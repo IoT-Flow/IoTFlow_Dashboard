@@ -118,6 +118,40 @@ npm install -g serve
 serve -s build -l 3000
 ```
 
+## 🛠️ Quick Start (Cross-Platform)
+
+### Prerequisites
+- **Node.js** 16.0+ ([Download](https://nodejs.org/))
+- **Git** latest version
+- **Chrome/Firefox** for optimal experience
+
+### Installation
+```bash
+# Clone the repository
+git clone <repository-url>
+cd Dashboard_IoTFlow
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Start development server
+npm start
+```
+
+### Environment Setup
+Create `.env.local` file:
+```env
+REACT_APP_API_URL=http://localhost:3001
+REACT_APP_WS_URL=ws://localhost:3001
+REACT_APP_DEBUG=true
+```
+
+> 📋 For detailed cross-platform setup instructions, see [SETUP.md](./SETUP.md)
+
 ## 🔑 Authentication
 
 The dashboard uses token-based authentication. For demo purposes, use:
