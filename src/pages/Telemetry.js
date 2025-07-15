@@ -21,6 +21,11 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Fab,
 } from '@mui/material';
 import {
   Download,
@@ -35,6 +40,11 @@ import {
   Thermostat,
   Opacity,
   Speed,
+  Add,
+  MoreVert,
+  Edit,
+  Delete,
+  DragIndicator,
 } from '@mui/icons-material';
 import { Line } from 'react-chartjs-2';
 import {
@@ -54,6 +64,9 @@ import 'chartjs-adapter-date-fns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import { useAuth } from '../contexts/AuthContext';
+import ChartCustomizationDialog from '../components/ChartCustomizationDialog';
+import CustomChart from '../components/CustomChart';
 import toast from 'react-hot-toast';
 
 ChartJS.register(
@@ -71,6 +84,7 @@ ChartJS.register(
 
 const Telemetry = () => {
   const { subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
+  const { user } = useAuth();
   const [selectedDevice, setSelectedDevice] = useState('all');
   const [timeRange, setTimeRange] = useState('1h');
   const [chartType, setChartType] = useState('line');
@@ -79,6 +93,13 @@ const Telemetry = () => {
   const [endDate, setEndDate] = useState(new Date());
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Custom chart management
+  const [customCharts, setCustomCharts] = useState([]);
+  const [chartCustomizationOpen, setChartCustomizationOpen] = useState(false);
+  const [editingChart, setEditingChart] = useState(null);
+  const [chartMenuAnchor, setChartMenuAnchor] = useState(null);
+  const [selectedChartForMenu, setSelectedChartForMenu] = useState(null);
 
   // Mock devices for demo
   const [devices] = useState([
@@ -91,6 +112,80 @@ const Telemetry = () => {
 
   // Mock telemetry data
   const [telemetryHistory, setTelemetryHistory] = useState({});
+
+  // Load custom charts from localStorage
+  useEffect(() => {
+    const savedCharts = localStorage.getItem(`telemetry_charts_${user?.email || 'demo'}`);
+    if (savedCharts) {
+      try {
+        setCustomCharts(JSON.parse(savedCharts));
+      } catch (error) {
+        console.error('Error loading saved charts:', error);
+      }
+    }
+  }, [user]);
+
+  // Save custom charts to localStorage
+  const saveChartsToStorage = (charts) => {
+    localStorage.setItem(`telemetry_charts_${user?.email || 'demo'}`, JSON.stringify(charts));
+  };
+
+  // Custom chart management functions
+  const handleAddChart = () => {
+    setEditingChart(null);
+    setChartCustomizationOpen(true);
+  };
+
+  const handleEditChart = (chart) => {
+    setEditingChart(chart);
+    setChartCustomizationOpen(true);
+    setChartMenuAnchor(null);
+  };
+
+  const handleDeleteChart = (chartId) => {
+    const updatedCharts = customCharts.filter(chart => chart.id !== chartId);
+    setCustomCharts(updatedCharts);
+    saveChartsToStorage(updatedCharts);
+    setChartMenuAnchor(null);
+    toast.success('Chart deleted successfully');
+  };
+
+  const handleSaveChart = (chartConfig) => {
+    let updatedCharts;
+    
+    if (editingChart) {
+      // Update existing chart
+      updatedCharts = customCharts.map(chart => 
+        chart.id === editingChart.id ? { ...chartConfig, id: editingChart.id } : chart
+      );
+      toast.success('Chart updated successfully');
+    } else {
+      // Add new chart
+      const newChart = {
+        ...chartConfig,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+      };
+      updatedCharts = [...customCharts, newChart];
+      toast.success('Chart created successfully');
+    }
+    
+    setCustomCharts(updatedCharts);
+    saveChartsToStorage(updatedCharts);
+    setChartCustomizationOpen(false);
+    setEditingChart(null);
+  };
+
+  const handleChartMenuOpen = (event, chart) => {
+    event.stopPropagation();
+    setChartMenuAnchor(event.currentTarget);
+    setSelectedChartForMenu(chart);
+  };
+
+  const handleChartMenuClose = () => {
+    setChartMenuAnchor(null);
+    setSelectedChartForMenu(null);
+  };
 
   useEffect(() => {
     // Generate mock historical data
@@ -512,6 +607,102 @@ const Telemetry = () => {
           </CardContent>
         </Card>
 
+        {/* Custom Charts Section */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box>
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+                Custom Charts
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Create personalized charts with multiple devices and data types
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddChart}
+            >
+              Add Chart
+            </Button>
+          </Box>
+
+          {customCharts.length === 0 ? (
+            <Card>
+              <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                <BarChart sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No Custom Charts Yet
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Create your first custom chart to visualize telemetry data from multiple devices
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleAddChart}
+                >
+                  Create First Chart
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Grid container spacing={3}>
+              {customCharts.map((chart, index) => (
+                <Grid item xs={12} lg={6} key={chart.id}>
+                  <Card sx={{ position: 'relative' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <DragIndicator sx={{ color: 'text.disabled', cursor: 'grab' }} />
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            {chart.title}
+                          </Typography>
+                        </Box>
+                        <IconButton 
+                          size="small"
+                          onClick={(e) => handleChartMenuOpen(e, chart)}
+                        >
+                          <MoreVert />
+                        </IconButton>
+                      </Box>
+                      
+                      {chart.description && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          {chart.description}
+                        </Typography>
+                      )}
+
+                      <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                        {chart.devices.map(deviceId => {
+                          const device = devices.find(d => d.id === deviceId);
+                          return device ? (
+                            <Chip
+                              key={deviceId}
+                              label={device.name}
+                              size="small"
+                              variant="outlined"
+                              avatar={<Avatar sx={{ bgcolor: 'primary.main' }}>{device.type[0]}</Avatar>}
+                            />
+                          ) : null;
+                        })}
+                      </Box>
+
+                      <Box sx={{ height: 300 }}>
+                        <CustomChart
+                          chartConfig={chart}
+                          telemetryData={telemetryHistory}
+                          devices={devices}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+
         {/* Additional Analytics */}
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -609,6 +800,58 @@ const Telemetry = () => {
             <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
           </DialogActions>
         </Dialog>
+
+        {/* Chart Customization Dialog */}
+        <ChartCustomizationDialog
+          open={chartCustomizationOpen}
+          onClose={() => {
+            setChartCustomizationOpen(false);
+            setEditingChart(null);
+          }}
+          onSave={handleSaveChart}
+          devices={devices}
+          initialConfig={editingChart}
+          telemetryData={telemetryHistory}
+        />
+
+        {/* Chart Menu */}
+        <Menu
+          anchorEl={chartMenuAnchor}
+          open={Boolean(chartMenuAnchor)}
+          onClose={handleChartMenuClose}
+        >
+          <MenuItem onClick={() => handleEditChart(selectedChartForMenu)}>
+            <ListItemIcon>
+              <Edit fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Edit Chart</ListItemText>
+          </MenuItem>
+          <Divider />
+          <MenuItem 
+            onClick={() => handleDeleteChart(selectedChartForMenu?.id)}
+            sx={{ color: 'error.main' }}
+          >
+            <ListItemIcon>
+              <Delete fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Delete Chart</ListItemText>
+          </MenuItem>
+        </Menu>
+
+        {/* Floating Action Button for Quick Chart Creation */}
+        <Fab
+          color="primary"
+          aria-label="add chart"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 1000,
+          }}
+          onClick={handleAddChart}
+        >
+          <Add />
+        </Fab>
       </Box>
     </LocalizationProvider>
   );
