@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoTFlow Backend Integration Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border-left: 4px solid #007bff;
+      background-color: #f8f9fa;
+    }
+
+    .success {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .info {
+      color: #17a2b8;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .log {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 10px;
+      height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .credentials {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔗 IoTFlow Backend Integration Test</h1>
+
+    <div class="test-section">
+      <h2>🚀 System Status</h2>
+      <p class="info">This page tests the connection between the frontend and backend systems.</p>
+
+      <div class="credentials">
+        <h3>Demo Credentials</h3>
+        <p><strong>User:</strong> demo / demo123</p>
+        <p><strong>Admin:</strong> admin / admin123</p>
+      </div>
+
+      <button onclick="testBackendConnection()">Test Backend Connection</button>
+      <button onclick="testDemoLogin()">Test Demo Login</button>
+      <button onclick="testAdminLogin()">Test Admin Login</button>
+      <button onclick="testFullFlow()">Test Full Flow</button>
+      <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="test-section">
+      <h2>📊 Test Results</h2>
+      <div id="log" class="log">
+        Click a test button to start testing...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:5001';
+    let currentToken = null;
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      const color = type === 'success' ? '#28a745' :
+        type === 'error' ? '#dc3545' : '#17a2b8';
+
+      logDiv.innerHTML += `<div style="color: ${color}; margin: 5px 0;">
+                [${timestamp}] ${message}
+            </div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    async function testBackendConnection() {
+      log('🔍 Testing backend connection...', 'info');
+
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+
+        if (response.ok) {
+          log('✅ Backend is running: ' + data.message, 'success');
+          log('📍 Backend URL: ' + API_BASE, 'info');
+        } else {
+          log('❌ Backend responded with error: ' + data.message, 'error');
+        }
+      } catch (error) {
+        log('❌ Failed to connect to backend: ' + error.message, 'error');
+        log('🔧 Make sure backend is running on port 5001', 'info');
+      }
+    }
+
+    async function testDemoLogin() {
+      log('🔑 Testing demo user login...', 'info');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: 'demo',
+            password: 'demo123'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentToken = data.data.token;
+          log('✅ Demo login successful!', 'success');
+          log('👤 User: ' + data.data.user.username, 'info');
+          log('🏢 Tenant: ' + data.data.user.tenant_id, 'info');
+          log('🔑 Token: ' + currentToken.substring(0, 50) + '...', 'info');
+        } else {
+          log('❌ Demo login failed: ' + data.message, 'error');
+        }
+      } catch (error) {
+        log('❌ Demo login error: ' + error.message, 'error');
+      }
+    }
+
+    async function testAdminLogin() {
+      log('🔑 Testing admin user login...', 'info');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: 'admin',
+            password: 'admin123'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentToken = data.data.token;
+          log('✅ Admin login successful!', 'success');
+          log('👤 User: ' + data.data.user.username, 'info');
+          log('🔐 Role: ' + data.data.user.role, 'info');
+          log('🏢 Tenant: ' + data.data.user.tenant_id, 'info');
+        } else {
+          log('❌ Admin login failed: ' + data.message, 'error');
+        }
+      } catch (error) {
+        log('❌ Admin login error: ' + error.message, 'error');
+      }
+    }
+
+    async function testFullFlow() {
+      log('🔄 Testing complete authentication flow...', 'info');
+
+      // Step 1: Test backend connection
+      await testBackendConnection();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 2: Test demo login
+      await testDemoLogin();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (currentToken) {
+        // Step 3: Test protected endpoint
+        log('🔒 Testing protected profile endpoint...', 'info');
+        try {
+          const profileResponse = await fetch(`${API_BASE}/api/auth/profile`, {
+            headers: {
+              'Authorization': `Bearer ${currentToken}`
+            }
+          });
+
+          const profileData = await profileResponse.json();
+
+          if (profileData.success) {
+            log('✅ Profile fetch successful!', 'success');
+            log('📧 Email: ' + profileData.data.user.email, 'info');
+          } else {
+            log('❌ Profile fetch failed: ' + profileData.message, 'error');
+          }
+        } catch (error) {
+          log('❌ Profile fetch error: ' + error.message, 'error');
+        }
+
+        // Step 4: Test devices endpoint
+        log('📱 Testing devices endpoint...', 'info');
+        try {
+          const devicesResponse = await fetch(`${API_BASE}/api/devices`, {
+            headers: {
+              'Authorization': `Bearer ${currentToken}`
+            }
+          });
+
+          const devicesData = await devicesResponse.json();
+
+          if (devicesData.success) {
+            log('✅ Devices fetch successful!', 'success');
+            log('📊 Device count: ' + devicesData.data.devices.length, 'info');
+
+            if (devicesData.data.devices.length > 0) {
+              const firstDevice = devicesData.data.devices[0];
+              log('📱 First device: ' + firstDevice.name, 'info');
+
+              // Step 5: Test telemetry endpoint
+              log('📈 Testing telemetry endpoint...', 'info');
+              try {
+                const telemetryResponse = await fetch(`${API_BASE}/api/telemetry/device/${firstDevice.device_id}?limit=3`, {
+                  headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                  }
+                });
+
+                const telemetryData = await telemetryResponse.json();
+
+                if (telemetryData.success) {
+                  log('✅ Telemetry fetch successful!', 'success');
+                  log('📊 Data points: ' + telemetryData.data.telemetry.length, 'info');
+                  log('🎯 Total available: ' + telemetryData.data.pagination.total, 'info');
+                } else {
+                  log('❌ Telemetry fetch failed: ' + telemetryData.message, 'error');
+                }
+              } catch (error) {
+                log('❌ Telemetry fetch error: ' + error.message, 'error');
+              }
+            }
+          } else {
+            log('❌ Devices fetch failed: ' + devicesData.message, 'error');
+          }
+        } catch (error) {
+          log('❌ Devices fetch error: ' + error.message, 'error');
+        }
+
+        log('🎉 Full flow test completed!', 'success');
+      } else {
+        log('❌ Cannot continue - no authentication token', 'error');
+      }
+    }
+
+    // Auto-run connection test on page load
+    window.onload = function () {
+      log('🚀 IoTFlow Backend Integration Test Started', 'info');
+      log('Backend URL: ' + API_BASE, 'info');
+      setTimeout(testBackendConnection, 1000);
+    };
+  </script>
+</body>
+
+</html>

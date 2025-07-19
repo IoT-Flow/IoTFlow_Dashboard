@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Debug IoTFlow Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .test-section {
+      background: #f0f0f0;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+    }
+
+    .success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    button {
+      padding: 8px 15px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    pre {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .form-group {
+      margin: 10px 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔍 IoTFlow Login Debug Tool</h1>
+
+    <div class="test-section">
+      <h3>📋 Test Login Function</h3>
+      <div class="form-group">
+        <label>Email/Username:</label>
+        <input type="text" id="email" value="admin@iotflow.com" />
+      </div>
+      <div class="form-group">
+        <label>Password:</label>
+        <input type="password" id="password" value="admin123" />
+      </div>
+      <button class="btn-primary" onclick="testLogin()">🔐 Test Login</button>
+      <button class="btn-danger" onclick="clearAll()">🗑️ Clear Storage</button>
+      <button class="btn-success" onclick="checkStorage()">📊 Check Storage</button>
+    </div>
+
+    <div id="results" class="test-section info">
+      <h4>Results will appear here...</h4>
+    </div>
+  </div>
+
+  <script>
+    function log(message, type = 'info') {
+      const resultsDiv = document.getElementById('results');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+      resultsDiv.innerHTML += `<div class="test-section ${className}"><strong>[${timestamp}]</strong> ${message}</div>`;
+    }
+
+    function clearResults() {
+      document.getElementById('results').innerHTML = '<h4>Results cleared</h4>';
+    }
+
+    function clearAll() {
+      localStorage.clear();
+      clearResults();
+      log('✅ LocalStorage cleared', 'success');
+    }
+
+    function checkStorage() {
+      clearResults();
+      log('🔍 Checking localStorage...', 'info');
+
+      const apiKey = localStorage.getItem('iotflow_user_api_key');
+      const userData = localStorage.getItem('iotflow_user');
+      const deviceCache = localStorage.getItem('iotflow_devices_cache');
+
+      log(`API Key: ${apiKey ? '✅ Present' : '❌ Missing'}`, apiKey ? 'success' : 'error');
+      log(`User Data: ${userData ? '✅ Present' : '❌ Missing'}`, userData ? 'success' : 'error');
+      log(`Device Cache: ${deviceCache ? '✅ Present' : '❌ Missing'}`, deviceCache ? 'info' : 'info');
+
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          log(`<pre>User Object:\n${JSON.stringify(user, null, 2)}</pre>`, 'info');
+        } catch (e) {
+          log('❌ Failed to parse user data: ' + e.message, 'error');
+        }
+      }
+    }
+
+    async function testLogin() {
+      clearResults();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      log(`🚀 Starting login test for: ${email}`, 'info');
+
+      try {
+        // Simulate the demo authentication
+        const demoUsers = [
+          {
+            credentials: ['admin@iotflow.com', 'admin'],
+            password: 'admin123',
+            user: {
+              id: 1,
+              username: 'admin',
+              email: 'admin@iotflow.com',
+              firstName: 'Admin',
+              lastName: 'User',
+              role: 'admin',
+              api_key: 'admin_api_key_demo_secure_token_123',
+              tenant_id: 1,
+              permissions: ['admin', 'user_management', 'system_access'],
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            }
+          },
+          {
+            credentials: ['john@iotflow.com', 'john'],
+            password: 'john123',
+            user: {
+              id: 2,
+              username: 'john',
+              email: 'john@iotflow.com',
+              firstName: 'John',
+              lastName: 'Smith',
+              role: 'user',
+              api_key: 'john_api_key_demo_secure_token_456',
+              tenant_id: 2,
+              permissions: ['device_access', 'telemetry_read'],
+              createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
+              lastLogin: new Date().toISOString()
+            }
+          },
+          {
+            credentials: ['alice@iotflow.com', 'alice'],
+            password: 'alice123',
+            user: {
+              id: 3,
+              username: 'alice',
+              email: 'alice@iotflow.com',
+              firstName: 'Alice',
+              lastName: 'Johnson',
+              role: 'user',
+              api_key: 'alice_api_key_demo_secure_token_789',
+              tenant_id: 3,
+              permissions: ['device_access', 'telemetry_read', 'analytics_read'],
+              createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+              lastLogin: new Date().toISOString()
+            }
+          }
+        ];
+
+        log(`🔍 Looking for user matching: ${email}`, 'info');
+
+        const matchedUser = demoUsers.find(user =>
+          user.credentials.some(cred =>
+            cred.toLowerCase() === email.toLowerCase()
+          ) && user.password === password
+        );
+
+        if (matchedUser) {
+          log(`✅ User found: ${matchedUser.user.username}`, 'success');
+
+          // Store in localStorage
+          localStorage.setItem('iotflow_user', JSON.stringify(matchedUser.user));
+          localStorage.setItem('iotflow_user_api_key', matchedUser.user.api_key);
+          localStorage.removeItem('iotflow_devices_cache');
+
+          log(`✅ Data stored in localStorage`, 'success');
+          log(`<pre>Stored User:\n${JSON.stringify(matchedUser.user, null, 2)}</pre>`, 'success');
+
+          // Test retrieval
+          const retrievedUser = localStorage.getItem('iotflow_user');
+          const retrievedKey = localStorage.getItem('iotflow_user_api_key');
+
+          if (retrievedUser && retrievedKey) {
+            log(`✅ Data successfully retrieved from localStorage`, 'success');
+
+            // Test parsing
+            try {
+              const parsedUser = JSON.parse(retrievedUser);
+              if (parsedUser.id && parsedUser.email) {
+                log(`✅ User data is valid and complete`, 'success');
+                log(`🎉 LOGIN TEST SUCCESSFUL!`, 'success');
+              } else {
+                log(`❌ User data is missing required fields`, 'error');
+              }
+            } catch (e) {
+              log(`❌ Failed to parse retrieved user data: ${e.message}`, 'error');
+            }
+          } else {
+            log(`❌ Failed to retrieve data from localStorage`, 'error');
+          }
+        } else {
+          log(`❌ No matching user found for: ${email} with provided password`, 'error');
+          log(`Available credentials: admin@iotflow.com, john@iotflow.com, alice@iotflow.com`, 'info');
+        }
+
+      } catch (error) {
+        log(`❌ Login test failed: ${error.message}`, 'error');
+      }
+    }
+
+    // Check storage on load
+    window.onload = function () {
+      checkStorage();
+    };
+  </script>
+</body>
+
+</html>
