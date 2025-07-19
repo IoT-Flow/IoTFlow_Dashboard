@@ -30,20 +30,21 @@ class ApiService {
     // Demo users storage (persisted in localStorage for demo purposes)
     this.demoUsers = this.loadDemoUsers();
 
-    // Request interceptor for Node.js backend authentication
+    // Request interceptor for API key authentication
     this.api.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('iotflow_token');
         const user = this.getCurrentUserFromStorage();
 
         // For auth endpoints, don't add headers
-        if (config.url.includes('/auth/')) {
+        if (config.url.includes('/auth/') || config.url.includes('/login') || config.url.includes('/register')) {
           return config;
         }
 
         // Use API key for authenticated requests
         if (user && user.api_key) {
           config.headers['x-api-key'] = user.api_key;
+        } else {
+          console.warn('No API key found for authenticated request');
         }
 
         // Add user context for multi-tenant data isolation
@@ -498,125 +499,133 @@ class ApiService {
         totalPages: response.data.totalPages || 1
       };
     } catch (error) {
-      console.log('Backend devices failed, using demo data...', error.message);
+      console.error('Backend devices error:', error.response?.data || error.message);
 
-      // Enhanced demo data with strict user isolation
-      const currentUser = this.getCurrentUserFromStorage();
-      if (!currentUser) {
-        this.handleUnauthorized();
-        return;
+      // Only fall back to demo if it's a network error or 500 error
+      if (!error.response || error.response.status >= 500) {
+        console.log('Backend devices failed, using demo data...', error.message);
+
+        // Enhanced demo data with strict user isolation
+        const currentUser = this.getCurrentUserFromStorage();
+        if (!currentUser) {
+          this.handleUnauthorized();
+          return;
+        }
+
+        // User-specific device data with enhanced multi-tenant isolation
+        const userDevicesMap = {
+          1: [ // Admin user devices
+            {
+              id: 1,
+              deviceId: 'ADMIN_TEMP_001',
+              name: 'Server Room Temperature Monitor',
+              type: 'Temperature',
+              device_type: 'temperature_sensor',
+              location: 'Data Center - Server Room A',
+              status: 'active',
+              lastSeen: new Date(Date.now() - 300000).toISOString(),
+              owner: 1,
+              tenant_id: 1,
+              api_key: 'device_admin_temp_001_secure_api_key_demo',
+              createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
+              description: 'Critical infrastructure temperature monitoring'
+            },
+            {
+              id: 2,
+              deviceId: 'ADMIN_PRESS_002',
+              name: 'HVAC Pressure Monitoring System',
+              type: 'Pressure',
+              device_type: 'pressure_sensor',
+              location: 'Building A - HVAC Control Room',
+              status: 'active',
+              lastSeen: new Date(Date.now() - 120000).toISOString(),
+              owner: 1,
+              tenant_id: 1,
+              api_key: 'device_admin_press_002_secure_api_key_demo',
+              createdAt: new Date(Date.now() - 86400000 * 45).toISOString(),
+              description: 'Building HVAC system pressure monitoring and control'
+            }
+          ],
+          2: [ // John's personal devices
+            {
+              id: 3,
+              deviceId: 'JOHN_TEMP_001',
+              name: 'Living Room Climate Sensor',
+              type: 'Temperature',
+              device_type: 'temperature_humidity_sensor',
+              location: 'Home - Living Room',
+              status: 'active',
+              lastSeen: new Date(Date.now() - 600000).toISOString(),
+              owner: 2,
+              tenant_id: 2,
+              api_key: 'device_john_temp_001_secure_api_key_demo',
+              createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
+              description: 'Smart home climate monitoring and comfort optimization'
+            },
+            {
+              id: 4,
+              deviceId: 'JOHN_LED_002',
+              name: 'Smart RGB LED Controller',
+              type: 'LED',
+              device_type: 'smart_lighting',
+              location: 'Home - Living Room',
+              status: 'active',
+              lastSeen: new Date(Date.now() - 180000).toISOString(),
+              owner: 2,
+              tenant_id: 2,
+              api_key: 'device_john_led_002_secure_api_key_demo',
+              createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
+              description: 'RGB LED strip with voice control and automation'
+            }
+          ],
+          3: [ // Alice's garden automation devices
+            {
+              id: 7,
+              deviceId: 'ALICE_TEMP_001',
+              name: 'Greenhouse Climate Station',
+              type: 'Temperature',
+              device_type: 'environmental_sensor',
+              location: 'Garden - Smart Greenhouse',
+              status: 'active',
+              lastSeen: new Date(Date.now() - 240000).toISOString(),
+              owner: 3,
+              tenant_id: 3,
+              api_key: 'device_alice_temp_001_secure_api_key_demo',
+              createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
+              description: 'Precision greenhouse climate control and monitoring'
+            },
+            {
+              id: 8,
+              deviceId: 'ALICE_PUMP_002',
+              name: 'Smart Irrigation Pump',
+              type: 'Pump',
+              device_type: 'irrigation_pump',
+              location: 'Garden - Irrigation Hub',
+              status: 'active',
+              lastSeen: new Date(Date.now() - 300000).toISOString(),
+              owner: 3,
+              tenant_id: 3,
+              api_key: 'device_alice_pump_002_secure_api_key_demo',
+              createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+              description: 'Solar-powered smart irrigation with soil moisture integration'
+            }
+          ]
+        };
+
+        // Strict tenant isolation - only return current user's devices
+        const userDevices = userDevicesMap[currentUser.id] || [];
+
+        return {
+          success: true,
+          data: userDevices,
+          total: userDevices.length,
+          page: params.page || 1,
+          limit: params.limit || 50
+        };
+      } else {
+        // Re-throw client errors (400, 401, 403, etc.) to be handled by the UI
+        throw error;
       }
-
-      // User-specific device data with enhanced multi-tenant isolation
-      const userDevicesMap = {
-        1: [ // Admin user devices
-          {
-            id: 1,
-            deviceId: 'ADMIN_TEMP_001',
-            name: 'Server Room Temperature Monitor',
-            type: 'Temperature',
-            device_type: 'temperature_sensor',
-            location: 'Data Center - Server Room A',
-            status: 'active',
-            lastSeen: new Date(Date.now() - 300000).toISOString(),
-            owner: 1,
-            tenant_id: 1,
-            api_key: 'device_admin_temp_001_secure_api_key_demo',
-            createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
-            description: 'Critical infrastructure temperature monitoring'
-          },
-          {
-            id: 2,
-            deviceId: 'ADMIN_PRESS_002',
-            name: 'HVAC Pressure Monitoring System',
-            type: 'Pressure',
-            device_type: 'pressure_sensor',
-            location: 'Building A - HVAC Control Room',
-            status: 'active',
-            lastSeen: new Date(Date.now() - 120000).toISOString(),
-            owner: 1,
-            tenant_id: 1,
-            api_key: 'device_admin_press_002_secure_api_key_demo',
-            createdAt: new Date(Date.now() - 86400000 * 45).toISOString(),
-            description: 'Building HVAC system pressure monitoring and control'
-          }
-        ],
-        2: [ // John's personal devices
-          {
-            id: 3,
-            deviceId: 'JOHN_TEMP_001',
-            name: 'Living Room Climate Sensor',
-            type: 'Temperature',
-            device_type: 'temperature_humidity_sensor',
-            location: 'Home - Living Room',
-            status: 'active',
-            lastSeen: new Date(Date.now() - 600000).toISOString(),
-            owner: 2,
-            tenant_id: 2,
-            api_key: 'device_john_temp_001_secure_api_key_demo',
-            createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
-            description: 'Smart home climate monitoring and comfort optimization'
-          },
-          {
-            id: 4,
-            deviceId: 'JOHN_LED_002',
-            name: 'Smart RGB LED Controller',
-            type: 'LED',
-            device_type: 'smart_lighting',
-            location: 'Home - Living Room',
-            status: 'active',
-            lastSeen: new Date(Date.now() - 180000).toISOString(),
-            owner: 2,
-            tenant_id: 2,
-            api_key: 'device_john_led_002_secure_api_key_demo',
-            createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
-            description: 'RGB LED strip with voice control and automation'
-          }
-        ],
-        3: [ // Alice's garden automation devices
-          {
-            id: 7,
-            deviceId: 'ALICE_TEMP_001',
-            name: 'Greenhouse Climate Station',
-            type: 'Temperature',
-            device_type: 'environmental_sensor',
-            location: 'Garden - Smart Greenhouse',
-            status: 'active',
-            lastSeen: new Date(Date.now() - 240000).toISOString(),
-            owner: 3,
-            tenant_id: 3,
-            api_key: 'device_alice_temp_001_secure_api_key_demo',
-            createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
-            description: 'Precision greenhouse climate control and monitoring'
-          },
-          {
-            id: 8,
-            deviceId: 'ALICE_PUMP_002',
-            name: 'Smart Irrigation Pump',
-            type: 'Pump',
-            device_type: 'irrigation_pump',
-            location: 'Garden - Irrigation Hub',
-            status: 'active',
-            lastSeen: new Date(Date.now() - 300000).toISOString(),
-            owner: 3,
-            tenant_id: 3,
-            api_key: 'device_alice_pump_002_secure_api_key_demo',
-            createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-            description: 'Solar-powered smart irrigation with soil moisture integration'
-          }
-        ]
-      };
-
-      // Strict tenant isolation - only return current user's devices
-      const userDevices = userDevicesMap[currentUser.id] || [];
-
-      return {
-        success: true,
-        data: userDevices,
-        total: userDevices.length,
-        page: params.page || 1,
-        limit: params.limit || 50
-      };
     }
   }
 
@@ -664,20 +673,20 @@ class ApiService {
 
       console.log('Backend device creation successful:', response.data);
 
-      // Transform backend response to match frontend format
+      // Backend returns the device object directly (not wrapped)
       const device = response.data;
       const transformedDevice = {
         id: device.id,
-        deviceId: device.id,
+        deviceId: device.device_id || device.id,
         name: device.name,
         type: device.device_type || device.type,
         location: device.location,
         status: device.status,
         description: device.description,
-        lastSeen: device.last_seen || device.lastSeen || device.updated_at,
-        createdAt: device.created_at || device.createdAt,
-        updatedAt: device.updated_at || device.updatedAt,
-        owner: device.user_id || device.owner,
+        lastSeen: device.last_seen || device.updated_at,
+        createdAt: device.created_at,
+        updatedAt: device.updated_at,
+        owner: device.user_id,
         api_key: device.api_key,
         firmware_version: device.firmware_version,
         hardware_version: device.hardware_version
@@ -688,38 +697,47 @@ class ApiService {
         data: transformedDevice
       };
     } catch (error) {
-      console.log('Backend device creation failed, using demo...', error.message);
-      // Enhanced demo device registration matching backend structure
-      const currentUser = this.getCurrentUserFromStorage();
-      if (!currentUser) {
-        this.handleUnauthorized();
-        return;
+      console.error('Backend device creation error:', error.response?.data || error.message);
+
+      // Only fall back to demo if it's a network error or 500 error
+      if (!error.response || error.response.status >= 500) {
+        console.log('Backend device creation failed, using demo...', error.message);
+
+        // Enhanced demo device registration matching backend structure
+        const currentUser = this.getCurrentUserFromStorage();
+        if (!currentUser) {
+          this.handleUnauthorized();
+          return;
+        }
+
+        const deviceId = Math.floor(Math.random() * 1000) + 100;
+        const deviceApiKey = `device_${currentUser.id}_${deviceData.name.toLowerCase().replace(/\s+/g, '_')}_${Math.random().toString(36).substr(2, 20)}`;
+
+        const newDevice = {
+          id: deviceId,
+          deviceId: deviceId,
+          name: deviceData.name,
+          type: deviceData.type || deviceData.device_type,
+          location: deviceData.location,
+          description: deviceData.description || '',
+          status: 'offline', // Device starts offline until first connection
+          owner: currentUser.id,
+          api_key: deviceApiKey,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastSeen: null,
+          firmware_version: deviceData.firmware_version,
+          hardware_version: deviceData.hardware_version
+        };
+
+        return {
+          success: true,
+          data: newDevice
+        };
+      } else {
+        // Re-throw client errors (400, 401, 403, etc.) to be handled by the UI
+        throw error;
       }
-
-      const deviceId = Math.floor(Math.random() * 1000) + 100;
-      const deviceApiKey = `device_${currentUser.id}_${deviceData.name.toLowerCase().replace(/\s+/g, '_')}_${Math.random().toString(36).substr(2, 20)}`;
-
-      const newDevice = {
-        id: deviceId,
-        deviceId: deviceId,
-        name: deviceData.name,
-        type: deviceData.type || deviceData.device_type,
-        location: deviceData.location,
-        description: deviceData.description || '',
-        status: 'offline', // Device starts offline until first connection
-        owner: currentUser.id,
-        api_key: deviceApiKey,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        lastSeen: null,
-        firmware_version: deviceData.firmware_version,
-        hardware_version: deviceData.hardware_version
-      };
-
-      return {
-        success: true,
-        data: newDevice
-      };
     }
   }
 

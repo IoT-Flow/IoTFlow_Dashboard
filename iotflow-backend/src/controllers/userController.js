@@ -51,9 +51,24 @@ class UserController {
 
   async login(req, res) {
     try {
-      const { email, password } = req.body;
+      const { email, username, password } = req.body;
 
-      const user = await User.findOne({ where: { email } });
+      // Allow login with either email or username
+      const loginIdentifier = email || username;
+      if (!loginIdentifier) {
+        return res.status(400).json({ message: 'Email or username is required' });
+      }
+
+      // Find user by email or username
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [
+            { email: loginIdentifier },
+            { username: loginIdentifier }
+          ]
+        }
+      });
+
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }

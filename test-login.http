@@ -1,0 +1,30 @@
+### Register a test user
+POST http://localhost:3001/api/users/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Login test
+POST http://localhost:3001/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Test with wrong credentials
+POST http://localhost:3001/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "wrongpassword"
+}
+
+### Health check
+GET http://localhost:3001/health

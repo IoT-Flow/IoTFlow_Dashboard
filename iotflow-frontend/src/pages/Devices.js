@@ -100,22 +100,25 @@ const Devices = () => {
         console.log('Devices response:', response); // Debug log
 
         if (response && response.success) {
+          // Backend response has devices in response.data (already an array)
+          const deviceList = response.data || [];
+
           // Transform backend data to match component's expected format
-          const transformedDevices = response.data.devices.map(device => ({
+          const transformedDevices = deviceList.map(device => ({
             id: device.id,
-            deviceId: device.device_id,
+            deviceId: device.device_id || device.id,
             name: device.name,
-            type: device.type,
+            type: device.device_type || device.type,
             location: device.location,
             status: device.status,
-            last_seen: new Date(device.last_seen || device.updatedAt),
-            firmware_version: device.configuration?.firmware_version || '1.0.0',
-            hardware_version: device.configuration?.hardware_version || '1.0',
+            last_seen: new Date(device.last_seen || device.updated_at || device.createdAt),
+            firmware_version: device.firmware_version || '1.0.0',
+            hardware_version: device.hardware_version || '1.0',
             api_key: device.api_key || 'N/A',
             description: device.description || '',
-            created_at: new Date(device.createdAt),
+            created_at: new Date(device.created_at),
             telemetry_count: Math.floor(Math.random() * 50000), // Mock for demo
-            is_online: device.is_online || false,
+            is_online: device.status === 'active',
             tenant_id: device.tenant_id,
             user_id: device.user_id
           }));
@@ -308,26 +311,35 @@ const Devices = () => {
         if (result && result.success) {
           // Transform backend response to match component format
           const newDevice = {
-            id: result.data.device.id,
-            deviceId: result.data.device.device_id,
-            name: result.data.device.name,
-            type: result.data.device.type,
-            location: result.data.device.location,
-            status: result.data.device.status,
-            last_seen: result.data.device.last_seen ? new Date(result.data.device.last_seen) : new Date(),
-            firmware_version: result.data.device.configuration?.firmware_version || deviceForm.firmware_version,
-            hardware_version: result.data.device.configuration?.hardware_version || deviceForm.hardware_version,
-            api_key: result.data.device.api_key || 'N/A',
-            description: result.data.device.description,
-            created_at: new Date(result.data.device.createdAt),
+            id: result.data.id,
+            deviceId: result.data.deviceId || result.data.id,
+            name: result.data.name,
+            type: result.data.type,
+            location: result.data.location,
+            status: result.data.status,
+            last_seen: result.data.lastSeen ? new Date(result.data.lastSeen) : new Date(),
+            firmware_version: result.data.firmware_version || deviceForm.firmware_version,
+            hardware_version: result.data.hardware_version || deviceForm.hardware_version,
+            api_key: result.data.api_key || 'N/A',
+            description: result.data.description,
+            created_at: new Date(result.data.createdAt || Date.now()),
             telemetry_count: 0,
-            is_online: result.data.device.is_online || false,
-            tenant_id: result.data.device.tenant_id,
-            user_id: result.data.device.user_id
+            is_online: result.data.status === 'active',
+            tenant_id: result.data.tenant_id,
+            user_id: result.data.owner
           };
 
           setDevices([...devices, newDevice]);
           setDeviceDialogOpen(false);
+          // Reset form for next use
+          setDeviceForm({
+            name: '',
+            type: 'Temperature',
+            location: '',
+            description: '',
+            firmware_version: '1.0.0',
+            hardware_version: '1.0',
+          });
           toast.success(`Device "${newDevice.name}" created successfully`);
         } else {
           throw new Error(result?.message || 'Failed to create device');

@@ -48,14 +48,14 @@ async function testLogin() {
     console.log('✅ Login successful!');
     console.log('Response status:', response.status);
     console.log('Response data:', JSON.stringify(response.data, null, 2));
-    
+
     // Extract token for further testing
     const token = response.data.token;
     if (token) {
       console.log('\n🎟️  JWT Token received:', token.substring(0, 50) + '...');
       return { token, user: response.data.user };
     }
-    
+
     return response.data;
   } catch (error) {
     console.log('❌ Login failed');
@@ -119,21 +119,21 @@ async function testInvalidLogin() {
 async function runTests() {
   console.log('🚀 Starting IoTFlow Login API Tests');
   console.log('=====================================');
-  
+
   // Test 1: Try to register a user (might fail if user already exists)
   await testRegister();
-  
+
   // Test 2: Test valid login
   const loginResult = await testLogin();
-  
+
   // Test 3: Test protected route if login was successful
   if (loginResult && loginResult.token) {
     await testProtectedRoute(loginResult.token);
   }
-  
+
   // Test 4: Test invalid login
   await testInvalidLogin();
-  
+
   console.log('\n✨ Tests completed!');
 }
 
@@ -161,7 +161,7 @@ async function checkBackend() {
 async function main() {
   console.log('🔍 Checking if backend is running...');
   const backendRunning = await checkBackend();
-  
+
   if (backendRunning) {
     await runTests();
   } else {

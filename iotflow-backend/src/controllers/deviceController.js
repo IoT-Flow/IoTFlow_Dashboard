@@ -6,6 +6,9 @@ const crypto = require('crypto');
 class DeviceController {
   async createDevice(req, res) {
     try {
+      console.log('📝 Creating device with request body:', req.body);
+      console.log('🔐 User from auth middleware:', req.user ? { id: req.user.id, email: req.user.email } : 'No user');
+
       const {
         name,
         description,
@@ -15,6 +18,30 @@ class DeviceController {
         firmware_version,
         hardware_version
       } = req.body;
+
+      // Validate required fields
+      if (!name || !device_type) {
+        return res.status(400).json({
+          message: 'Missing required fields',
+          required: ['name', 'device_type'],
+          received: { name, device_type }
+        });
+      }
+
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: 'User authentication required' });
+      }
+
+      console.log('📦 Creating device with data:', {
+        name,
+        description,
+        device_type,
+        status: status || 'offline',
+        location,
+        firmware_version,
+        hardware_version,
+        user_id: req.user.id,
+      });
 
       const newDevice = await Device.create({
         name,
@@ -27,8 +54,10 @@ class DeviceController {
         user_id: req.user.id,
       });
 
+      console.log('✅ Device created successfully:', newDevice.toJSON());
       res.status(201).json(newDevice);
     } catch (error) {
+      console.error('❌ Device creation failed:', error);
       res.status(500).json({ message: 'Failed to create device', error: error.message });
     }
   }

@@ -1,6 +1,43 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
+const verifyAuth = async (req, res, next) => {
+  try {
+    let user = null;
+
+    // Try API key authentication first
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey) {
+      user = await User.findOne({ where: { api_key: apiKey } });
+      if (user) {
+        req.user = user;
+        return next();
+      }
+    }
+
+    // Try JWT token authentication
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        user = await User.findByPk(decoded.id);
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      } catch (jwtError) {
+        // Token is invalid, continue to check other methods
+      }
+    }
+
+    // If neither authentication method worked
+    return res.status(401).json({ message: 'Authentication required. Provide valid API key or JWT token.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Authentication error', error: error.message });
+  }
+};
+
 const verifyApiKey = async (req, res, next) => {
   // Skip API key verification for user creation
   if (req.path === '/api/users' && req.method === 'POST') {
@@ -53,6 +90,7 @@ const adminMiddleware = (req, res, next) => {
 };
 
 module.exports = {
+  verifyAuth,
   verifyApiKey,
   authMiddleware,
   adminMiddleware,

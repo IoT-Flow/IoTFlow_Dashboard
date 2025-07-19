@@ -4,7 +4,7 @@ const { verifyApiKey } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Device CRUD routes
+// Device CRUD routes (API key authentication)
 router.post('/', verifyApiKey, DeviceController.createDevice);
 router.get('/', verifyApiKey, DeviceController.getAllDevices);
 router.get('/:id', verifyApiKey, DeviceController.getDevice);

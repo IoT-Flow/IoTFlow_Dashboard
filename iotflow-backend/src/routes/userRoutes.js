@@ -1,6 +1,6 @@
 const express = require('express');
 const UserController = require('../controllers/userController');
-const { verifyApiKey } = require('../middlewares/authMiddleware');
+const { verifyAuth } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -8,15 +8,15 @@ const router = express.Router();
 router.post('/register', UserController.register);
 router.post('/login', UserController.login);
 
-// User management routes (require API key)
-router.get('/profile', verifyApiKey, UserController.getProfile);
-router.put('/profile', verifyApiKey, UserController.updateProfile);
-router.post('/refresh-api-key', verifyApiKey, UserController.refreshApiKey);
+// User management routes (require authentication)
+router.get('/profile', verifyAuth, UserController.getProfile);
+router.put('/profile', verifyAuth, UserController.updateProfile);
+router.post('/refresh-api-key', verifyAuth, UserController.refreshApiKey);
 
 // Admin routes (existing CRUD operations)
 router.post('/', UserController.createUser);
-router.get('/:id', verifyApiKey, UserController.getUser);
-router.put('/:id', verifyApiKey, UserController.updateUser);
-router.delete('/:id', verifyApiKey, UserController.deleteUser);
+router.get('/:id', verifyAuth, UserController.getUser);
+router.put('/:id', verifyAuth, UserController.updateUser);
+router.delete('/:id', verifyAuth, UserController.deleteUser);
 
 module.exports = router;
