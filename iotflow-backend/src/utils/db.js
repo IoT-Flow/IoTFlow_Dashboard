@@ -5,7 +5,7 @@ require('dotenv').config();
 let sequelize;
 
 // Define the path to the SQLite database
-const dbPath = process.env.DB_PATH || path.join('/home/omar-bouattour/Desktop', 'iotflow.db');
+const dbPath = process.env.DB_PATH;
 
 if (process.env.NODE_ENV === 'test') {
   // Use in-memory SQLite for testing
