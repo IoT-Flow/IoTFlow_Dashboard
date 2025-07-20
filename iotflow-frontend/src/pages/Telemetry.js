@@ -62,6 +62,7 @@ import CustomChart from '../components/CustomChart';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import api from '../services/api'; // Import your API service
+import apiService from '../services/apiService';
 
 ChartJS.register(
   CategoryScale,
@@ -105,12 +106,11 @@ const Telemetry = () => {
       if (user) {
         try {
           setLoading(true);
-          const response = await api.get('/devices', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const response = await apiService.getDevices();
+          console.log(response);
           setDevices(response.data);
           if (response.data.length > 0) {
-            setSelectedDevice(response.data[0].id); // Select the first device by default
+            setSelectedDevice(response.data[0]); // Select the first device by default
           }
         } catch (error) {
           toast.error('Failed to fetch devices.');
@@ -200,12 +200,12 @@ const Telemetry = () => {
   // Fetch telemetry data when selected device or time range changes
   useEffect(() => {
     const fetchTelemetry = async () => {
-      if (!selectedDevice) return;
-
+      if (!selectedDevice.id) return;
+      console.log(selectedDevice.id);
       setLoading(true);
       try {
         // For custom charts, we need to get all available measurements
-        const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice}/measurements`, {
+        const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice.id}/measurements`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const measurements = measurementsResponse.data;
@@ -216,7 +216,7 @@ const Telemetry = () => {
         const newTelemetryHistory = {};
 
         for (const measurement of measurements) {
-          const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice}`, {
+          const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice.id}`, {
             headers: { Authorization: `Bearer ${token}` },
             params: {
               measurement,
@@ -230,20 +230,20 @@ const Telemetry = () => {
           const formattedData = telemetryResponse.data.map(d => ({
             timestamp: new Date(parseInt(d.Time)),
             value: parseFloat(d[Object.keys(d).find(k => k.endsWith(measurement))]),
-            device_id: selectedDevice,
+            device_id: selectedDevice.id,
             measurement: measurement,
           }));
 
-          if (!newTelemetryHistory[selectedDevice]) {
-            newTelemetryHistory[selectedDevice] = {};
+          if (!newTelemetryHistory[selectedDevice.id]) {
+            newTelemetryHistory[selectedDevice.id] = {};
           }
-          newTelemetryHistory[selectedDevice][measurement] = formattedData;
+          newTelemetryHistory[selectedDevice.id][measurement] = formattedData;
         }
 
         setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
 
       } catch (error) {
-        toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
+        toast.error(`Failed to fetch telemetry for device ${selectedDevice.id}`);
         console.error('Error fetching telemetry:', error);
       } finally {
         setLoading(false);
@@ -257,13 +257,13 @@ const Telemetry = () => {
       const interval = setInterval(fetchTelemetry, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     }
-  }, [selectedDevice, timeRange, autoRefresh, token]);
+  }, [selectedDevice.id, timeRange, autoRefresh, token]);
 
 
   const handleDeviceChange = (event) => {
     const deviceId = event.target.value;
-    if (selectedDevice) {
-      unsubscribeFromDevice(selectedDevice);
+    if (selectedDevice.id) {
+      unsubscribeFromDevice(selectedDevice.id);
     }
 
     setSelectedDevice(deviceId);
