@@ -190,3 +190,4 @@ logs/
 .classpath
 .factorypath
 .settings/
+.vscode/
