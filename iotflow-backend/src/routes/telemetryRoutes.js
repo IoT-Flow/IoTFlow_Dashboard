@@ -1,13 +1,12 @@
 const express = require('express');
 const TelemetryController = require('../controllers/telemetryController');
-const { verifyAuth } = require('../middlewares/authMiddleware');
+const { verifyApiKey } = require('../middlewares/authMiddleware'); // Use API key for device-sent data
 
 const router = express.Router();
 
 // Telemetry data routes
-router.post('/', verifyAuth, TelemetryController.submitTelemetry);
-router.get('/device/:device_id', verifyAuth, TelemetryController.getTelemetryData);
-router.get('/device/:device_id/aggregated', verifyAuth, TelemetryController.getAggregatedData);
-router.get('/device/:device_id/latest', verifyAuth, TelemetryController.getLatestValues);
+router.post('/', verifyApiKey, TelemetryController.submitTelemetry); // Device submits telemetry
+router.get('/device/:device_id', TelemetryController.getTelemetryData); // User views telemetry
+router.get('/device/:device_id/aggregated', TelemetryController.getAggregatedData); // User views aggregated data
 
 module.exports = router;

@@ -9,17 +9,20 @@
     "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
+    "apache-iotdb": "^0.0.1-security",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "iotdb-client-nodejs": "^0.0.7",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.10.9",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "jest": "^30.0.4",

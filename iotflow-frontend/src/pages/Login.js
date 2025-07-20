@@ -41,6 +41,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    console.log('Attempting to log in with:', loginData); // Log input data
 
     if (!loginData.emailOrUsername.trim() || !loginData.password.trim()) {
       setError('Please enter both email/username and password');
@@ -48,11 +49,19 @@ const Login = () => {
       return;
     }
 
-    const result = await login(loginData.emailOrUsername, loginData.password);
-    if (!result.success) {
-      setError(result.error || 'Invalid credentials');
+    try {
+      const result = await login(loginData.emailOrUsername, loginData.password);
+      console.log('Login result:', result); // Log the full result from the login function
+
+      if (!result.success) {
+        setError(result.error || 'Invalid credentials');
+      }
+    } catch (err) {
+      console.error('An error occurred during login:', err); // Log any unexpected errors
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRegisterSubmit = async (e) => {

@@ -8,7 +8,7 @@ require('./models');
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
 // Initialize database
 const startServer = async () => {

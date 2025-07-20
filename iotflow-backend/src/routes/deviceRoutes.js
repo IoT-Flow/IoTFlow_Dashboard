@@ -1,21 +1,18 @@
 const express = require('express');
 const DeviceController = require('../controllers/deviceController');
-const { verifyApiKey } = require('../middlewares/authMiddleware');
+const { verifyToken } = require('../middlewares/authMiddleware'); // Changed to verifyToken for user-based auth
 
 const router = express.Router();
 
-// Device CRUD routes (API key authentication)
-router.post('/', verifyApiKey, DeviceController.createDevice);
-router.get('/', verifyApiKey, DeviceController.getAllDevices);
-router.get('/:id', verifyApiKey, DeviceController.getDevice);
-router.put('/:id', verifyApiKey, DeviceController.updateDevice);
-router.delete('/:id', verifyApiKey, DeviceController.deleteDevice);
-
-// Device status management
-router.patch('/:id/status', verifyApiKey, DeviceController.updateDeviceStatus);
+// Device CRUD routes - Protected by user authentication
+router.post('/', verifyToken, DeviceController.createDevice);
+router.get('/', verifyToken, DeviceController.getAllDevices);
+router.get('/:id', verifyToken, DeviceController.getDevice);
+router.put('/:id', verifyToken, DeviceController.updateDevice);
+router.delete('/:id', verifyToken, DeviceController.deleteDevice);
 
 // Device configuration management
-router.get('/:id/configurations', verifyApiKey, DeviceController.getDeviceConfigurations);
-router.put('/:id/configurations', verifyApiKey, DeviceController.updateDeviceConfiguration);
+router.get('/:id/configuration', verifyToken, DeviceController.getDeviceConfiguration);
+router.put('/:id/configuration', verifyToken, DeviceController.updateDeviceConfiguration);
 
 module.exports = router;

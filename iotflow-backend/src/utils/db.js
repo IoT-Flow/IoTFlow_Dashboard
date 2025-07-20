@@ -1,46 +1,36 @@
 const { Sequelize } = require('sequelize');
+const path = require('path');
 require('dotenv').config();
 
-// Use SQLite for development and testing, PostgreSQL for production
 let sequelize;
+
+// Define the path to the SQLite database
+const dbPath = process.env.DB_PATH || path.join('/home/omar-bouattour/Desktop', 'iotflow.db');
+
 if (process.env.NODE_ENV === 'test') {
   // Use in-memory SQLite for testing
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: ':memory:',
+  sequelize = new Sequelize('sqlite::memory:', {
     logging: false,
   });
-} else if (process.env.NODE_ENV === 'production' && process.env.DB_HOST) {
+} else if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
   // Use PostgreSQL for production
-  const { Pool } = require('pg');
-  const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-  });
-
-  const query = (text, params) => pool.query(text, params);
-  const getClient = async () => pool.connect();
-
-  sequelize = new Sequelize({
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+    protocol: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
     logging: false,
   });
-
-  module.exports = { sequelize, query, getClient };
 } else {
   // Use SQLite file for development
   sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: './database.sqlite',
-    logging: false,
+    storage: dbPath,
+    logging: console.log,
   });
 }
 

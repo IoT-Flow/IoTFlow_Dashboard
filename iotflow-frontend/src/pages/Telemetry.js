@@ -1,73 +1,67 @@
-import React, { useState, useEffect } from 'react';
 import {
+  Add,
+  BarChart,
+  Delete,
+  DeviceHub,
+  Download,
+  Edit,
+  MoreVert,
+  Opacity,
+  Refresh,
+  Speed,
+  Thermostat,
+  Timeline
+} from '@mui/icons-material';
+import {
+  Alert,
+  Avatar,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
-  Avatar,
-  IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   CircularProgress,
-  Alert,
-  Menu,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
   ListItemIcon,
   ListItemText,
-  Divider,
-  Fab,
+  Menu,
+  MenuItem,
+  Select,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography
 } from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import {
-  Download,
-  Refresh,
-  Settings,
-  ZoomIn,
-  ZoomOut,
-  Fullscreen,
-  Timeline,
-  BarChart,
-  DeviceHub,
-  Thermostat,
-  Opacity,
-  Speed,
-  Add,
-  MoreVert,
-  Edit,
-  Delete,
-  DragIndicator,
-} from '@mui/icons-material';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
+  ArcElement,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  TimeScale,
   Title,
   Tooltip,
-  Legend,
-  ArcElement,
-  TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { useWebSocket } from '../contexts/WebSocketContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import { Line } from 'react-chartjs-2';
+import toast from 'react-hot-toast';
 import ChartCustomizationDialog from '../components/ChartCustomizationDialog';
 import CustomChart from '../components/CustomChart';
-import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
+import { useWebSocket } from '../contexts/WebSocketContext';
+import api from '../services/api'; // Import your API service
 
 ChartJS.register(
   CategoryScale,
@@ -84,8 +78,8 @@ ChartJS.register(
 
 const Telemetry = () => {
   const { subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
-  const { user } = useAuth();
-  const [selectedDevice, setSelectedDevice] = useState('all');
+  const { user, token } = useAuth(); // Get token from auth context
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [timeRange, setTimeRange] = useState('1h');
   const [chartType, setChartType] = useState('line');
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -93,7 +87,7 @@ const Telemetry = () => {
   const [endDate, setEndDate] = useState(new Date());
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Custom chart management
   const [customCharts, setCustomCharts] = useState([]);
   const [chartCustomizationOpen, setChartCustomizationOpen] = useState(false);
@@ -101,17 +95,33 @@ const Telemetry = () => {
   const [chartMenuAnchor, setChartMenuAnchor] = useState(null);
   const [selectedChartForMenu, setSelectedChartForMenu] = useState(null);
 
-  // Mock devices for demo
-  const [devices] = useState([
-    { id: 'TEMP_001', name: 'Temperature Sensor 001', type: 'Temperature', unit: '°C' },
-    { id: 'HUMID_002', name: 'Humidity Sensor 002', type: 'Humidity', unit: '%' },
-    { id: 'PRESS_003', name: 'Pressure Monitor 003', type: 'Pressure', unit: 'hPa' },
-    { id: 'VIBR_004', name: 'Vibration Sensor 004', type: 'Vibration', unit: 'mm/s' },
-    { id: 'GPS_005', name: 'GPS Tracker 005', type: 'Location', unit: 'coords' },
-  ]);
-
-  // Mock telemetry data
+  // Devices from the backend
+  const [devices, setDevices] = useState([]);
   const [telemetryHistory, setTelemetryHistory] = useState({});
+
+  // Fetch devices from the backend
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (user) {
+        try {
+          setLoading(true);
+          const response = await api.get('/devices', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setDevices(response.data);
+          if (response.data.length > 0) {
+            setSelectedDevice(response.data[0].id); // Select the first device by default
+          }
+        } catch (error) {
+          toast.error('Failed to fetch devices.');
+          console.error('Error fetching devices:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchDevices();
+  }, [user, token]);
 
   // Load custom charts from localStorage
   useEffect(() => {
@@ -152,10 +162,10 @@ const Telemetry = () => {
 
   const handleSaveChart = (chartConfig) => {
     let updatedCharts;
-    
+
     if (editingChart) {
       // Update existing chart
-      updatedCharts = customCharts.map(chart => 
+      updatedCharts = customCharts.map(chart =>
         chart.id === editingChart.id ? { ...chartConfig, id: editingChart.id } : chart
       );
       toast.success('Chart updated successfully');
@@ -169,7 +179,7 @@ const Telemetry = () => {
       updatedCharts = [...customCharts, newChart];
       toast.success('Chart created successfully');
     }
-    
+
     setCustomCharts(updatedCharts);
     saveChartsToStorage(updatedCharts);
     setChartCustomizationOpen(false);
@@ -187,72 +197,86 @@ const Telemetry = () => {
     setSelectedChartForMenu(null);
   };
 
+  // Fetch telemetry data when selected device or time range changes
   useEffect(() => {
-    // Generate mock historical data
-    const generateMockData = () => {
-      const now = new Date();
-      const data = {};
-      
-      devices.forEach(device => {
-        data[device.id] = [];
-        for (let i = 100; i >= 0; i--) {
-          const timestamp = new Date(now.getTime() - i * 60000); // Every minute
-          let value;
-          
-          switch (device.type) {
-            case 'Temperature':
-              value = 20 + Math.sin(i * 0.1) * 5 + Math.random() * 2;
-              break;
-            case 'Humidity':
-              value = 50 + Math.sin(i * 0.05) * 20 + Math.random() * 5;
-              break;
-            case 'Pressure':
-              value = 1013 + Math.sin(i * 0.03) * 10 + Math.random() * 3;
-              break;
-            case 'Vibration':
-              value = Math.random() * 10;
-              break;
-            default:
-              value = Math.random() * 100;
-          }
-          
-          data[device.id].push({
-            timestamp,
-            value: parseFloat(value.toFixed(2)),
-            device_id: device.id,
+    const fetchTelemetry = async () => {
+      if (!selectedDevice) return;
+
+      setLoading(true);
+      try {
+        // For custom charts, we need to get all available measurements
+        const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice}/measurements`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const measurements = measurementsResponse.data;
+
+        const now = new Date();
+        const { startTime } = getTimeRangeDates(timeRange);
+
+        const newTelemetryHistory = {};
+
+        for (const measurement of measurements) {
+          const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              measurement,
+              start_date: startTime.toISOString(),
+              end_date: now.toISOString(),
+              limit: 1000,
+            }
           });
+
+          // The data from IoTDB needs to be parsed and formatted for the chart
+          const formattedData = telemetryResponse.data.map(d => ({
+            timestamp: new Date(parseInt(d.Time)),
+            value: parseFloat(d[Object.keys(d).find(k => k.endsWith(measurement))]),
+            device_id: selectedDevice,
+            measurement: measurement,
+          }));
+
+          if (!newTelemetryHistory[selectedDevice]) {
+            newTelemetryHistory[selectedDevice] = {};
+          }
+          newTelemetryHistory[selectedDevice][measurement] = formattedData;
         }
-      });
-      
-      setTelemetryHistory(data);
+
+        setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
+
+      } catch (error) {
+        toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
+        console.error('Error fetching telemetry:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    generateMockData();
-    
-    // Auto-refresh data
+    fetchTelemetry();
+
+    // Auto-refresh logic
     if (autoRefresh) {
-      const interval = setInterval(generateMockData, 5000);
+      const interval = setInterval(fetchTelemetry, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, devices]);
+  }, [selectedDevice, timeRange, autoRefresh, token]);
 
-  const handleDeviceChange = (deviceId) => {
-    if (selectedDevice !== 'all') {
+
+  const handleDeviceChange = (event) => {
+    const deviceId = event.target.value;
+    if (selectedDevice) {
       unsubscribeFromDevice(selectedDevice);
     }
-    
+
     setSelectedDevice(deviceId);
-    
-    if (deviceId !== 'all') {
+
+    if (deviceId) {
       subscribeToDevice(deviceId);
     }
   };
 
-  const handleTimeRangeChange = (range) => {
-    setTimeRange(range);
+  const getTimeRangeDates = (range) => {
     const now = new Date();
     let startTime;
-    
+
     switch (range) {
       case '15m':
         startTime = new Date(now.getTime() - 15 * 60000);
@@ -272,59 +296,66 @@ const Telemetry = () => {
       default:
         startTime = new Date(now.getTime() - 3600000);
     }
-    
-    setStartDate(startTime);
-    setEndDate(now);
+    return { startTime, endTime: now };
+  }
+
+  const handleTimeRangeChange = (event, newRange) => {
+    if (newRange !== null) {
+      setTimeRange(newRange);
+    }
   };
 
   const getChartData = () => {
-    const devicesToShow = selectedDevice === 'all' 
-      ? devices.slice(0, 3) // Show first 3 devices for overview
-      : devices.filter(d => d.id === selectedDevice);
+    if (!selectedDevice || !telemetryHistory[selectedDevice]) {
+      return { datasets: [] };
+    }
 
-    const datasets = devicesToShow.map((device, index) => {
-      const data = telemetryHistory[device.id] || [];
-      const filteredData = data.filter(item => 
-        item.timestamp >= startDate && item.timestamp <= endDate
-      );
+    const datasets = [];
+    const deviceMeasurements = telemetryHistory[selectedDevice];
+    const colors = ['#1976d2', '#dc004e', '#ed6c02', '#2e7d32', '#9c27b0'];
+    let colorIndex = 0;
 
-      const colors = ['#1976d2', '#dc004e', '#ed6c02', '#2e7d32', '#9c27b0'];
-      
-      return {
-        label: device.name,
-        data: filteredData.map(item => ({
-          x: item.timestamp,
-          y: item.value,
-        })),
-        borderColor: colors[index % colors.length],
-        backgroundColor: `${colors[index % colors.length]}20`,
-        tension: 0.4,
-        fill: chartType === 'area',
-      };
-    });
+    for (const measurement in deviceMeasurements) {
+      if (deviceMeasurements.hasOwnProperty(measurement)) {
+        const data = deviceMeasurements[measurement] || [];
+
+        datasets.push({
+          label: `${devices.find(d => d.id === selectedDevice)?.name} - ${measurement}`,
+          data: data.map(item => ({
+            x: item.timestamp,
+            y: item.value,
+          })),
+          borderColor: colors[colorIndex % colors.length],
+          backgroundColor: `${colors[colorIndex % colors.length]}20`,
+          tension: 0.4,
+          fill: chartType === 'area',
+        });
+        colorIndex++;
+      }
+    }
 
     return { datasets };
   };
 
   const getRealtimeStats = () => {
-    if (selectedDevice === 'all') {
-      return devices.map(device => {
-        const latestData = telemetryHistory[device.id]?.slice(-1)[0];
-        return {
-          device,
+    if (!selectedDevice || !telemetryHistory[selectedDevice]) {
+      return [];
+    }
+
+    const stats = [];
+    const deviceMeasurements = telemetryHistory[selectedDevice];
+
+    for (const measurement in deviceMeasurements) {
+      if (deviceMeasurements.hasOwnProperty(measurement)) {
+        const latestData = deviceMeasurements[measurement]?.slice(-1)[0];
+        stats.push({
+          device: { ...devices.find(d => d.id === selectedDevice), name: `${devices.find(d => d.id === selectedDevice)?.name} - ${measurement}` },
           value: latestData?.value || 0,
           timestamp: latestData?.timestamp || new Date(),
-        };
-      });
-    } else {
-      const device = devices.find(d => d.id === selectedDevice);
-      const latestData = telemetryHistory[selectedDevice]?.slice(-1)[0];
-      return [{
-        device,
-        value: latestData?.value || 0,
-        timestamp: latestData?.timestamp || new Date(),
-      }];
+        });
+      }
     }
+    return stats;
   };
 
   const handleExport = async (format) => {
@@ -332,20 +363,18 @@ const Telemetry = () => {
     try {
       // Simulate export process
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const data = selectedDevice === 'all' 
-        ? telemetryHistory 
-        : { [selectedDevice]: telemetryHistory[selectedDevice] };
-      
+
+      const dataToExport = telemetryHistory[selectedDevice] || {};
+
       if (format === 'csv') {
         // Generate CSV
-        let csv = 'Device ID,Timestamp,Value\n';
-        Object.entries(data).forEach(([deviceId, records]) => {
+        let csv = 'Device ID,Measurement,Timestamp,Value\n';
+        Object.entries(dataToExport).forEach(([measurement, records]) => {
           records.forEach(record => {
-            csv += `${deviceId},${record.timestamp.toISOString()},${record.value}\n`;
+            csv += `${selectedDevice},${measurement},${record.timestamp.toISOString()},${record.value}\n`;
           });
         });
-        
+
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -354,7 +383,7 @@ const Telemetry = () => {
         a.click();
       } else if (format === 'json') {
         // Generate JSON
-        const json = JSON.stringify(data, null, 2);
+        const json = JSON.stringify(dataToExport, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -362,7 +391,7 @@ const Telemetry = () => {
         a.download = `telemetry_${selectedDevice}_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
       }
-      
+
       toast.success(`Data exported as ${format.toUpperCase()}`);
       setExportDialogOpen(false);
     } catch (error) {
@@ -405,7 +434,7 @@ const Telemetry = () => {
               {getDeviceIcon(device.type)}
             </Avatar>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h4" component="div" 
+              <Typography variant="h4" component="div"
                 sx={{ fontWeight: 600, color: `${getValueColor(device.type, value)}.main` }}>
                 {value}{device.unit}
               </Typography>
@@ -488,6 +517,22 @@ const Telemetry = () => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel id="device-select-label">Device</InputLabel>
+              <Select
+                labelId="device-select-label"
+                id="device-select"
+                value={selectedDevice || ''}
+                label="Device"
+                onChange={handleDeviceChange}
+              >
+                {devices.map((device) => (
+                  <MenuItem key={device.id} value={device.id}>
+                    {device.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Button
               variant="outlined"
               startIcon={<Download />}
@@ -498,7 +543,58 @@ const Telemetry = () => {
             <Button
               variant="outlined"
               startIcon={<Refresh />}
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                // Manually trigger a refresh
+                const fetchTelemetry = async () => {
+                  if (!selectedDevice) return;
+
+                  setLoading(true);
+                  try {
+                    const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice}/measurements`, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const measurements = measurementsResponse.data;
+
+                    const now = new Date();
+                    const { startTime } = getTimeRangeDates(timeRange);
+
+                    const newTelemetryHistory = {};
+
+                    for (const measurement of measurements) {
+                      const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                        params: {
+                          measurement,
+                          start_date: startTime.toISOString(),
+                          end_date: now.toISOString(),
+                          limit: 1000,
+                        }
+                      });
+
+                      const formattedData = telemetryResponse.data.map(d => ({
+                        timestamp: new Date(parseInt(d.Time)),
+                        value: parseFloat(d[Object.keys(d).find(k => k.endsWith(measurement))]),
+                        device_id: selectedDevice,
+                        measurement: measurement,
+                      }));
+
+                      if (!newTelemetryHistory[selectedDevice]) {
+                        newTelemetryHistory[selectedDevice] = {};
+                      }
+                      newTelemetryHistory[selectedDevice][measurement] = formattedData;
+                    }
+
+                    setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
+
+                  } catch (error) {
+                    toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
+                    console.error('Error fetching telemetry:', error);
+                  } finally {
+                    setLoading(false);
+                  }
+                };
+                fetchTelemetry();
+              }}
             >
               Refresh
             </Button>
@@ -506,313 +602,115 @@ const Telemetry = () => {
         </Box>
 
         {/* Controls */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Device</InputLabel>
-                  <Select
-                    value={selectedDevice}
-                    label="Device"
-                    onChange={(e) => handleDeviceChange(e.target.value)}
-                  >
-                    <MenuItem value="all">All Devices</MenuItem>
-                    {devices.map(device => (
-                      <MenuItem key={device.id} value={device.id}>
-                        {device.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <ToggleButtonGroup
-                  value={timeRange}
-                  exclusive
-                  onChange={(e, value) => value && handleTimeRangeChange(value)}
-                  size="small"
-                >
-                  <ToggleButton value="15m">15m</ToggleButton>
-                  <ToggleButton value="1h">1h</ToggleButton>
-                  <ToggleButton value="6h">6h</ToggleButton>
-                  <ToggleButton value="24h">24h</ToggleButton>
-                  <ToggleButton value="7d">7d</ToggleButton>
-                </ToggleButtonGroup>
-              </Grid>
-              
-              <Grid item xs={12} md={3}>
-                <ToggleButtonGroup
-                  value={chartType}
-                  exclusive
-                  onChange={(e, value) => value && setChartType(value)}
-                  size="small"
-                >
-                  <ToggleButton value="line">
-                    <Timeline />
-                  </ToggleButton>
-                  <ToggleButton value="area">
-                    <BarChart />
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Grid>
-              
-              <Grid item xs={12} md={2}>
-                <Chip
-                  label={autoRefresh ? "Auto-Refresh ON" : "Auto-Refresh OFF"}
-                  color={autoRefresh ? "success" : "default"}
-                  onClick={() => setAutoRefresh(!autoRefresh)}
-                  clickable
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Real-time Metrics */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {getRealtimeStats().map((stat, index) => (
-            <Grid item xs={12} sm={6} md={selectedDevice === 'all' ? 4 : 6} key={stat.device.id}>
-              <MetricCard {...stat} />
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Main Chart */}
         <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
-                Telemetry Data Visualization
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <IconButton size="small">
-                  <ZoomIn />
-                </IconButton>
-                <IconButton size="small">
-                  <ZoomOut />
-                </IconButton>
-                <IconButton size="small">
-                  <Fullscreen />
-                </IconButton>
-                <IconButton size="small">
-                  <Settings />
-                </IconButton>
-              </Box>
-            </Box>
-            <Box sx={{ height: 400 }}>
-              <Line data={getChartData()} options={chartOptions} />
+          <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <ToggleButtonGroup
+              value={timeRange}
+              exclusive
+              onChange={handleTimeRangeChange}
+              aria-label="time range"
+            >
+              <ToggleButton value="15m" aria-label="15 minutes">15m</ToggleButton>
+              <ToggleButton value="1h" aria-label="1 hour">1h</ToggleButton>
+              <ToggleButton value="6h" aria-label="6 hours">6h</ToggleButton>
+              <ToggleButton value="24h" aria-label="24 hours">24h</ToggleButton>
+              <ToggleButton value="7d" aria-label="7 days">7d</ToggleButton>
+            </ToggleButtonGroup>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <ToggleButtonGroup
+                value={chartType}
+                exclusive
+                onChange={(e, newType) => newType && setChartType(newType)}
+                aria-label="chart type"
+              >
+                <ToggleButton value="line" aria-label="line chart">
+                  <Timeline />
+                </ToggleButton>
+                <ToggleButton value="bar" aria-label="bar chart">
+                  <BarChart />
+                </ToggleButton>
+                <ToggleButton value="area" aria-label="area chart">
+                  <i className="fas fa-chart-area" style={{ fontSize: '1.25rem' }}></i>
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <ToggleButton
+                value="check"
+                selected={autoRefresh}
+                onChange={() => setAutoRefresh(!autoRefresh)}
+              >
+                Auto-Refresh
+              </ToggleButton>
             </Box>
           </CardContent>
         </Card>
 
-        {/* Custom Charts Section */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Box>
-              <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-                Custom Charts
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Create personalized charts with multiple devices and data types
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={handleAddChart}
-            >
-              Add Chart
-            </Button>
-          </Box>
+        {loading && <CircularProgress sx={{ display: 'block', margin: 'auto', my: 4 }} />}
 
-          {customCharts.length === 0 ? (
+        {!loading && selectedDevice && (
+          <>
+            {/* Real-time Stats */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              {getRealtimeStats().map((stat, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <MetricCard {...stat} />
+                </Grid>
+              ))}
+            </Grid>
+
+            {/* Main Chart */}
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <BarChart sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Custom Charts Yet
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Create your first custom chart to visualize telemetry data from multiple devices
+              <CardContent>
+                <Box sx={{ height: 400 }}>
+                  <Line data={getChartData()} options={chartOptions} />
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Custom Charts */}
+            <Box sx={{ mt: 4 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" component="h2">
+                  Custom Dashboards
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={handleAddChart}
                 >
-                  Create First Chart
+                  Add Chart
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Grid container spacing={3}>
-              {customCharts.map((chart, index) => (
-                <Grid item xs={12} lg={6} key={chart.id}>
-                  <Card sx={{ position: 'relative' }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <DragIndicator sx={{ color: 'text.disabled', cursor: 'grab' }} />
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            {chart.title}
-                          </Typography>
-                        </Box>
-                        <IconButton 
-                          size="small"
+              </Box>
+
+              {customCharts.length > 0 ? (
+                <Grid container spacing={3}>
+                  {customCharts.map(chart => (
+                    <Grid item xs={12} md={6} lg={4} key={chart.id}>
+                      <Card sx={{ position: 'relative' }}>
+                        <IconButton
+                          sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
                           onClick={(e) => handleChartMenuOpen(e, chart)}
                         >
                           <MoreVert />
                         </IconButton>
-                      </Box>
-                      
-                      {chart.description && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          {chart.description}
-                        </Typography>
-                      )}
-
-                      <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                        {chart.devices.map(deviceId => {
-                          const device = devices.find(d => d.id === deviceId);
-                          return device ? (
-                            <Chip
-                              key={deviceId}
-                              label={device.name}
-                              size="small"
-                              variant="outlined"
-                              avatar={<Avatar sx={{ bgcolor: 'primary.main' }}>{device.type[0]}</Avatar>}
-                            />
-                          ) : null;
-                        })}
-                      </Box>
-
-                      <Box sx={{ height: 300 }}>
                         <CustomChart
                           chartConfig={chart}
-                          telemetryData={telemetryHistory}
-                          devices={devices}
+                          telemetryData={telemetryHistory[selectedDevice]?.[chart.measurement] || []}
                         />
-                      </Box>
-                    </CardContent>
-                  </Card>
+                      </Card>
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
-
-        {/* Additional Analytics */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-                  Data Summary
-                </Typography>
-                {getRealtimeStats().map(stat => (
-                  <Box key={stat.device.id} sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2">{stat.device.name}</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {stat.value}{stat.device.unit}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <Chip label="Min: 15.2" size="small" variant="outlined" />
-                      <Chip label="Max: 28.7" size="small" variant="outlined" />
-                      <Chip label="Avg: 22.1" size="small" variant="outlined" />
-                    </Box>
-                  </Box>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-                  Data Quality & Alerts
-                </Typography>
-                <Alert severity="success" sx={{ mb: 2 }}>
-                  All devices reporting normally - 99.8% uptime
-                </Alert>
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  Temperature sensor TEMP_001 approaching threshold
-                </Alert>
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Data Points Collected Today
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    45,620
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Export Dialog */}
-        <Dialog
-          open={exportDialogOpen}
-          onClose={() => setExportDialogOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Export Telemetry Data</DialogTitle>
-          <DialogContent>
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" gutterBottom>
-                Export data for device: <strong>{selectedDevice === 'all' ? 'All Devices' : selectedDevice}</strong>
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Time range: {startDate.toLocaleString()} - {endDate.toLocaleString()}
-              </Typography>
-              
-              <Grid container spacing={2} sx={{ mt: 3 }}>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={() => handleExport('csv')}
-                    disabled={loading}
-                  >
-                    {loading ? <CircularProgress size={20} /> : 'Export as CSV'}
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={() => handleExport('json')}
-                    disabled={loading}
-                  >
-                    {loading ? <CircularProgress size={20} /> : 'Export as JSON'}
-                  </Button>
-                </Grid>
-              </Grid>
+              ) : (
+                <Alert severity="info">No custom charts created yet. Click "Add Chart" to get started.</Alert>
+              )}
             </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
-          </DialogActions>
-        </Dialog>
+          </>
+        )}
 
-        {/* Chart Customization Dialog */}
-        <ChartCustomizationDialog
-          open={chartCustomizationOpen}
-          onClose={() => {
-            setChartCustomizationOpen(false);
-            setEditingChart(null);
-          }}
-          onSave={handleSaveChart}
-          devices={devices}
-          initialConfig={editingChart}
-          telemetryData={telemetryHistory}
-        />
+        {!loading && !selectedDevice && (
+          <Alert severity="info">Please select a device to view telemetry.</Alert>
+        )}
 
         {/* Chart Menu */}
         <Menu
@@ -821,37 +719,41 @@ const Telemetry = () => {
           onClose={handleChartMenuClose}
         >
           <MenuItem onClick={() => handleEditChart(selectedChartForMenu)}>
-            <ListItemIcon>
-              <Edit fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Edit Chart</ListItemText>
+            <ListItemIcon><Edit fontSize="small" /></ListItemIcon>
+            <ListItemText>Edit</ListItemText>
           </MenuItem>
-          <Divider />
-          <MenuItem 
-            onClick={() => handleDeleteChart(selectedChartForMenu?.id)}
-            sx={{ color: 'error.main' }}
-          >
-            <ListItemIcon>
-              <Delete fontSize="small" color="error" />
-            </ListItemIcon>
-            <ListItemText>Delete Chart</ListItemText>
+          <MenuItem onClick={() => handleDeleteChart(selectedChartForMenu.id)}>
+            <ListItemIcon><Delete fontSize="small" /></ListItemIcon>
+            <ListItemText>Delete</ListItemText>
           </MenuItem>
         </Menu>
 
-        {/* Floating Action Button for Quick Chart Creation */}
-        <Fab
-          color="primary"
-          aria-label="add chart"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 1000,
-          }}
-          onClick={handleAddChart}
-        >
-          <Add />
-        </Fab>
+        {/* Export Dialog */}
+        <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
+          <DialogTitle>Export Telemetry Data</DialogTitle>
+          <DialogContent>
+            <Typography>Select the format for your data export.</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => handleExport('csv')} disabled={loading}>
+              {loading ? <CircularProgress size={24} /> : 'Export as CSV'}
+            </Button>
+            <Button onClick={() => handleExport('json')} disabled={loading}>
+              {loading ? <CircularProgress size={24} /> : 'Export as JSON'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Chart Customization Dialog */}
+        <ChartCustomizationDialog
+          open={chartCustomizationOpen}
+          onClose={() => setChartCustomizationOpen(false)}
+          onSave={handleSaveChart}
+          devices={devices}
+          measurements={selectedDevice && telemetryHistory[selectedDevice] ? Object.keys(telemetryHistory[selectedDevice]) : []}
+          existingChart={editingChart}
+        />
       </Box>
     </LocalizationProvider>
   );

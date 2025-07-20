@@ -34,17 +34,18 @@ class ApiService {
     this.api.interceptors.request.use(
       (config) => {
         const user = this.getCurrentUserFromStorage();
+        const token = localStorage.getItem('iotflow_token');
 
         // For auth endpoints, don't add headers
         if (config.url.includes('/auth/') || config.url.includes('/login') || config.url.includes('/register')) {
           return config;
         }
 
-        // Use API key for authenticated requests
-        if (user && user.api_key) {
-          config.headers['x-api-key'] = user.api_key;
+        // Use JWT token for authenticated requests
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
         } else {
-          console.warn('No API key found for authenticated request');
+          console.warn('No auth token found for authenticated request');
         }
 
         // Add user context for multi-tenant data isolation
@@ -120,7 +121,6 @@ class ApiService {
           firstName: 'Admin',
           lastName: 'User',
           role: 'admin',
-          api_key: 'admin_api_key_demo_secure_token_123',
           tenant_id: 1,
           permissions: ['admin', 'user_management', 'system_access'],
           createdAt: new Date().toISOString(),
@@ -137,7 +137,6 @@ class ApiService {
           firstName: 'John',
           lastName: 'Smith',
           role: 'user',
-          api_key: 'john_api_key_demo_secure_token_456',
           tenant_id: 2,
           permissions: ['device_access', 'telemetry_read'],
           createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
@@ -154,7 +153,6 @@ class ApiService {
           firstName: 'Alice',
           lastName: 'Johnson',
           role: 'user',
-          api_key: 'alice_api_key_demo_secure_token_789',
           tenant_id: 3,
           permissions: ['device_access', 'telemetry_read', 'analytics_read'],
           createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
@@ -256,11 +254,6 @@ class ApiService {
         throw new Error('Invalid server response format');
       }
 
-      // Make sure the user has an API key
-      if (!userData.api_key) {
-        throw new Error('User does not have an API key');
-      }
-
       localStorage.setItem('iotflow_user', JSON.stringify(userData));
       localStorage.setItem('iotflow_token', token);
       this.setAuthToken(token);
@@ -271,7 +264,6 @@ class ApiService {
       console.log('Backend login successful:', {
         userId: userData.id,
         username: userData.username,
-        hasApiKey: !!userData.api_key
       });
 
       return {
@@ -326,15 +318,9 @@ class ApiService {
       // Backend returns user data directly
       const user = response.data;
 
-      // Generate API key if not provided by backend
-      if (!user.api_key) {
-        user.api_key = `user_${user.id}_api_key_${Math.random().toString(36).substr(2, 20)}`;
-      }
-
       console.log('Backend registration successful:', {
         userId: user.id,
         username: user.username,
-        hasApiKey: !!user.api_key
       });
 
       return {
@@ -350,7 +336,6 @@ class ApiService {
 
       // Enhanced demo registration with backend structure
       const newUserId = Date.now();
-      const userApiKey = `user_${newUserId}_api_key_demo_${Math.random().toString(36).substr(2, 16)}`;
 
       const newUser = {
         id: newUserId,
@@ -359,7 +344,6 @@ class ApiService {
         firstName: userData.firstName,
         lastName: userData.lastName,
         role: 'user',
-        api_key: userApiKey,
         tenant_id: newUserId, // Each new user gets their own tenant
         permissions: ['device_access', 'telemetry_read'],
         createdAt: new Date().toISOString(),
@@ -442,24 +426,6 @@ class ApiService {
     }
   }
 
-  async refreshApiKey() {
-    try {
-      const response = await this.api.post('/auth/refresh-api-key');
-
-      // Update local storage with new API key
-      const currentUser = this.getCurrentUserFromStorage();
-      if (currentUser) {
-        currentUser.api_key = response.data.api_key;
-        localStorage.setItem('iotflow_user', JSON.stringify(currentUser));
-      }
-
-      return response.data;
-    } catch (error) {
-      console.log('Backend API key refresh failed:', error.message);
-      throw error;
-    }
-  }
-
   // ==================== MULTI-TENANT DEVICE MANAGEMENT ====================
 
   async getDevices(params = {}) {
@@ -481,11 +447,11 @@ class ApiService {
           location: device.location,
           status: device.status,
           description: device.description,
+          apiKey: device.api_key, // Re-add api_key
           lastSeen: device.last_seen || device.lastSeen || device.updated_at,
           createdAt: device.created_at || device.createdAt,
           updatedAt: device.updated_at || device.updatedAt,
           owner: device.user_id || device.owner,
-          api_key: device.api_key,
           firmware_version: device.firmware_version,
           hardware_version: device.hardware_version
         }));
@@ -523,10 +489,10 @@ class ApiService {
               device_type: 'temperature_sensor',
               location: 'Data Center - Server Room A',
               status: 'active',
+              api_key: 'demo_admin_key_temp_001', // Re-add api_key
               lastSeen: new Date(Date.now() - 300000).toISOString(),
               owner: 1,
               tenant_id: 1,
-              api_key: 'device_admin_temp_001_secure_api_key_demo',
               createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
               description: 'Critical infrastructure temperature monitoring'
             },
@@ -538,10 +504,10 @@ class ApiService {
               device_type: 'pressure_sensor',
               location: 'Building A - HVAC Control Room',
               status: 'active',
+              api_key: 'demo_admin_key_press_002', // Re-add api_key
               lastSeen: new Date(Date.now() - 120000).toISOString(),
               owner: 1,
               tenant_id: 1,
-              api_key: 'device_admin_press_002_secure_api_key_demo',
               createdAt: new Date(Date.now() - 86400000 * 45).toISOString(),
               description: 'Building HVAC system pressure monitoring and control'
             }
@@ -555,10 +521,10 @@ class ApiService {
               device_type: 'temperature_humidity_sensor',
               location: 'Home - Living Room',
               status: 'active',
+              api_key: 'demo_john_key_temp_001', // Re-add api_key
               lastSeen: new Date(Date.now() - 600000).toISOString(),
               owner: 2,
               tenant_id: 2,
-              api_key: 'device_john_temp_001_secure_api_key_demo',
               createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
               description: 'Smart home climate monitoring and comfort optimization'
             },
@@ -570,10 +536,10 @@ class ApiService {
               device_type: 'smart_lighting',
               location: 'Home - Living Room',
               status: 'active',
+              api_key: 'demo_john_key_led_002', // Re-add api_key
               lastSeen: new Date(Date.now() - 180000).toISOString(),
               owner: 2,
               tenant_id: 2,
-              api_key: 'device_john_led_002_secure_api_key_demo',
               createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
               description: 'RGB LED strip with voice control and automation'
             }
@@ -587,10 +553,10 @@ class ApiService {
               device_type: 'environmental_sensor',
               location: 'Garden - Smart Greenhouse',
               status: 'active',
+              api_key: 'demo_alice_key_temp_001', // Re-add api_key
               lastSeen: new Date(Date.now() - 240000).toISOString(),
               owner: 3,
               tenant_id: 3,
-              api_key: 'device_alice_temp_001_secure_api_key_demo',
               createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
               description: 'Precision greenhouse climate control and monitoring'
             },
@@ -602,10 +568,10 @@ class ApiService {
               device_type: 'irrigation_pump',
               location: 'Garden - Irrigation Hub',
               status: 'active',
+              api_key: 'demo_alice_key_pump_002', // Re-add api_key
               lastSeen: new Date(Date.now() - 300000).toISOString(),
               owner: 3,
               tenant_id: 3,
-              api_key: 'device_alice_pump_002_secure_api_key_demo',
               createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
               description: 'Solar-powered smart irrigation with soil moisture integration'
             }
@@ -643,11 +609,11 @@ class ApiService {
         location: device.location,
         status: device.status,
         description: device.description,
+        apiKey: device.api_key, // Re-add api_key
         lastSeen: device.last_seen || device.lastSeen || device.updated_at,
         createdAt: device.created_at || device.createdAt,
         updatedAt: device.updated_at || device.updatedAt,
         owner: device.user_id || device.owner,
-        api_key: device.api_key,
         firmware_version: device.firmware_version,
         hardware_version: device.hardware_version
       };
@@ -683,11 +649,11 @@ class ApiService {
         location: device.location,
         status: device.status,
         description: device.description,
+        apiKey: device.api_key, // Re-add api_key
         lastSeen: device.last_seen || device.updated_at,
         createdAt: device.created_at,
         updatedAt: device.updated_at,
         owner: device.user_id,
-        api_key: device.api_key,
         firmware_version: device.firmware_version,
         hardware_version: device.hardware_version
       };
@@ -711,7 +677,6 @@ class ApiService {
         }
 
         const deviceId = Math.floor(Math.random() * 1000) + 100;
-        const deviceApiKey = `device_${currentUser.id}_${deviceData.name.toLowerCase().replace(/\s+/g, '_')}_${Math.random().toString(36).substr(2, 20)}`;
 
         const newDevice = {
           id: deviceId,
@@ -722,7 +687,7 @@ class ApiService {
           description: deviceData.description || '',
           status: 'offline', // Device starts offline until first connection
           owner: currentUser.id,
-          api_key: deviceApiKey,
+          apiKey: `demo_key_${Date.now()}`, // Re-add api_key
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastSeen: null,
@@ -765,11 +730,11 @@ class ApiService {
         location: device.location,
         status: device.status,
         description: device.description,
+        apiKey: device.api_key, // Re-add api_key
         lastSeen: device.last_seen || device.lastSeen || device.updated_at,
         createdAt: device.created_at || device.createdAt,
         updatedAt: device.updated_at || device.updatedAt,
         owner: device.user_id || device.owner,
-        api_key: device.api_key,
         firmware_version: device.firmware_version,
         hardware_version: device.hardware_version
       };
@@ -800,7 +765,7 @@ class ApiService {
   }
 
   async regenerateApiKey(deviceId) {
-    const response = await this.api.post(`/devices/${deviceId}/regenerate-key`);
+    const response = await this.api.post(`/devices/${deviceId}/regenerate-api-key`);
     return response.data;
   }
 
@@ -1202,11 +1167,11 @@ class ApiService {
    * Submit telemetry data for a device (used by devices, not dashboard)
    * Endpoint: POST /api/v1/telemetry/{device_id}
    */
-  async submitTelemetryData(deviceId, telemetryData, deviceApiKey) {
+  async submitTelemetryData(deviceId, telemetryData, apiKey) {
     try {
       const response = await this.api.post(`/telemetry/${deviceId}`, telemetryData, {
         headers: {
-          'Authorization': `Bearer ${deviceApiKey}`,
+          'X-API-Key': apiKey, // Use X-API-Key for device authentication
           'Content-Type': 'application/json'
         }
       });

@@ -11,12 +11,14 @@ User.init({
     primaryKey: true,
     autoIncrement: true,
   },
+
   user_id: {
     type: DataTypes.STRING(32),
     allowNull: false,
     unique: true,
     defaultValue: () => uuidv4().replace(/-/g, ''),
   },
+  
   username: {
     type: DataTypes.STRING(80),
     allowNull: false,
@@ -31,12 +33,14 @@ User.init({
     type: DataTypes.STRING(128),
     allowNull: false,
   },
+  /*
   api_key: {
     type: DataTypes.STRING(64),
     allowNull: false,
     unique: true,
     defaultValue: () => crypto.randomBytes(32).toString('hex'),
   },
+  */
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -45,6 +49,7 @@ User.init({
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  /*
   role: {
     type: DataTypes.STRING(50),
     allowNull: true,
@@ -55,6 +60,7 @@ User.init({
     allowNull: true,
     defaultValue: 'default',
   },
+  */
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

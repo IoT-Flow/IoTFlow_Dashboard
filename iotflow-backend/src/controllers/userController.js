@@ -9,20 +9,13 @@ class UserController {
     try {
       const { username, email, password } = req.body;
 
-      console.log('Registration attempt:', { username, email });
-
       // Check if user already exists
       const existingUser = await User.findOne({
-        where: {
-          [Op.or]: [{ email }, { username }]
-        }
+        where: { [Op.or]: [{ email }, { username }] },
       });
 
-      console.log('Existing user check result:', existingUser);
-
       if (existingUser) {
-        console.log('User already exists:', existingUser.email);
-        return res.status(400).json({ message: 'User already exists' });
+        return res.status(409).json({ message: 'User already exists' });
       }
 
       // Hash password
@@ -32,15 +25,8 @@ class UserController {
         username,
         email,
         password_hash,
-        is_active: true,
-        is_admin: false,
-        role: 'user',
-        tenant_id: 'default',
-        created_at: new Date(),
-        updated_at: new Date(),
       });
-
-      // Remove password from response
+      
       const { password_hash: _, ...userResponse } = newUser.toJSON();
 
       res.status(201).json(userResponse);
@@ -53,28 +39,19 @@ class UserController {
     try {
       const { email, username, password } = req.body;
 
-      // Allow login with either email or username
       const loginIdentifier = email || username;
-      if (!loginIdentifier) {
-        return res.status(400).json({ message: 'Email or username is required' });
+      if (!loginIdentifier || !password) {
+        return res.status(400).json({ message: 'Email/username and password are required' });
       }
 
       // Find user by email or username
       const user = await User.findOne({
         where: {
-          [Op.or]: [
-            { email: loginIdentifier },
-            { username: loginIdentifier }
-          ]
-        }
+          [Op.or]: [{ email: loginIdentifier }, { username: loginIdentifier }],
+        },
       });
 
-      if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.password_hash);
-      if (!isValidPassword) {
+      if (!user || !(await bcrypt.compare(password, user.password_hash))) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
@@ -93,7 +70,6 @@ class UserController {
       res.status(200).json({
         user: userResponse,
         token,
-        message: 'Login successful'
       });
     } catch (error) {
       res.status(500).json({ message: 'Login failed', error: error.message });
@@ -127,23 +103,29 @@ class UserController {
 
   async updateProfile(req, res) {
     try {
-      const userId = req.user.id;
+      const { id } = req.user;
       const { username, email, password } = req.body;
 
-      const updates = { updated_at: new Date() };
+      const updates = {};
       if (username) updates.username = username;
       if (email) updates.email = email;
       if (password) {
         updates.password_hash = await bcrypt.hash(password, 10);
       }
 
-      const [updated] = await User.update(updates, { where: { id: userId } });
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ message: 'No updates provided' });
+      }
+
+      updates.updated_at = new Date();
+
+      const [updated] = await User.update(updates, { where: { id } });
 
       if (!updated) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      const updatedUser = await User.findByPk(userId);
+      const updatedUser = await User.findByPk(id);
       const { password_hash: _, ...userResponse } = updatedUser.toJSON();
 
       res.status(200).json(userResponse);
@@ -154,65 +136,66 @@ class UserController {
 
   async createUser(req, res) {
     try {
-      const { username, email, password_hash, role = 'user', tenant_id = 'default' } = req.body;
+      const { username, email, password, role = 'user', tenant_id = 'default' } = req.body;
+
+      const password_hash = await bcrypt.hash(password, 10);
+
       const newUser = await User.create({
         username,
         email,
         password_hash,
-        is_active: true,
-        is_admin: false,
         role,
         tenant_id,
-        created_at: new Date(),
-        updated_at: new Date(),
       });
       res.status(201).json(newUser);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to create user', error });
+      res.status(500).json({ message: 'Failed to create user', error: error.message });
     }
   }
 
   async getUser(req, res) {
     try {
-      const userId = req.params.id;
-      const user = await User.findByPk(userId);
+      const user = await User.findByPk(req.params.id);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
       res.status(200).json(user);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to retrieve user', error });
+      res.status(500).json({ message: 'Failed to retrieve user', error: error.message });
     }
   }
 
   async updateUser(req, res) {
     try {
-      const userId = req.params.id;
-      const { username, email, password_hash, is_active, is_admin, role, tenant_id } = req.body;
-      const [updated] = await User.update(
-        { username, email, password_hash, is_active, is_admin, role, tenant_id, updated_at: new Date() },
-        { where: { id: userId } }
-      );
+      const { id } = req.params;
+      const { username, email, password, is_active, is_admin, role, tenant_id } = req.body;
+
+      const updates = { username, email, is_active, is_admin, role, tenant_id, updated_at: new Date() };
+      if (password) {
+        updates.password_hash = await bcrypt.hash(password, 10);
+      }
+
+      const [updated] = await User.update(updates, { where: { id } });
+
       if (!updated) {
         return res.status(404).json({ message: 'User not found' });
       }
-      const updatedUser = await User.findByPk(userId);
+      const updatedUser = await User.findByPk(id);
       res.status(200).json(updatedUser);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to update user', error });
+      res.status(500).json({ message: 'Failed to update user', error: error.message });
     }
   }
 
   async deleteUser(req, res) {
     try {
-      const userId = req.params.id;
-      const deleted = await User.destroy({ where: { id: userId } });
+      const deleted = await User.destroy({ where: { id: req.params.id } });
       if (!deleted) {
         return res.status(404).json({ message: 'User not found' });
       }
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: 'Failed to delete user', error });
+      res.status(500).json({ message: 'Failed to delete user', error: error.message });
     }
   }
 }
