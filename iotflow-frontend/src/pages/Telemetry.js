@@ -110,7 +110,7 @@ const Telemetry = () => {
           console.log(response);
           setDevices(response.data);
           if (response.data.length > 0) {
-            setSelectedDevice(response.data[0]); // Select the first device by default
+            setSelectedDevice(response.data[0].id); // Select the first device by default
           }
         } catch (error) {
           toast.error('Failed to fetch devices.');
@@ -200,12 +200,12 @@ const Telemetry = () => {
   // Fetch telemetry data when selected device or time range changes
   useEffect(() => {
     const fetchTelemetry = async () => {
-      if (!selectedDevice.id) return;
-      console.log(selectedDevice.id);
+      if (!selectedDevice) return;
+      console.log(selectedDevice);
       setLoading(true);
       try {
         // For custom charts, we need to get all available measurements
-        const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice.id}/measurements`, {
+        const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice}/measurements`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const measurements = measurementsResponse.data;
@@ -216,7 +216,7 @@ const Telemetry = () => {
         const newTelemetryHistory = {};
 
         for (const measurement of measurements) {
-          const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice.id}`, {
+          const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice}`, {
             headers: { Authorization: `Bearer ${token}` },
             params: {
               measurement,
@@ -230,20 +230,20 @@ const Telemetry = () => {
           const formattedData = telemetryResponse.data.map(d => ({
             timestamp: new Date(parseInt(d.Time)),
             value: parseFloat(d[Object.keys(d).find(k => k.endsWith(measurement))]),
-            device_id: selectedDevice.id,
+            device_id: selectedDevice,
             measurement: measurement,
           }));
 
-          if (!newTelemetryHistory[selectedDevice.id]) {
-            newTelemetryHistory[selectedDevice.id] = {};
+          if (!newTelemetryHistory[selectedDevice]) {
+            newTelemetryHistory[selectedDevice] = {};
           }
-          newTelemetryHistory[selectedDevice.id][measurement] = formattedData;
+          newTelemetryHistory[selectedDevice][measurement] = formattedData;
         }
 
         setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
 
       } catch (error) {
-        toast.error(`Failed to fetch telemetry for device ${selectedDevice.id}`);
+        toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
         console.error('Error fetching telemetry:', error);
       } finally {
         setLoading(false);
@@ -257,13 +257,13 @@ const Telemetry = () => {
       const interval = setInterval(fetchTelemetry, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     }
-  }, [selectedDevice.id, timeRange, autoRefresh, token]);
+  }, [selectedDevice, timeRange, autoRefresh, token]);
 
 
   const handleDeviceChange = (event) => {
     const deviceId = event.target.value;
-    if (selectedDevice.id) {
-      unsubscribeFromDevice(selectedDevice.id);
+    if (selectedDevice) {
+      unsubscribeFromDevice(selectedDevice);
     }
 
     setSelectedDevice(deviceId);
