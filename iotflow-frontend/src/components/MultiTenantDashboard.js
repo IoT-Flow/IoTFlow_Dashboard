@@ -83,6 +83,7 @@ const MultiTenantDashboard = () => {
 
       // Load telemetry overview
       const overviewResult = await apiService.getUserTelemetryOverview('24h');
+      console.log(overviewResult);
       if (overviewResult.success) {
         setTelemetryOverview(overviewResult.data.overview);
       }
@@ -123,7 +124,7 @@ const MultiTenantDashboard = () => {
   const recentUpdatesCount = Array.isArray(realtimeUpdates) ? realtimeUpdates.filter(update =>
     update && update.timestamp && Date.now() - new Date(update.timestamp).getTime() < 300000 // Last 5 minutes
   ).length : 0;
-
+  console.log(devices);
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -211,7 +212,7 @@ const MultiTenantDashboard = () => {
                 </Avatar>
                 <Box>
                   <Typography variant="h4">
-                    {telemetryOverview?.total_devices || 0}
+                    {devices?.length || 0}
                   </Typography>
                   <Typography color="text.secondary">
                     Total Devices
@@ -231,7 +232,7 @@ const MultiTenantDashboard = () => {
                 </Avatar>
                 <Box>
                   <Typography variant="h4">
-                    {telemetryOverview?.active_devices || 0}
+                    {devices?.filter(device => device.status === 'active').length || 0}
                   </Typography>
                   <Typography color="text.secondary">
                     Active Devices
