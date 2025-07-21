@@ -47,18 +47,46 @@ iotflow-backend
    npm start
    ```
 
-## API Usage
-### User Management
-- **Create User**: `POST /api/users`
-- **Get User**: `GET /api/users/:id`
-- **Update User**: `PUT /api/users/:id`
-- **Delete User**: `DELETE /api/users/:id`
+## API Endpoints
+
+### Health Check
+- **GET /health**: Check API health status
+
+### Authentication & User Management
+- **POST /api/auth/register**: Register a new user
+- **POST /api/auth/login**: Login and receive JWT token
+- **GET /api/auth/profile**: Get user profile (requires API key)
+- **PUT /api/auth/profile**: Update user profile (requires API key)
+- **POST /api/auth/refresh-api-key**: Refresh API key (requires API key)
+
+#### Admin User Management
+- **POST /api/users**: Create user (admin only)
+- **GET /api/users/:id**: Get user by ID (admin only)
+- **PUT /api/users/:id**: Update user by ID (admin only)
+- **DELETE /api/users/:id**: Delete user by ID (admin only)
 
 ### Device Management
-- **Create Device**: `POST /api/devices`
-- **Get Device**: `GET /api/devices/:id`
-- **Update Device**: `PUT /api/devices/:id`
-- **Delete Device**: `DELETE /api/devices/:id`
+- **POST /api/devices**: Create device
+- **GET /api/devices**: Get all devices
+- **GET /api/devices/:id**: Get device by ID
+- **PUT /api/devices/:id**: Update device by ID
+- **DELETE /api/devices/:id**: Delete device by ID
+- **GET /api/devices/:id/configuration**: Get device configuration
+- **PUT /api/devices/:id/configuration**: Update device configuration
+
+### Telemetry Data
+- **POST /api/telemetry**: Submit telemetry data
+- **GET /api/telemetry/device/:device_id**: Get telemetry data for device
+- **GET /api/telemetry/device/:device_id/aggregated**: Get aggregated telemetry data for device
+
+### Dashboard & Analytics
+- **GET /api/dashboard/overview**: Get dashboard overview
+- **GET /api/dashboard/activity**: Get device activity
+- **GET /api/dashboard/alerts**: Get system alerts
+- **GET /api/dashboard/health**: Get system health metrics
+
+---
+For detailed request/response formats, authentication, and examples, see `API_DOCUMENTATION.md`.
 
 ## License
 This project is licensed under the MIT License.
