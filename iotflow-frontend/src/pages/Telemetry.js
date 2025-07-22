@@ -204,41 +204,51 @@ const Telemetry = () => {
       console.log(selectedDevice);
       setLoading(true);
       try {
-        // For custom charts, we need to get all available measurements
-        const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice}/measurements`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const measurements = measurementsResponse.data;
-
         const now = new Date();
         const { startTime } = getTimeRangeDates(timeRange);
 
-        const newTelemetryHistory = {};
+        // Use the correct API endpoint that matches your backend
+        const telemetryResponse = await api.get(`/telemetry/${selectedDevice}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            start_date: startTime.toISOString(),
+            end_date: now.toISOString(),
+            limit: 1000,
+          }
+        });
 
-        for (const measurement of measurements) {
-          const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice}`, {
-            headers: { Authorization: `Bearer ${token}` },
-            params: {
-              measurement,
-              start_date: startTime.toISOString(),
-              end_date: now.toISOString(),
-              limit: 1000,
+        // Process the telemetry data from IoTDB format
+        const telemetryData = telemetryResponse.data.telemetry || [];
+        console.log('Raw telemetry data:', telemetryData);
+
+        const newTelemetryHistory = {};
+        if (!newTelemetryHistory[selectedDevice]) {
+          newTelemetryHistory[selectedDevice] = {};
+        }
+
+        // Group data by measurement type
+        telemetryData.forEach(record => {
+          // Extract measurements from the record (excluding Time and timestamp fields)
+          Object.keys(record).forEach(key => {
+            if (key !== 'Time' && key !== 'timestamp') {
+              const measurement = key;
+              const value = record[key];
+
+              if (value !== null && value !== undefined) {
+                if (!newTelemetryHistory[selectedDevice][measurement]) {
+                  newTelemetryHistory[selectedDevice][measurement] = [];
+                }
+
+                newTelemetryHistory[selectedDevice][measurement].push({
+                  timestamp: new Date(record.Time),
+                  value: parseFloat(value),
+                  device_id: selectedDevice,
+                  measurement: measurement,
+                });
+              }
             }
           });
-
-          // The data from IoTDB needs to be parsed and formatted for the chart
-          const formattedData = telemetryResponse.data.map(d => ({
-            timestamp: new Date(parseInt(d.Time)),
-            value: parseFloat(d[Object.keys(d).find(k => k.endsWith(measurement))]),
-            device_id: selectedDevice,
-            measurement: measurement,
-          }));
-
-          if (!newTelemetryHistory[selectedDevice]) {
-            newTelemetryHistory[selectedDevice] = {};
-          }
-          newTelemetryHistory[selectedDevice][measurement] = formattedData;
-        }
+        });
 
         setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
 
@@ -550,39 +560,51 @@ const Telemetry = () => {
 
                   setLoading(true);
                   try {
-                    const measurementsResponse = await api.get(`/telemetry/device/${selectedDevice}/measurements`, {
-                      headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const measurements = measurementsResponse.data;
-
                     const now = new Date();
                     const { startTime } = getTimeRangeDates(timeRange);
 
-                    const newTelemetryHistory = {};
+                    // Use the correct API endpoint that matches your backend
+                    const telemetryResponse = await api.get(`/telemetry/${selectedDevice}`, {
+                      headers: { Authorization: `Bearer ${token}` },
+                      params: {
+                        start_date: startTime.toISOString(),
+                        end_date: now.toISOString(),
+                        limit: 1000,
+                      }
+                    });
 
-                    for (const measurement of measurements) {
-                      const telemetryResponse = await api.get(`/telemetry/device/${selectedDevice}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        params: {
-                          measurement,
-                          start_date: startTime.toISOString(),
-                          end_date: now.toISOString(),
-                          limit: 1000,
+                    // Process the telemetry data from IoTDB format
+                    const telemetryData = telemetryResponse.data.telemetry || [];
+                    console.log('Refreshed telemetry data:', telemetryData);
+
+                    const newTelemetryHistory = {};
+                    if (!newTelemetryHistory[selectedDevice]) {
+                      newTelemetryHistory[selectedDevice] = {};
+                    }
+
+                    // Group data by measurement type
+                    telemetryData.forEach(record => {
+                      // Extract measurements from the record (excluding Time and timestamp fields)
+                      Object.keys(record).forEach(key => {
+                        if (key !== 'Time' && key !== 'timestamp') {
+                          const measurement = key;
+                          const value = record[key];
+
+                          if (value !== null && value !== undefined) {
+                            if (!newTelemetryHistory[selectedDevice][measurement]) {
+                              newTelemetryHistory[selectedDevice][measurement] = [];
+                            }
+
+                            newTelemetryHistory[selectedDevice][measurement].push({
+                              timestamp: new Date(record.Time),
+                              value: parseFloat(value),
+                              device_id: selectedDevice,
+                              measurement: measurement,
+                            });
+                          }
                         }
                       });
-
-                      const formattedData = telemetryResponse.data.map(d => ({
-                        timestamp: new Date(parseInt(d.Time)),
-                        value: parseFloat(d[Object.keys(d).find(k => k.endsWith(measurement))]),
-                        device_id: selectedDevice,
-                        measurement: measurement,
-                      }));
-
-                      if (!newTelemetryHistory[selectedDevice]) {
-                        newTelemetryHistory[selectedDevice] = {};
-                      }
-                      newTelemetryHistory[selectedDevice][measurement] = formattedData;
-                    }
+                    });
 
                     setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
 

@@ -10,11 +10,10 @@ import {
   FilterList,
   Key,
   MoreVert,
-  Refresh,
   Schedule,
   Search,
   Visibility,
-  Warning,
+  Warning
 } from '@mui/icons-material';
 import {
   Alert,
@@ -25,7 +24,6 @@ import {
   CardContent,
   Checkbox,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -86,11 +84,6 @@ const Devices = () => {
     hardware_version: '1.0',
   });
 
-  // Telemetry data state
-  const [telemetryData, setTelemetryData] = useState({});
-  const [deviceStats, setDeviceStats] = useState({});
-  const [refreshingTelemetry, setRefreshingTelemetry] = useState(false);
-
   // Load user devices
   useEffect(() => {
     const loadDevices = async () => {
@@ -142,69 +135,6 @@ const Devices = () => {
       loadDevices();
     }
   }, [user]);
-
-  // Load telemetry data for all devices
-  const loadTelemetryData = async () => {
-    if (!user || devices.length === 0) return;
-
-    try {
-      setRefreshingTelemetry(true);
-
-      // Get latest telemetry for all devices
-      const latestDataResult = await apiService.getLatestTelemetryData();
-      if (latestDataResult.success) {
-        setTelemetryData(latestDataResult.data);
-      }
-
-      // Get message counts for each device
-      const statsPromises = devices.map(async (device) => {
-        try {
-          const messageCountResult = await apiService.getDeviceMessageCount(device.id, '24h');
-          const telemetryStatsResult = await apiService.getDeviceTelemetryStats(device.id, '24h');
-
-          return {
-            deviceId: device.id,
-            messageCount: messageCountResult.success ? messageCountResult.data.count : 0,
-            stats: telemetryStatsResult.success ? telemetryStatsResult.data : null
-          };
-        } catch (error) {
-          console.error(`Failed to load stats for device ${device.id}:`, error);
-          return {
-            deviceId: device.id,
-            messageCount: Math.floor(Math.random() * 10000),
-            stats: null
-          };
-        }
-      });
-
-      const statsResults = await Promise.all(statsPromises);
-      const statsMap = {};
-      statsResults.forEach(result => {
-        statsMap[result.deviceId] = {
-          messageCount: result.messageCount,
-          stats: result.stats
-        };
-      });
-      setDeviceStats(statsMap);
-
-    } catch (error) {
-      console.error('Failed to load telemetry data:', error);
-      toast.error('Failed to load device telemetry data');
-    } finally {
-      setRefreshingTelemetry(false);
-    }
-  };
-
-  // Load telemetry data when devices change
-  useEffect(() => {
-    if (devices.length > 0) {
-      loadTelemetryData();
-
-      // Set up auto-refresh for telemetry data every 30 seconds
-      const telemetryInterval = setInterval(loadTelemetryData, 30000);
-      return () => clearInterval(telemetryInterval);
-    }
-  }, [devices]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -387,103 +317,6 @@ const Devices = () => {
     return controllableTypes.includes(device.type);
   };
 
-  // Format telemetry values for display
-  const formatTelemetryValue = (value, dataType) => {
-    if (value === null || value === undefined) return '--';
-
-    switch (dataType) {
-      case 'temperature':
-        return `${value}°C`;
-      case 'humidity':
-        return `${value}%`;
-      case 'pressure':
-        return `${value} hPa`;
-      case 'brightness':
-        return `${value}%`;
-      case 'speed':
-        return `Level ${value}`;
-      case 'flow_rate':
-        return `${value} L/min`;
-      case 'battery':
-        return `${value}%`;
-      case 'power':
-        return value ? 'ON' : 'OFF';
-      case 'lock_status':
-        return value === 'locked' ? '🔒 Locked' : '🔓 Unlocked';
-      default:
-        return typeof value === 'number' ? value.toFixed(1) : value;
-    }
-  };
-
-  // Get telemetry display for device
-  const getDeviceTelemetryDisplay = (device) => {
-    const deviceTelemetry = telemetryData[device.id];
-    if (!deviceTelemetry) return 'No data';
-
-    const relevantData = [];
-
-    // Show relevant telemetry based on device type
-    switch (device.type) {
-      case 'Temperature':
-        if (deviceTelemetry.temperature !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.temperature, 'temperature')}`);
-        }
-        if (deviceTelemetry.humidity !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.humidity, 'humidity')}`);
-        }
-        break;
-      case 'Pressure':
-        if (deviceTelemetry.pressure !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.pressure, 'pressure')}`);
-        }
-        break;
-      case 'LED':
-        if (deviceTelemetry.power !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.power, 'power')}`);
-        }
-        if (deviceTelemetry.brightness !== undefined && deviceTelemetry.power) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.brightness, 'brightness')}`);
-        }
-        break;
-      case 'Door Lock':
-        if (deviceTelemetry.locked !== undefined) {
-          relevantData.push(deviceTelemetry.locked ? '🔒 Locked' : '🔓 Unlocked');
-        }
-        if (deviceTelemetry.battery !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.battery, 'battery')}`);
-        }
-        break;
-      case 'Fan':
-        if (deviceTelemetry.power !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.power, 'power')}`);
-        }
-        if (deviceTelemetry.speed !== undefined && deviceTelemetry.power) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.speed, 'speed')}`);
-        }
-        break;
-      case 'Pump':
-        if (deviceTelemetry.power !== undefined) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.power, 'power')}`);
-        }
-        if (deviceTelemetry.flowRate !== undefined && deviceTelemetry.power) {
-          relevantData.push(`${formatTelemetryValue(deviceTelemetry.flowRate, 'flow_rate')}`);
-        }
-        break;
-      default:
-        if (deviceTelemetry.value !== undefined) {
-          relevantData.push(formatTelemetryValue(deviceTelemetry.value, 'value'));
-        }
-    }
-
-    return relevantData.length > 0 ? relevantData.join(' | ') : 'No recent data';
-  };
-
-  // Get message count for device
-  const getDeviceMessageCount = (device) => {
-    const stats = deviceStats[device.id];
-    return stats?.messageCount || device.telemetry_count || 0;
-  };
-
   const handleBulkStatusUpdate = (newStatus) => {
     setDevices(devices.map(device =>
       selectedDevices.includes(device.id)
@@ -542,28 +375,6 @@ const Devices = () => {
             Manage and monitor your IoT devices with real-time telemetry from IoTDB
             {user && ` • Logged in as ${user.firstName} ${user.lastName}`}
           </Typography>
-          {Object.keys(telemetryData).length > 0 && (
-            <Box sx={{ mt: 1, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Chip
-                label={`${Object.keys(telemetryData).length} devices reporting`}
-                color="success"
-                size="small"
-              />
-              <Chip
-                label={`${Object.values(deviceStats).reduce((sum, stats) => sum + (stats.messageCount || 0), 0).toLocaleString()} messages today`}
-                color="info"
-                size="small"
-              />
-              {refreshingTelemetry && (
-                <Chip
-                  label="Syncing telemetry data..."
-                  color="primary"
-                  size="small"
-                  icon={<CircularProgress size={12} />}
-                />
-              )}
-            </Box>
-          )}
         </Box>
         <Button
           variant="contained"
@@ -627,20 +438,8 @@ const Devices = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Refresh />}
-                  onClick={loadTelemetryData}
-                  disabled={refreshingTelemetry}
-                >
-                  {refreshingTelemetry ? 'Refreshing...' : 'Refresh Data'}
-                </Button>
-                <Button variant="outlined" startIcon={<FilterList />}>
-                  More Filters
-                </Button>
-                <Button variant="outlined" startIcon={<Download />}>
-                  Export
-                </Button>
+                <Button variant="outlined" startIcon={<FilterList />}>More Filters</Button>
+                <Button variant="outlined" startIcon={<Download />}>Export</Button>
               </Box>
             </Grid>
           </Grid>
@@ -654,7 +453,7 @@ const Devices = () => {
             sx={{
               pl: { sm: 2 },
               pr: { xs: 1, sm: 1 },
-              bgcolor: alpha('primary.main', 0.1),
+              bgcolor: alpha('#1976d2', 0.1), // Fixed: use valid color value
             }}
           >
             <Typography
@@ -733,9 +532,7 @@ const Devices = () => {
                     <TableCell>Type</TableCell>
                     <TableCell>Location</TableCell>
                     <TableCell>Status</TableCell>
-                    <TableCell>Latest Telemetry</TableCell>
                     <TableCell>Last Seen</TableCell>
-                    <TableCell>Messages (24h)</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -783,31 +580,9 @@ const Devices = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {getDeviceTelemetryDisplay(device)}
-                              </Typography>
-                              {telemetryData[device.id] && (
-                                <Typography variant="caption" color="text.secondary">
-                                  Updated: {new Date(telemetryData[device.id].timestamp).toLocaleTimeString()}
-                                </Typography>
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
                             <Typography variant="body2">
                               {device.last_seen ? device.last_seen.toLocaleString() : 'Never'}
                             </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {getDeviceMessageCount(device).toLocaleString()}
-                              </Typography>
-                              {refreshingTelemetry && (
-                                <CircularProgress size={12} />
-                              )}
-                            </Box>
                           </TableCell>
                           <TableCell align="right">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

@@ -4,9 +4,14 @@ const { verifyApiKey } = require('../middlewares/authMiddleware'); // Use API ke
 
 const router = express.Router();
 
+// Health check for IoTDB connectivity (must be before parameterized routes)
+router.get('/health', TelemetryController.healthCheck);
+
+// Aggregated data route (must be before generic device_id route)
+router.get('/device/:device_id/aggregated', TelemetryController.getAggregatedData);
+
 // Telemetry data routes
 router.post('/', verifyApiKey, TelemetryController.submitTelemetry); // Device submits telemetry
-router.get('/device/:device_id', TelemetryController.getTelemetryData); // User views telemetry
-router.get('/device/:device_id/aggregated', TelemetryController.getAggregatedData); // User views aggregated data
+router.get('/:device_id', TelemetryController.getTelemetryData); // User views telemetry
 
 module.exports = router;

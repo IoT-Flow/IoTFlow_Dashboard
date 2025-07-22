@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "apache-iotdb": "^0.0.1-security"
+  }
+}
