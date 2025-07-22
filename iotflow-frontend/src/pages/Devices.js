@@ -287,10 +287,23 @@ const Devices = () => {
     setDeviceToDelete(device);
   };
 
-  const confirmDeleteDevice = () => {
-    setDevices(devices.filter(device => device.id !== deviceToDelete.id));
-    setDeviceToDelete(null);
-    toast.success('Device deleted successfully');
+  const confirmDeleteDevice = async () => {
+    try {
+      setLoading(true);
+      const result = await apiService.deleteDevice(deviceToDelete.id);
+      if (result && result.success) {
+        setDevices(devices.filter(device => device.id !== deviceToDelete.id));
+        setDeviceToDelete(null);
+        toast.success('Device deleted successfully');
+      } else {
+        throw new Error(result?.message || 'Failed to delete device');
+      }
+    } catch (error) {
+      console.error('Error deleting device:', error);
+      toast.error('Failed to delete device');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleShowConnectionDetails = (device) => {

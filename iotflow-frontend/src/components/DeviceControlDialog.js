@@ -1,105 +1,90 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
+  CheckCircle,
+  Close,
+  Error,
+  History,
+  PlayArrow,
+  Power,
+  Refresh,
+  Schedule,
+  Settings,
+  Stop,
+  Warning
+} from '@mui/icons-material';
+import {
+  Alert,
   Box,
-  Grid,
-  Typography,
+  Button,
   Card,
   CardContent,
-  Switch,
-  Slider,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Chip,
-  IconButton,
-  Tooltip,
-  Alert,
   CircularProgress,
-  FormControlLabel
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Slider,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography
 } from '@mui/material';
-import {
-  Close,
-  Power,
-  PlayArrow,
-  Stop,
-  Settings,
-  Refresh,
-  History,
-  Warning,
-  CheckCircle,
-  Error,
-  Schedule
-} from '@mui/icons-material';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import apiService from '../services/apiService';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import apiService from '../services/apiService';
 
 const DeviceControlDialog = ({ open, onClose, device }) => {
-  const { sendDeviceCommand, getDeviceState, subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
-  const [deviceState, setDeviceState] = useState(null);
-  const [availableCommands, setAvailableCommands] = useState([]);
-  const [commandHistory, setCommandHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [commandLoading, setCommandLoading] = useState({});
-  const [controlValues, setControlValues] = useState({});
-  const [showHistory, setShowHistory] = useState(false);
+  // --- Context and State ---
+  const { sendDeviceCommand, subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
+  const [deviceState, setDeviceState] = useState(null); // Device status and state
+  const [availableCommands, setAvailableCommands] = useState([]); // Supported commands
+  const [commandHistory, setCommandHistory] = useState([]); // Recent commands
+  const [loading, setLoading] = useState(false); // Dialog loading state
+  const [commandLoading, setCommandLoading] = useState({}); // Per-command loading
+  const [controlValues, setControlValues] = useState({}); // UI control values
+  const [showHistory, setShowHistory] = useState(false); // Show/hide history
 
-  // Load device data when dialog opens
+  // --- Effects ---
+  // Load device data and subscribe when dialog opens
   useEffect(() => {
     if (open && device) {
       loadDeviceData();
       subscribeToDevice(device.id);
     }
-    
     return () => {
-      if (device) {
-        unsubscribeFromDevice(device.id);
-      }
+      if (device) unsubscribeFromDevice(device.id);
     };
   }, [open, device, subscribeToDevice, unsubscribeFromDevice]);
 
-  // Monitor device state changes from WebSocket
+  // Placeholder for future WebSocket state sync
   useEffect(() => {
-    if (device) {
-      const wsState = getDeviceState(device.id);
-      if (wsState) {
-        setDeviceState(wsState);
-      }
-    }
-  }, [device, getDeviceState]);
+    // To sync deviceState from context, use getDeviceStatus or getDeviceTelemetry if needed
+  }, [device]);
 
+  // --- Data Loaders ---
   const loadDeviceData = async () => {
     if (!device) return;
-    
     setLoading(true);
     try {
-      // Load device status, available commands, and command history in parallel
       const [statusResult, commandsResult, historyResult] = await Promise.all([
         apiService.getDeviceStatus(device.id),
         apiService.getDeviceCommands(device.id),
         apiService.getCommandHistory(device.id, { limit: 10 })
       ]);
-
       if (statusResult.success) {
         setDeviceState(statusResult.data);
-        // Initialize control values from current state
         setControlValues(statusResult.data.state || {});
       }
-
-      if (commandsResult.success) {
-        setAvailableCommands(commandsResult.data.commands || []);
-      }
-
-      if (historyResult.success) {
-        setCommandHistory(historyResult.data.commands || []);
-      }
+      if (commandsResult.success) setAvailableCommands(commandsResult.data.commands || []);
+      if (historyResult.success) setCommandHistory(historyResult.data.commands || []);
     } catch (error) {
       console.error('Failed to load device data:', error);
       toast.error('Failed to load device information');
@@ -108,31 +93,32 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     }
   };
 
+  const loadCommandHistory = async () => {
+    try {
+      const result = await apiService.getCommandHistory(device.id, { limit: 10 });
+      if (result.success) setCommandHistory(result.data.commands || []);
+    } catch (error) {
+      console.error('Failed to load command history:', error);
+    }
+  };
+
+  // --- Command Execution ---
   const executeCommand = async (command, params = {}) => {
     if (!device) return;
-
     const commandKey = `${command}_${JSON.stringify(params)}`;
     setCommandLoading(prev => ({ ...prev, [commandKey]: true }));
-
     try {
-      // Send command via WebSocket for real-time response
       sendDeviceCommand(device.id, command, params);
-      
-      // Also send via API for persistence
       const result = await apiService.sendDeviceCommand(device.id, command, params);
-      
       if (result.success) {
         toast.success(`Command '${command}' executed successfully`);
-        
-        // Update local state optimistically
+        // Optimistically update local state for control feedback
         if (params.hasOwnProperty('state') || params.hasOwnProperty('power')) {
           setDeviceState(prev => ({
             ...prev,
             state: { ...prev?.state, ...params }
           }));
         }
-        
-        // Refresh command history
         loadCommandHistory();
       } else {
         toast.error('Command execution failed');
@@ -145,26 +131,10 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     }
   };
 
-  const loadCommandHistory = async () => {
-    try {
-      const result = await apiService.getCommandHistory(device.id, { limit: 10 });
-      if (result.success) {
-        setCommandHistory(result.data.commands || []);
-      }
-    } catch (error) {
-      console.error('Failed to load command history:', error);
-    }
-  };
-
+  // --- UI Utilities ---
   const getCommandIcon = (command) => {
     const iconMap = {
-      'power': <Power />,
-      'start': <PlayArrow />,
-      'stop': <Stop />,
-      'lock': <Settings />,
-      'unlock': <Settings />,
-      'open': <PlayArrow />,
-      'close': <Stop />
+      'power': <Power />, 'start': <PlayArrow />, 'stop': <Stop />, 'lock': <Settings />, 'unlock': <Settings />, 'open': <PlayArrow />, 'close': <Stop />
     };
     return iconMap[command] || <Settings />;
   };
@@ -183,6 +153,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     return controllableTypes.includes(device?.type);
   };
 
+  // --- Renderers ---
   const renderControlInterface = () => {
     if (!isControllableDevice() || availableCommands.length === 0) {
       return (
@@ -191,29 +162,16 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         </Alert>
       );
     }
-
     return (
       <Grid container spacing={3}>
         {availableCommands.map((command, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>
-            <Card 
-              variant="outlined" 
-              sx={{ 
-                height: '100%',
-                '&:hover': { 
-                  boxShadow: 2,
-                  borderColor: 'primary.main'
-                }
-              }}
-            >
+            <Card variant="outlined" sx={{ height: '100%', '&:hover': { boxShadow: 2, borderColor: 'primary.main' } }}>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
                   {getCommandIcon(command.name)}
-                  <Typography variant="h6" sx={{ ml: 1 }}>
-                    {command.label}
-                  </Typography>
+                  <Typography variant="h6" sx={{ ml: 1 }}>{command.label}</Typography>
                 </Box>
-
                 {renderCommandControl(command)}
               </CardContent>
             </Card>
@@ -226,22 +184,14 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
   const renderCommandControl = (command) => {
     const commandKey = `${command.name}_${JSON.stringify(controlValues)}`;
     const isLoading = commandLoading[commandKey];
-
     switch (command.type) {
       case 'button':
         return (
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={() => executeCommand(command.name, {})}
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={16} /> : getCommandIcon(command.name)}
-          >
+          <Button fullWidth variant="contained" onClick={() => executeCommand(command.name, {})} disabled={isLoading} startIcon={isLoading ? <CircularProgress size={16} /> : getCommandIcon(command.name)}>
             {command.label}
           </Button>
         );
-
-      case 'toggle':
+      case 'toggle': {
         const paramName = command.params[0];
         const isOn = controlValues[paramName] || false;
         return (
@@ -260,32 +210,26 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
             label={isOn ? 'ON' : 'OFF'}
           />
         );
-
-      case 'slider':
+      }
+      case 'slider': {
         const sliderParam = command.params[0];
         const sliderValue = controlValues[sliderParam] || command.min || 0;
         return (
           <Box>
-            <Typography variant="body2" gutterBottom>
-              {command.label}: {sliderValue}
-            </Typography>
+            <Typography variant="body2" gutterBottom>{command.label}: {sliderValue}</Typography>
             <Slider
               value={sliderValue}
               min={command.min || 0}
               max={command.max || 100}
-              onChange={(e, value) => {
-                setControlValues(prev => ({ ...prev, [sliderParam]: value }));
-              }}
-              onChangeCommitted={(e, value) => {
-                executeCommand(command.name, { [sliderParam]: value });
-              }}
+              onChange={(e, value) => setControlValues(prev => ({ ...prev, [sliderParam]: value }))}
+              onChangeCommitted={(e, value) => executeCommand(command.name, { [sliderParam]: value })}
               disabled={isLoading}
               valueLabelDisplay="auto"
             />
           </Box>
         );
-
-      case 'select':
+      }
+      case 'select': {
         const selectParam = command.params[0];
         const selectValue = controlValues[selectParam] || command.options[0];
         return (
@@ -302,34 +246,21 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
               disabled={isLoading}
             >
               {command.options?.map((option, idx) => (
-                <MenuItem key={idx} value={option}>
-                  {option}
-                </MenuItem>
+                <MenuItem key={idx} value={option}>{option}</MenuItem>
               ))}
             </Select>
           </FormControl>
         );
-
+      }
       case 'color':
         return (
           <Box>
-            <Typography variant="body2" gutterBottom>
-              Color Control
-            </Typography>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => {
-                const color = { r: 255, g: 0, b: 0 }; // Default red
-                executeCommand(command.name, color);
-              }}
-              disabled={isLoading}
-            >
+            <Typography variant="body2" gutterBottom>Color Control</Typography>
+            <Button fullWidth variant="outlined" onClick={() => executeCommand(command.name, { r: 255, g: 0, b: 0 })} disabled={isLoading}>
               Set Color
             </Button>
           </Box>
         );
-
       case 'password':
         return (
           <TextField
@@ -346,7 +277,6 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
             helperText="Press Enter to execute"
           />
         );
-
       default:
         return (
           <Typography variant="body2" color="text.secondary">
@@ -358,45 +288,25 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
 
   const renderDeviceStatus = () => {
     if (!deviceState) return null;
-
     return (
       <Card variant="outlined" sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Device Status
-          </Typography>
+          <Typography variant="h6" gutterBottom>Device Status</Typography>
           <Grid container spacing={2}>
             <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">
-                Status
-              </Typography>
-              <Chip 
-                label={deviceState.status} 
-                color={deviceState.status === 'active' ? 'success' : 'default'}
-                size="small"
-              />
+              <Typography variant="body2" color="text.secondary">Status</Typography>
+              <Chip label={deviceState.status} color={deviceState.status === 'active' ? 'success' : 'default'} size="small" />
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">
-                Last Update
-              </Typography>
-              <Typography variant="body2">
-                {deviceState.lastUpdate ? new Date(deviceState.lastUpdate).toLocaleString() : 'Never'}
-              </Typography>
+              <Typography variant="body2" color="text.secondary">Last Update</Typography>
+              <Typography variant="body2">{deviceState.lastUpdate ? new Date(deviceState.lastUpdate).toLocaleString() : 'Never'}</Typography>
             </Grid>
             {deviceState.state && Object.keys(deviceState.state).length > 0 && (
               <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Current State
-                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>Current State</Typography>
                 <Box display="flex" flexWrap="wrap" gap={1}>
                   {Object.entries(deviceState.state).map(([key, value]) => (
-                    <Chip 
-                      key={key}
-                      label={`${key}: ${typeof value === 'boolean' ? (value ? 'ON' : 'OFF') : value}`}
-                      variant="outlined"
-                      size="small"
-                    />
+                    <Chip key={key} label={`${key}: ${typeof value === 'boolean' ? (value ? 'ON' : 'OFF') : value}`} variant="outlined" size="small" />
                   ))}
                 </Box>
               </Grid>
@@ -409,47 +319,26 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
 
   const renderCommandHistory = () => {
     if (!showHistory) return null;
-
     return (
       <Card variant="outlined" sx={{ mt: 3 }}>
         <CardContent>
           <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              Recent Commands
-            </Typography>
-            <Button size="small" onClick={loadCommandHistory} startIcon={<Refresh />}>
-              Refresh
-            </Button>
+            <Typography variant="h6">Recent Commands</Typography>
+            <Button size="small" onClick={loadCommandHistory} startIcon={<Refresh />}>Refresh</Button>
           </Box>
-          
           {commandHistory.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No recent commands
-            </Typography>
+            <Typography variant="body2" color="text.secondary">No recent commands</Typography>
           ) : (
             <Box>
               {commandHistory.map((cmd, index) => (
-                <Box key={index} sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  py: 1,
-                  borderBottom: index < commandHistory.length - 1 ? '1px solid' : 'none',
-                  borderColor: 'divider'
-                }}>
+                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: index < commandHistory.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                   <Box>
-                    <Typography variant="body2" fontWeight="medium">
-                      {cmd.command}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(cmd.timestamp).toLocaleString()}
-                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">{cmd.command}</Typography>
+                    <Typography variant="caption" color="text.secondary">{new Date(cmd.timestamp).toLocaleString()}</Typography>
                   </Box>
                   <Box display="flex" alignItems="center" gap={1}>
                     {getStatusIcon(cmd.status)}
-                    <Typography variant="caption">
-                      {cmd.executionTime}ms
-                    </Typography>
+                    <Typography variant="caption">{cmd.executionTime}ms</Typography>
                   </Box>
                 </Box>
               ))}
@@ -462,36 +351,17 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
 
   if (!device) return null;
 
+  // --- Main Dialog UI ---
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{
-        sx: { minHeight: '70vh' }
-      }}
-    >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        pb: 1
-      }}>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { minHeight: '70vh' } }}>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
         <Box>
-          <Typography variant="h5" component="div">
-            Device Control
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary">
-            {device.name} ({device.type})
-          </Typography>
+          <Typography variant="h5" component="div">Device Control</Typography>
+          <Typography variant="subtitle1" color="text.secondary">{device.name} ({device.type})</Typography>
         </Box>
         <Box display="flex" gap={1}>
           <Tooltip title="Command History">
-            <IconButton 
-              onClick={() => setShowHistory(!showHistory)}
-              color={showHistory ? 'primary' : 'default'}
-            >
+            <IconButton onClick={() => setShowHistory(!showHistory)} color={showHistory ? 'primary' : 'default'}>
               <History />
             </IconButton>
           </Tooltip>
@@ -505,7 +375,6 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
           </IconButton>
         </Box>
       </DialogTitle>
-
       <DialogContent>
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" py={4}>
@@ -515,21 +384,14 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         ) : (
           <Box>
             {renderDeviceStatus()}
-            
-            <Typography variant="h6" gutterBottom>
-              Device Controls
-            </Typography>
-            
+            <Typography variant="h6" gutterBottom>Device Controls</Typography>
             {renderControlInterface()}
             {renderCommandHistory()}
           </Box>
         )}
       </DialogContent>
-
       <DialogActions>
-        <Button onClick={onClose}>
-          Close
-        </Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

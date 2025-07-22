@@ -104,14 +104,15 @@ class DeviceController {
   async deleteDevice(req, res) {
     try {
       const { id } = req.params;
+      // Delete related device configuration first
+      await DeviceConfiguration.destroy({ where: { device_id: id } });
+      // TODO: Delete other related records (e.g., telemetry) if needed
       const deleted = await Device.destroy({
         where: { id, user_id: req.user.id },
       });
-
       if (!deleted) {
         return res.status(404).json({ message: 'Device not found' });
       }
-
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete device', error: error.message });
