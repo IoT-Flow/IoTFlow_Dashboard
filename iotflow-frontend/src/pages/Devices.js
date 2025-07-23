@@ -97,23 +97,25 @@ const Devices = () => {
           const deviceList = response.data || [];
 
           // Transform backend data to match component's expected format
-          const transformedDevices = deviceList.map(device => ({
-            id: device.id,
-            deviceId: device.device_id || device.id,
-            name: device.name,
-            type: device.device_type || device.type,
-            location: device.location,
-            status: device.status,
-            last_seen: new Date(device.last_seen || device.updated_at || device.createdAt),
-            firmware_version: device.firmware_version || '1.0.0',
-            hardware_version: device.hardware_version || '1.0',
-            api_key: device.api_key || 'N/A',
-            description: device.description || '',
-            created_at: new Date(device.created_at),
-            is_online: device.status === 'active',
-            tenant_id: device.tenant_id,
-            user_id: device.user_id
-          }));
+          const transformedDevices = deviceList.map(device => {
+            return {
+              id: device.id,
+              deviceId: device.device_id || device.id,
+              name: device.name,
+              type: device.device_type || device.type,
+              location: device.location,
+              status: device.status,
+              last_seen: new Date(device.last_seen || device.updatedAt || device.createdAt),
+              firmware_version: device.firmware_version || '1.0.0',
+              hardware_version: device.hardware_version || '1.0',
+              api_key: device.apiKey || 'N/A',
+              description: device.description || '',
+              created_at: new Date(device.createdAt),
+              is_online: device.status === 'active',
+              tenant_id: device.tenant_id,
+              user_id: device.user_id
+            };
+          });
           setDevices(transformedDevices);
           toast.success(`Loaded ${transformedDevices.length} devices`);
         } else {
@@ -249,7 +251,7 @@ const Devices = () => {
             last_seen: result.data.lastSeen ? new Date(result.data.lastSeen) : new Date(),
             firmware_version: result.data.firmware_version || deviceForm.firmware_version,
             hardware_version: result.data.hardware_version || deviceForm.hardware_version,
-            api_key: result.data.api_key || 'N/A',
+            api_key: result.data.apiKey || 'N/A',
             description: result.data.description,
             created_at: new Date(result.data.createdAt || Date.now()),
             telemetry_count: 0,
@@ -308,7 +310,7 @@ const Devices = () => {
   const handleShowConnectionDetails = (device) => {
     setSelectedDevice(device);
     setNewDeviceConnection(device.connectionDetails || {
-      deviceToken: device.api_key,
+      api_key: device.apiKey || device.api_key || 'N/A',
       gatewayIP: '192.168.1.100',
       mqttEndpoint: 'mqtt://192.168.1.100:1883',
       httpsEndpoint: 'https://192.168.1.100:8443',
@@ -794,12 +796,12 @@ const Devices = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom color="primary">
-                    Authentication Token
+                    API Key
                   </Typography>
                   <TextField
                     fullWidth
-                    label="Device Token"
-                    value={newDeviceConnection.deviceToken}
+                    label="API Key"
+                    value={newDeviceConnection.api_key}
                     InputProps={{
                       readOnly: true,
                       endAdornment: (
@@ -807,8 +809,8 @@ const Devices = () => {
                           <Tooltip title="Copy to clipboard">
                             <IconButton
                               onClick={() => {
-                                navigator.clipboard.writeText(newDeviceConnection.deviceToken);
-                                toast.success('Device token copied to clipboard');
+                                navigator.clipboard.writeText(newDeviceConnection.api_key);
+                                toast.success('API key copied to clipboard');
                               }}
                             >
                               <Visibility />
@@ -896,12 +898,8 @@ const Devices = () => {
           <Button
             variant="outlined"
             onClick={() => {
-              const connectionInfo = `Device: ${selectedDevice?.name || 'New Device'}
-Token: ${newDeviceConnection?.deviceToken}
-Gateway IP: ${newDeviceConnection?.gatewayIP}
-MQTT Endpoint: ${newDeviceConnection?.mqttEndpoint}
-MQTT Topic: ${newDeviceConnection?.mqttTopic}`;
-
+              const connectionInfo = `Device: ${selectedDevice?.name || 'New Device'}\nAPI Key: ${newDeviceConnection?.api_key}\nGateway IP: ${newDeviceConnection?.gatewayIP}\nMQTT Endpoint: ${newDeviceConnection?.mqttEndpoint}\nMQTT Topic: ${newDeviceConnection?.mqttTopic}`;
+              console.log("test");
               navigator.clipboard.writeText(connectionInfo);
               toast.success('Connection details copied to clipboard');
             }}
