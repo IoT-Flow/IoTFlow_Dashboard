@@ -1,125 +1,108 @@
-import React, { useState, useEffect, useRef } from 'react';
 import {
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
+  AccountTree,
+  Air,
+  Assessment,
+  BarChart,
+  BatteryFull,
+  Brightness1,
+  BubbleChart,
+  CalendarToday,
+  CompareArrows,
+  Compress,
+  DateRange,
+  Delete,
+  DeviceHub,
+  DonutLarge,
+  Download,
+  Edit,
+  ElectricalServices,
+  Engineering,
+  EventNote,
+  Explore,
+  Factory,
+  FilterAlt,
+  Fullscreen,
+  Functions,
+  GridView,
+  Input,
+  LinearScale as LinearScaleIcon,
+  LocalGasStation,
+  LocationOn,
+  Map,
+  MapOutlined,
+  Memory,
+  MonitorHeart,
+  MoreVert,
+  Navigation,
+  OfflineBolt,
+  Pause,
+  PieChart,
+  PieChartOutline,
+  PlayArrow,
+  PowerSettingsNew,
+  Public,
+  QueryStats,
+  RadioButtonChecked,
+  Refresh,
+  RotateRight,
+  Router,
+  ScatterPlot,
+  Send,
+  Sensors,
+  Settings,
+  ShowChart,
+  SignalWifi4Bar,
+  SmartButton,
+  Speed,
+  TableChart,
+  TableRows,
+  Thermostat,
+  Timeline,
+  Timer,
+  ToggleOn,
+  TouchApp,
+  Tune,
+  Update,
+  ViewCompact,
+  ViewList,
+  ViewModule,
+  ViewStream,
+  WaterDrop,
+  Waves,
+  WbSunny
+} from '@mui/icons-material';
+import {
+  Alert,
   Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Chip,
+  CircularProgress,
   IconButton,
   Menu,
   MenuItem,
-  Tooltip,
-  Chip,
-  CircularProgress,
-  Alert,
-  Button
+  Typography
 } from '@mui/material';
 import {
-  MoreVert,
-  Edit,
-  Delete,
-  Refresh,
-  Fullscreen,
-  Download,
-  Settings,
-  PlayArrow,
-  Pause,
-  ZoomIn,
-  ZoomOut,
-  Timeline,
-  BarChart,
-  PieChart,
-  ScatterPlot,
-  ShowChart,
-  DeviceHub,
-  TableChart,
-  Map,
-  ControlPoint,
-  Input,
-  Event,
-  ElectricBolt,
-  Factory,
-  Speed,
-  Thermostat,
-  BatteryFull,
-  SignalWifi4Bar,
-  RotateRight,
-  Power,
-  LinearScale as LinearScaleIcon,
-  CompareArrows,
-  ViewModule,
-  AccountTree,
-  Functions,
-  CalendarToday,
-  Schedule,
-  WbSunny,
-  AcUnit,
-  Opacity,
-  Air,
-  FilterAlt,
-  MonitorHeart,
-  Memory,
-  Router,
-  Sensors,
-  Engineering,
-  ElectricalServices,
-  WaterDrop,
-  LocalGasStation,
-  Brightness1,
-  RadioButtonChecked,
-  ToggleOn,
-  Tune,
-  TouchApp,
-  SmartButton,
-  Navigation,
-  DateRange,
-  QueryStats,
-  Assessment,
-  Dashboard,
-  ViewList,
-  GridView,
-  Analytics,
-  ShowChartSharp,
-  DonutLarge,
-  PieChartOutline,
-  ScatterPlotSharp,
-  BubbleChart,
-  ViewCompact,
-  TableRows,
-  ViewStream,
-  MapOutlined,
-  LocationOn,
-  Public,
-  Explore,
-  Gamepad,
-  Send,
-  Update,
-  Timer,
-  EventNote,
-  PowerSettingsNew,
-  Bolt,
-  Compress,
-  Waves,
-  OfflineBolt
-} from '@mui/icons-material';
-import { Line, Bar, Pie, Scatter, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
+  ArcElement,
   BarElement,
-  Title,
+  CategoryScale,
+  Chart as ChartJS,
   Tooltip as ChartTooltip,
   Legend,
-  ArcElement,
+  LinearScale,
+  LineElement,
+  PointElement,
   TimeScale,
+  Title,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import html2canvas from 'html2canvas';
+import { useEffect, useRef, useState } from 'react';
+import { Bar, Doughnut, Line, Pie, Scatter } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
-import apiService from '../services/apiService';
 
 // Register Chart.js components
 ChartJS.register(
@@ -135,13 +118,13 @@ ChartJS.register(
   TimeScale
 );
 
-const CustomChart = ({ 
-  chartConfig, 
-  onEdit, 
-  onDelete, 
+const CustomChart = ({
+  chartConfig,
+  onEdit,
+  onDelete,
   telemetryData = {},
   isFullscreen = false,
-  onToggleFullscreen 
+  onToggleFullscreen
 }) => {
   const [loading, setLoading] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -152,32 +135,16 @@ const CustomChart = ({
   const chartRef = useRef(null);
   const refreshIntervalRef = useRef(null);
 
-  useEffect(() => {
-    loadChartData();
-    
-    if (autoRefresh && chartConfig.refreshInterval) {
-      refreshIntervalRef.current = setInterval(loadChartData, chartConfig.refreshInterval * 1000);
-    }
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, [chartConfig, autoRefresh, telemetryData]);
-
   const loadChartData = async () => {
-    if (!chartConfig.devices?.length || !chartConfig.dataTypes?.length) {
-      setError('Chart configuration incomplete');
+    // Accept telemetryData as an array
+    if (!Array.isArray(telemetryData) || telemetryData.length === 0) {
+      setError('No telemetry data available for this measurement');
+      setChartData(null);
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
-      // In a real implementation, this would fetch data from the API
-      // For demo purposes, we'll use the telemetryData prop or generate mock data
       const chartData = await generateChartData();
       setChartData(chartData);
       setLastUpdated(new Date());
@@ -190,155 +157,41 @@ const CustomChart = ({
     }
   };
 
-  const generateChartData = async () => {
-    const labels = [];
-    const datasets = [];
-    const now = new Date();
-    
-    // Generate time labels based on time range
-    const timeRangeMinutes = {
-      '15m': 15,
-      '1h': 60,
-      '6h': 360,
-      '24h': 1440,
-      '7d': 10080,
-      '30d': 43200
-    }[chartConfig.timeRange] || 60;
+  useEffect(() => {
+    loadChartData();
 
-    const dataPoints = Math.min(timeRangeMinutes, 100); // Limit data points for performance
-    const intervalMs = (timeRangeMinutes * 60 * 1000) / dataPoints;
-
-    for (let i = dataPoints; i >= 0; i--) {
-      const timestamp = new Date(now.getTime() - i * intervalMs);
-      if (timeRangeMinutes <= 1440) { // 24 hours or less
-        labels.push(timestamp.toLocaleTimeString());
-      } else {
-        labels.push(timestamp.toLocaleDateString());
-      }
+    if (autoRefresh && chartConfig.refreshInterval) {
+      refreshIntervalRef.current = setInterval(loadChartData, chartConfig.refreshInterval * 1000);
     }
 
-    // Generate datasets for each device-datatype combination
-    const colors = [
-      '#1976d2', '#dc004e', '#9c27b0', '#673ab7', '#3f51b5',
-      '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50',
-      '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800',
-      '#ff5722', '#795548', '#9e9e9e', '#607d8b'
-    ];
-
-    let colorIndex = 0;
-
-    for (const deviceId of chartConfig.devices) {
-      for (const dataType of chartConfig.dataTypes) {
-        try {
-          // Try to get real data from telemetryData first
-          let data = [];
-          
-          if (telemetryData[deviceId]) {
-            // Use real telemetry data if available
-            data = telemetryData[deviceId]
-              .filter(point => point.type === dataType)
-              .slice(-dataPoints)
-              .map(point => point.value);
-          }
-          
-          // If no real data, generate mock data
-          if (data.length === 0) {
-            data = labels.map((_, index) => {
-              return generateMockValue(dataType, index, dataPoints);
-            });
-          }
-
-          // Apply aggregation if specified
-          if (chartConfig.aggregation !== 'none' && data.length > 1) {
-            data = applyAggregation(data, chartConfig.aggregation);
-          }
-
-          const color = chartConfig.customColors?.[colorIndex] || colors[colorIndex % colors.length];
-          const deviceName = chartConfig.devices.length === 1 ? '' : `Device ${deviceId.slice(-3)} - `;
-          const dataTypeName = dataType.charAt(0).toUpperCase() + dataType.slice(1);
-
-          datasets.push({
-            label: `${deviceName}${dataTypeName}`,
-            data: data,
-            borderColor: color,
-            backgroundColor: chartConfig.fillArea || chartConfig.type === 'pie' || chartConfig.type === 'doughnut' 
-              ? color + '20' 
-              : color,
-            fill: chartConfig.fillArea && (chartConfig.type === 'line' || chartConfig.type === 'area'),
-            borderWidth: chartConfig.lineWidth || 2,
-            pointStyle: chartConfig.pointStyle || 'circle',
-            pointRadius: chartConfig.type === 'scatter' ? 4 : 2,
-            tension: chartConfig.type === 'line' ? 0.4 : 0,
-          });
-
-          colorIndex++;
-        } catch (err) {
-          console.error(`Error generating data for ${deviceId}-${dataType}:`, err);
-        }
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
       }
-    }
-
-    return { labels, datasets };
-  };
-
-  const generateMockValue = (dataType, index, total) => {
-    const baseValues = {
-      temperature: 22,
-      humidity: 50,
-      pressure: 1013,
-      vibration: 2,
-      light: 500,
-      voltage: 12,
-      current: 2.5,
-      power: 30,
-      flow_rate: 15,
-      rpm: 1500,
-      distance: 100,
-      ph: 7,
-      co2: 400,
-      noise: 45
     };
+  }, [chartConfig, autoRefresh, telemetryData]);
 
-    const base = baseValues[dataType] || 50;
-    const variation = base * 0.2; // 20% variation
-    const trend = Math.sin((index / total) * Math.PI * 2) * variation * 0.5;
-    const noise = (Math.random() - 0.5) * variation;
-    
-    return Math.max(0, base + trend + noise);
-  };
-
-  const applyAggregation = (data, aggregationType) => {
-    const chunkSize = Math.max(1, Math.floor(data.length / 20)); // Aggregate into ~20 points
-    const aggregated = [];
-    
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
-      let value;
-      
-      switch (aggregationType) {
-        case 'avg':
-          value = chunk.reduce((sum, val) => sum + val, 0) / chunk.length;
-          break;
-        case 'min':
-          value = Math.min(...chunk);
-          break;
-        case 'max':
-          value = Math.max(...chunk);
-          break;
-        case 'sum':
-          value = chunk.reduce((sum, val) => sum + val, 0);
-          break;
-        case 'count':
-          value = chunk.length;
-          break;
-        default:
-          value = chunk[0];
-      }
-      
-      aggregated.push(value);
-    }
-    
-    return aggregated;
+  const generateChartData = async () => {
+    // Format timestamps for labels
+    const labels = telemetryData.map(point => {
+      const date = new Date(point.timestamp);
+      // If less than 1 day, show time; else show date
+      return telemetryData.length > 0 && (telemetryData[telemetryData.length - 1].timestamp - telemetryData[0].timestamp < 24 * 60 * 60 * 1000)
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleDateString();
+    });
+    const data = telemetryData.map(point => point.value);
+    const datasets = [{
+      label: chartConfig.name || chartConfig.measurement,
+      data,
+      borderColor: chartConfig.borderColor || '#1976d2',
+      backgroundColor: chartConfig.fillArea ? (chartConfig.borderColor || '#1976d2') + '20' : (chartConfig.borderColor || '#1976d2'),
+      fill: chartConfig.fillArea,
+      borderWidth: chartConfig.lineWidth || 2,
+      pointStyle: chartConfig.pointStyle || 'circle',
+      tension: chartConfig.type === 'line' ? 0.4 : 0,
+    }];
+    return { labels, datasets };
   };
 
   const getChartOptions = () => {
@@ -411,7 +264,7 @@ const CustomChart = ({
       console.error('Failed to export chart:', err);
       toast.error('Failed to export chart');
     }
-    
+
     handleMenuClose();
   };
 
@@ -431,7 +284,7 @@ const CustomChart = ({
     'timeseries-table-new': Line,
     'flot-bar': Bar,
     'flot-line': Line,
-    
+
     // Chart widgets
     scatter: Scatter,
     pie: Pie,
@@ -444,7 +297,7 @@ const CustomChart = ({
     'chartjs-bar': Bar,
     'chartjs-line': Line,
     'chartjs-doughnut': Doughnut,
-    
+
     // For other widget types, we'll render informational cards
     default: Line
   }[chartConfig.type] || Line;
@@ -452,17 +305,17 @@ const CustomChart = ({
   // Special rendering for non-chart widget types
   const renderSpecialWidget = () => {
     const category = getWidgetCategory(chartConfig.type);
-    
+
     if (['Analog Gauges', 'Digital Gauges', 'Cards', 'Tables', 'Maps', 'Control', 'Input', 'Navigation', 'Scheduling', 'Energy', 'Industrial', 'Gateway', 'Alarm', 'System', 'Sensors'].includes(category)) {
       return (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center" 
-          height="100%" 
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="100%"
           textAlign="center"
-          sx={{ 
+          sx={{
             background: 'linear-gradient(45deg, #f5f5f5 25%, transparent 25%)',
             backgroundSize: '20px 20px',
             borderRadius: 1,
@@ -477,7 +330,7 @@ const CustomChart = ({
             {category} Widget
           </Typography>
           <Alert severity="info" sx={{ maxWidth: 300 }}>
-            This widget type represents a preview of ThingsBoard's {category.toLowerCase()} widgets. 
+            This widget type represents a preview of ThingsBoard's {category.toLowerCase()} widgets.
             Full implementation with interactive controls and real-time data coming soon.
           </Alert>
           {chartData && chartData.datasets?.length > 0 && (
@@ -489,10 +342,10 @@ const CustomChart = ({
           )}
           <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
             {chartConfig.dataTypes?.map(dataType => (
-              <Chip 
-                key={dataType} 
-                label={dataType} 
-                size="small" 
+              <Chip
+                key={dataType}
+                label={dataType}
+                size="small"
                 variant="outlined"
               />
             ))}
@@ -500,7 +353,7 @@ const CustomChart = ({
         </Box>
       );
     }
-    
+
     return null;
   };
 
@@ -513,7 +366,7 @@ const CustomChart = ({
       { value: 'area', category: 'Timeseries' },
       { value: 'stacked-bar', category: 'Timeseries' },
       { value: 'state', category: 'Timeseries' },
-      
+
       // Charts Widgets
       { value: 'pie', category: 'Charts' },
       { value: 'doughnut', category: 'Charts' },
@@ -522,7 +375,7 @@ const CustomChart = ({
       { value: 'scatter', category: 'Charts' },
       { value: 'bubble', category: 'Charts' },
       { value: 'heatmap', category: 'Charts' },
-      
+
       // Other categories
       { value: 'gauge', category: 'Analog Gauges' },
       { value: 'compass', category: 'Analog Gauges' },
@@ -560,7 +413,7 @@ const CustomChart = ({
       { value: 'wind-turbine', category: 'Industrial' },
       { value: 'motor-controller', category: 'Industrial' }
     ];
-    
+
     return chartTypes.find(t => t.value === type)?.category || 'Charts';
   };
 
@@ -602,7 +455,7 @@ const CustomChart = ({
       'wind-turbine': 'Wind Turbine',
       'motor-controller': 'Motor Controller'
     };
-    
+
     return labels[type] || type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
@@ -618,7 +471,7 @@ const CustomChart = ({
       'timeseries-table-new': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'flot-bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'flot-line': <ShowChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Charts
       'pie': <PieChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'doughnut': <DonutLarge sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -631,14 +484,14 @@ const CustomChart = ({
       'chartjs-bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'chartjs-line': <ShowChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'chartjs-doughnut': <DonutLarge sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Analog Gauges
       'gauge': <Speed sx={{ fontSize: 48, color: 'primary.main' }} />,
       'compass': <Explore sx={{ fontSize: 48, color: 'primary.main' }} />,
       'thermometer': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
       'linear-gauge': <LinearScaleIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
       'radial-gauge': <RadioButtonChecked sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Digital Gauges
       'digital-gauge': <Assessment sx={{ fontSize: 48, color: 'primary.main' }} />,
       'digital-thermometer': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -648,7 +501,7 @@ const CustomChart = ({
       'speedometer': <Speed sx={{ fontSize: 48, color: 'primary.main' }} />,
       'level': <CompareArrows sx={{ fontSize: 48, color: 'primary.main' }} />,
       'simple-gauge': <Brightness1 sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Cards
       'value-card': <ViewModule sx={{ fontSize: 48, color: 'primary.main' }} />,
       'simple-card': <ViewCompact sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -658,14 +511,14 @@ const CustomChart = ({
       'label-card': <ViewModule sx={{ fontSize: 48, color: 'primary.main' }} />,
       'multiple-input': <ViewList sx={{ fontSize: 48, color: 'primary.main' }} />,
       'html-card': <ViewModule sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Tables
       'entities-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'timeseries-table': <TableRows sx={{ fontSize: 48, color: 'primary.main' }} />,
       'latest-values': <ViewList sx={{ fontSize: 48, color: 'primary.main' }} />,
       'alarms-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'advanced-table': <ViewStream sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Maps
       'openstreet-map': <MapOutlined sx={{ fontSize: 48, color: 'primary.main' }} />,
       'google-map': <Public sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -674,7 +527,7 @@ const CustomChart = ({
       'trip-animation': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
       'here-map': <Map sx={{ fontSize: 48, color: 'primary.main' }} />,
       'tencent-map': <Map sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Control
       'knob-control': <RotateRight sx={{ fontSize: 48, color: 'primary.main' }} />,
       'switch-control': <ToggleOn sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -684,27 +537,27 @@ const CustomChart = ({
       'persistent-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'led-indicator': <Brightness1 sx={{ fontSize: 48, color: 'primary.main' }} />,
       'multiple-input-control': <Input sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Input
       'update-attribute': <Update sx={{ fontSize: 48, color: 'primary.main' }} />,
       'send-rpc': <Send sx={{ fontSize: 48, color: 'primary.main' }} />,
       'command-button': <TouchApp sx={{ fontSize: 48, color: 'primary.main' }} />,
       'edge-rpc': <Router sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Navigation
       'date-range-navigator': <DateRange sx={{ fontSize: 48, color: 'primary.main' }} />,
       'timespan-selector': <Timer sx={{ fontSize: 48, color: 'primary.main' }} />,
       'navigation-card': <Navigation sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Scheduling
       'scheduler-events': <EventNote sx={{ fontSize: 48, color: 'primary.main' }} />,
       'calendar-events': <CalendarToday sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Energy
       'power-button': <PowerSettingsNew sx={{ fontSize: 48, color: 'primary.main' }} />,
       'energy-meter': <ElectricalServices sx={{ fontSize: 48, color: 'primary.main' }} />,
       'solar-panel': <WbSunny sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Industrial
       'liquid-level': <WaterDrop sx={{ fontSize: 48, color: 'primary.main' }} />,
       'wind-turbine': <Air sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -712,20 +565,20 @@ const CustomChart = ({
       'valve-controller': <FilterAlt sx={{ fontSize: 48, color: 'primary.main' }} />,
       'pump-controller': <Compress sx={{ fontSize: 48, color: 'primary.main' }} />,
       'industrial-gauge': <Factory sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Gateway
       'gateway-remote-shell': <Router sx={{ fontSize: 48, color: 'primary.main' }} />,
       'gateway-config': <Settings sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Alarm
       'alarm-widget': <MonitorHeart sx={{ fontSize: 48, color: 'primary.main' }} />,
       'alarm-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // System
       'device-claiming': <DeviceHub sx={{ fontSize: 48, color: 'primary.main' }} />,
       'entity-admin': <Settings sx={{ fontSize: 48, color: 'primary.main' }} />,
       'json-input': <Memory sx={{ fontSize: 48, color: 'primary.main' }} />,
-      
+
       // Sensors
       'temperature-humidity': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
       'environmental': <Sensors sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -733,7 +586,7 @@ const CustomChart = ({
       'vibration-sensor': <Waves sx={{ fontSize: 48, color: 'primary.main' }} />,
       'electrical-meter': <OfflineBolt sx={{ fontSize: 48, color: 'primary.main' }} />
     };
-    
+
     return iconMap[type] || <DeviceHub sx={{ fontSize: 48, color: 'primary.main' }} />;
   };
 
@@ -773,28 +626,28 @@ const CustomChart = ({
         </Box>
 
         <Box display="flex" flexWrap="wrap" gap={0.5} mb={2}>
-          <Chip 
-            label={chartConfig.type} 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            label={chartConfig.type}
+            size="small"
+            variant="outlined"
           />
-          <Chip 
-            label={chartConfig.timeRange} 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            label={chartConfig.timeRange}
+            size="small"
+            variant="outlined"
           />
           {chartConfig.devices?.length > 0 && (
-            <Chip 
-              label={`${chartConfig.devices.length} device(s)`} 
-              size="small" 
-              variant="outlined" 
+            <Chip
+              label={`${chartConfig.devices.length} device(s)`}
+              size="small"
+              variant="outlined"
             />
           )}
           {chartConfig.dataTypes?.length > 0 && (
-            <Chip 
-              label={`${chartConfig.dataTypes.length} data type(s)`} 
-              size="small" 
-              variant="outlined" 
+            <Chip
+              label={`${chartConfig.dataTypes.length} data type(s)`}
+              size="small"
+              variant="outlined"
             />
           )}
         </Box>
@@ -805,10 +658,10 @@ const CustomChart = ({
             if (specialWidget) {
               return specialWidget;
             }
-            
+
             return chartData ? (
-              <ChartComponent 
-                data={chartConfig.type === 'stacked-bar' ? { ...chartData, datasets: chartData.datasets.map(d => ({ ...d, stack: 'stack1' })) } : chartData} 
+              <ChartComponent
+                data={chartConfig.type === 'stacked-bar' ? { ...chartData, datasets: chartData.datasets.map(d => ({ ...d, stack: 'stack1' })) } : chartData}
                 options={{
                   ...getChartOptions(),
                   ...(chartConfig.type === 'stacked-bar' && {
@@ -839,7 +692,7 @@ const CustomChart = ({
                       }
                     }
                   })
-                }} 
+                }}
               />
             ) : (
               <Box display="flex" justifyContent="center" alignItems="center" height="100%">

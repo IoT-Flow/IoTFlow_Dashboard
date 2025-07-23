@@ -84,8 +84,6 @@ const Telemetry = () => {
   const [timeRange, setTimeRange] = useState('1h');
   const [chartType, setChartType] = useState('line');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [startDate, setStartDate] = useState(new Date(Date.now() - 3600000)); // 1 hour ago
-  const [endDate, setEndDate] = useState(new Date());
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -99,6 +97,14 @@ const Telemetry = () => {
   // Devices from the backend
   const [devices, setDevices] = useState([]);
   const [telemetryHistory, setTelemetryHistory] = useState({});
+
+  // Telemetry measurement filter
+  const [measurementFilter, setMeasurementFilter] = useState('all');
+
+  // Get available measurements for the selected device
+  const availableMeasurements = selectedDevice && telemetryHistory[selectedDevice]
+    ? Object.keys(telemetryHistory[selectedDevice])
+    : [];
 
   // Fetch devices from the backend
   useEffect(() => {
@@ -315,26 +321,24 @@ const Telemetry = () => {
     }
   };
 
-  const getChartData = () => {
+  // Filtered chart data for main chart
+  const getFilteredChartData = () => {
     if (!selectedDevice || !telemetryHistory[selectedDevice]) {
       return { datasets: [] };
     }
-
-    const datasets = [];
     const deviceMeasurements = telemetryHistory[selectedDevice];
     const colors = ['#1976d2', '#dc004e', '#ed6c02', '#2e7d32', '#9c27b0'];
     let colorIndex = 0;
-
+    const datasets = [];
     for (const measurement in deviceMeasurements) {
-      if (deviceMeasurements.hasOwnProperty(measurement)) {
+      if (
+        deviceMeasurements.hasOwnProperty(measurement) &&
+        (measurementFilter === 'all' || measurement === measurementFilter)
+      ) {
         const data = deviceMeasurements[measurement] || [];
-
         datasets.push({
           label: `${devices.find(d => d.id === selectedDevice)?.name} - ${measurement}`,
-          data: data.map(item => ({
-            x: item.timestamp,
-            y: item.value,
-          })),
+          data: data.map(item => ({ x: item.timestamp, y: item.value })),
           borderColor: colors[colorIndex % colors.length],
           backgroundColor: `${colors[colorIndex % colors.length]}20`,
           tension: 0.4,
@@ -343,7 +347,6 @@ const Telemetry = () => {
         colorIndex++;
       }
     }
-
     return { datasets };
   };
 
@@ -626,20 +629,34 @@ const Telemetry = () => {
         {/* Controls */}
         <Card sx={{ mb: 4 }}>
           <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <ToggleButtonGroup
-              value={timeRange}
-              exclusive
-              onChange={handleTimeRangeChange}
-              aria-label="time range"
-            >
-              <ToggleButton value="15m" aria-label="15 minutes">15m</ToggleButton>
-              <ToggleButton value="1h" aria-label="1 hour">1h</ToggleButton>
-              <ToggleButton value="6h" aria-label="6 hours">6h</ToggleButton>
-              <ToggleButton value="24h" aria-label="24 hours">24h</ToggleButton>
-              <ToggleButton value="7d" aria-label="7 days">7d</ToggleButton>
-            </ToggleButtonGroup>
-
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FormControl sx={{ minWidth: 180 }}>
+                <InputLabel id="measurement-filter-label">Measurement</InputLabel>
+                <Select
+                  labelId="measurement-filter-label"
+                  id="measurement-filter"
+                  value={measurementFilter}
+                  label="Measurement"
+                  onChange={e => setMeasurementFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All Measurements</MenuItem>
+                  {availableMeasurements.map(m => (
+                    <MenuItem key={m} value={m}>{m}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <ToggleButtonGroup
+                value={timeRange}
+                exclusive
+                onChange={handleTimeRangeChange}
+                aria-label="time range"
+              >
+                <ToggleButton value="15m" aria-label="15 minutes">15m</ToggleButton>
+                <ToggleButton value="1h" aria-label="1 hour">1h</ToggleButton>
+                <ToggleButton value="6h" aria-label="6 hours">6h</ToggleButton>
+                <ToggleButton value="24h" aria-label="24 hours">24h</ToggleButton>
+                <ToggleButton value="7d" aria-label="7 days">7d</ToggleButton>
+              </ToggleButtonGroup>
               <ToggleButtonGroup
                 value={chartType}
                 exclusive
@@ -684,7 +701,7 @@ const Telemetry = () => {
             <Card>
               <CardContent>
                 <Box sx={{ height: 400 }}>
-                  <Line data={getChartData()} options={chartOptions} />
+                  <Line data={getFilteredChartData()} options={chartOptions} />
                 </Box>
               </CardContent>
             </Card>
@@ -706,22 +723,30 @@ const Telemetry = () => {
 
               {customCharts.length > 0 ? (
                 <Grid container spacing={3}>
-                  {customCharts.map(chart => (
-                    <Grid item xs={12} md={6} lg={4} key={chart.id}>
-                      <Card sx={{ position: 'relative' }}>
-                        <IconButton
-                          sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
-                          onClick={(e) => handleChartMenuOpen(e, chart)}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                        <CustomChart
-                          chartConfig={chart}
-                          telemetryData={telemetryHistory[selectedDevice]?.[chart.measurement] || []}
-                        />
-                      </Card>
-                    </Grid>
-                  ))}
+                  {customCharts.map(chart => {
+                    const telemetryForMeasurement = telemetryHistory[selectedDevice]?.[chart.measurement] || [];
+                    return (
+                      <Grid item xs={12} md={6} lg={4} key={chart.id}>
+                        <Card sx={{ position: 'relative' }}>
+                          <IconButton
+                            sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                            onClick={(e) => handleChartMenuOpen(e, chart)}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                          {telemetryForMeasurement.length > 0 ? (
+                            <CustomChart
+                              chartConfig={chart}
+                              telemetryData={telemetryForMeasurement}
+                              device={devices.find(d => d.id === selectedDevice)}
+                            />
+                          ) : (
+                            <Alert severity="warning">No telemetry data available for measurement "{chart.measurement}".</Alert>
+                          )}
+                        </Card>
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               ) : (
                 <Alert severity="info">No custom charts created yet. Click "Add Chart" to get started.</Alert>
@@ -771,7 +796,7 @@ const Telemetry = () => {
         <ChartCustomizationDialog
           open={chartCustomizationOpen}
           onClose={() => setChartCustomizationOpen(false)}
-          onSave={handleSaveChart}
+          onSaveChart={handleSaveChart}
           devices={devices}
           measurements={selectedDevice && telemetryHistory[selectedDevice] ? Object.keys(telemetryHistory[selectedDevice]) : []}
           existingChart={editingChart}

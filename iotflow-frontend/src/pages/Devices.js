@@ -110,7 +110,6 @@ const Devices = () => {
             api_key: device.api_key || 'N/A',
             description: device.description || '',
             created_at: new Date(device.created_at),
-            telemetry_count: Math.floor(Math.random() * 50000), // Mock for demo
             is_online: device.status === 'active',
             tenant_id: device.tenant_id,
             user_id: device.user_id

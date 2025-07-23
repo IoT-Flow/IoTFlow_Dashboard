@@ -46,26 +46,16 @@ class DeviceController {
 
   async getAllDevices(req, res) {
     try {
-      const { page = 1, limit = 10, status, device_type } = req.query;
-      const offset = (page - 1) * limit;
-
+      const { status, device_type } = req.query;
       const whereClause = { user_id: req.user.id };
       if (status) whereClause.status = status;
       if (device_type) whereClause.device_type = device_type;
-
-      const { count, rows } = await Device.findAndCountAll({
+      // Fetch all devices for the user, no limit or pagination
+      const devices = await Device.findAll({
         where: whereClause,
-        limit: parseInt(limit),
-        offset,
         order: [['created_at', 'DESC']],
       });
-
-      res.status(200).json({
-        devices: rows,
-        total: count,
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(count / limit),
-      });
+      res.status(200).json({ devices });
     } catch (error) {
       res.status(500).json({ message: 'Failed to retrieve devices', error: error.message });
     }

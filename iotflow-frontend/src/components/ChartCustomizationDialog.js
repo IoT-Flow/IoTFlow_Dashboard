@@ -1,137 +1,111 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
+  AccountTree,
+  Air,
+  Assessment,
+  BarChart,
+  BatteryFull,
+  Brightness1,
+  BubbleChart,
+  CalendarToday,
+  Close,
+  CompareArrows,
+  Compress,
+  DateRange,
+  DeviceHub,
+  DonutLarge,
+  ElectricalServices,
+  Engineering,
+  EventNote,
+  Explore,
+  Factory,
+  FilterAlt,
+  Functions,
+  GridView,
+  Input,
+  LinearScale as LinearScaleIcon,
+  LocalGasStation,
+  LocationOn,
+  Map,
+  MapOutlined,
+  Memory,
+  MonitorHeart,
+  Navigation,
+  OfflineBolt,
+  Palette,
+  PieChart,
+  PieChartOutline,
+  PowerSettingsNew,
+  Preview,
+  Public,
+  QueryStats,
+  RadioButtonChecked,
+  RotateRight,
+  Router,
+  Save,
+  ScatterPlot,
+  Send,
+  Sensors,
+  Settings,
+  ShowChart,
+  SignalWifi4Bar,
+  SmartButton,
+  Speed,
+  TableChart,
+  TableRows,
+  Thermostat,
+  Timeline,
+  Timer,
+  ToggleOn,
+  TouchApp,
+  Tune,
+  Update,
+  ViewCompact,
+  ViewList,
+  ViewModule,
+  ViewStream,
+  WaterDrop,
+  Waves,
+  WbSunny
+} from '@mui/icons-material';
+import {
+  Alert,
   Box,
-  Grid,
-  Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Card,
-  CardContent,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  Grid,
   IconButton,
-  Tooltip,
-  Divider,
-  Switch,
+  InputLabel,
+  MenuItem,
+  Select,
   Slider,
-  ColorPicker,
+  Switch,
   Tab,
   Tabs,
-  Autocomplete,
-  Alert
+  TextField,
+  Typography
 } from '@mui/material';
 import {
-  Add,
-  Delete,
-  Preview,
-  Save,
-  Close,
-  Palette,
-  Timeline,
-  BarChart,
-  PieChart,
-  ScatterPlot,
-  ShowChart,
-  TrendingUp,
-  Settings,
-  DeviceHub,
-  TableChart,
-  Map,
-  ControlPoint,
-  Input,
-  Event,
-  ElectricBolt,
-  Industry as FactoryIcon,
-  Speed,
-  Thermostat,
-  BatteryFull,
-  SignalWifi4Bar,
-  RotateRight,
-  Power,
-  LinearScale as LinearScaleIcon,
-  CompareArrows,
-  ViewModule,
-  AccountTree,
-  Functions,
-  CalendarToday,
-  Schedule,
-  WbSunny,
-  AcUnit,
-  Opacity,
-  Air,
-  FilterAlt,
-  MonitorHeart,
-  Memory,
-  Router,
-  Sensors,
-  Engineering,
-  ElectricalServices,
-  WaterDrop,
-  LocalGasStation,
-  Brightness1,
-  RadioButtonChecked,
-  ToggleOn,
-  Tune,
-  TouchApp,
-  SmartButton,
-  Navigation,
-  DateRange,
-  QueryStats,
-  Assessment,
-  Dashboard,
-  ViewList,
-  GridView,
-  Analytics,
-  ShowChartSharp,
-  DonutLarge,
-  PieChartOutline,
-  ScatterPlotSharp,
-  BubbleChart,
-  ViewCompact,
-  TableRows,
-  ViewStream,
-  MapOutlined,
-  LocationOn,
-  Public,
-  Explore,
-  Gamepad,
-  Edit,
-  Send,
-  Update,
-  Timer,
-  EventNote,
-  PowerSettingsNew,
-  Bolt,
-  Factory,
-  Compress,
-  Waves,
-  OfflineBolt
-} from '@mui/icons-material';
-import { HexColorPicker } from 'react-colorful';
-import { Line, Bar, Pie, Scatter, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
+  ArcElement,
   BarElement,
-  Title,
+  CategoryScale,
+  Chart as ChartJS,
   Tooltip as ChartTooltip,
   Legend,
-  ArcElement,
+  LinearScale,
+  LineElement,
+  PointElement,
   TimeScale,
+  Title,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { useEffect, useState } from 'react';
+import { Bar, Doughnut, Line, Pie, Scatter } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 
 // Register Chart.js components
@@ -148,12 +122,13 @@ ChartJS.register(
   TimeScale
 );
 
-const ChartCustomizationDialog = ({ 
-  open, 
-  onClose, 
-  devices = [], 
-  onSaveChart, 
-  editingChart = null 
+const ChartCustomizationDialog = ({
+  open,
+  onClose,
+  devices = [],
+  measurements = [], // <-- Accept measurements prop
+  onSaveChart,
+  editingChart = null
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -183,22 +158,8 @@ const ChartCustomizationDialog = ({
     groupBy: 'device'
   });
 
-  const [availableDataTypes] = useState([
-    { value: 'temperature', label: 'Temperature', unit: '°C' },
-    { value: 'humidity', label: 'Humidity', unit: '%' },
-    { value: 'pressure', label: 'Pressure', unit: 'hPa' },
-    { value: 'vibration', label: 'Vibration', unit: 'mm/s' },
-    { value: 'light', label: 'Light Level', unit: 'lux' },
-    { value: 'voltage', label: 'Voltage', unit: 'V' },
-    { value: 'current', label: 'Current', unit: 'A' },
-    { value: 'power', label: 'Power', unit: 'W' },
-    { value: 'flow_rate', label: 'Flow Rate', unit: 'L/min' },
-    { value: 'rpm', label: 'RPM', unit: 'rpm' },
-    { value: 'distance', label: 'Distance', unit: 'cm' },
-    { value: 'ph', label: 'pH Level', unit: 'pH' },
-    { value: 'co2', label: 'CO2 Level', unit: 'ppm' },
-    { value: 'noise', label: 'Noise Level', unit: 'dB' }
-  ]);
+  // Replace static availableDataTypes with measurements from prop
+  const [selectedMeasurement, setSelectedMeasurement] = useState('');
 
   const chartTypes = [
     // Timeseries Widgets
@@ -211,7 +172,7 @@ const ChartCustomizationDialog = ({
     { value: 'timeseries-table-new', label: 'Timeseries Table', icon: <TableChart />, category: 'Timeseries' },
     { value: 'flot-bar', label: 'Flot Bar Chart', icon: <BarChart />, category: 'Timeseries' },
     { value: 'flot-line', label: 'Flot Line Chart', icon: <ShowChart />, category: 'Timeseries' },
-    
+
     // Charts Widgets
     { value: 'pie', label: 'Pie Chart', icon: <PieChart />, category: 'Charts' },
     { value: 'doughnut', label: 'Doughnut Chart', icon: <DonutLarge />, category: 'Charts' },
@@ -224,14 +185,14 @@ const ChartCustomizationDialog = ({
     { value: 'chartjs-bar', label: 'Chart.js Bar', icon: <BarChart />, category: 'Charts' },
     { value: 'chartjs-line', label: 'Chart.js Line', icon: <ShowChart />, category: 'Charts' },
     { value: 'chartjs-doughnut', label: 'Chart.js Doughnut', icon: <DonutLarge />, category: 'Charts' },
-    
+
     // Analog Gauges
     { value: 'gauge', label: 'Analog Gauge', icon: <Speed />, category: 'Analog Gauges' },
     { value: 'compass', label: 'Compass', icon: <Explore />, category: 'Analog Gauges' },
     { value: 'thermometer', label: 'Thermometer Scale', icon: <Thermostat />, category: 'Analog Gauges' },
     { value: 'linear-gauge', label: 'Linear Gauge', icon: <LinearScaleIcon />, category: 'Analog Gauges' },
     { value: 'radial-gauge', label: 'Radial Gauge', icon: <RadioButtonChecked />, category: 'Analog Gauges' },
-    
+
     // Digital Gauges  
     { value: 'digital-gauge', label: 'Digital Gauge', icon: <Assessment />, category: 'Digital Gauges' },
     { value: 'digital-thermometer', label: 'Digital Thermometer', icon: <Thermostat />, category: 'Digital Gauges' },
@@ -241,7 +202,7 @@ const ChartCustomizationDialog = ({
     { value: 'speedometer', label: 'Speedometer', icon: <Speed />, category: 'Digital Gauges' },
     { value: 'level', label: 'Level Indicator', icon: <CompareArrows />, category: 'Digital Gauges' },
     { value: 'simple-gauge', label: 'Simple Gauge', icon: <Brightness1 />, category: 'Digital Gauges' },
-    
+
     // Cards Widgets
     { value: 'value-card', label: 'Value Card', icon: <ViewModule />, category: 'Cards' },
     { value: 'simple-card', label: 'Simple Card', icon: <ViewCompact />, category: 'Cards' },
@@ -251,14 +212,14 @@ const ChartCustomizationDialog = ({
     { value: 'label-card', label: 'Label Value Card', icon: <ViewModule />, category: 'Cards' },
     { value: 'multiple-input', label: 'Multiple Input Widgets', icon: <ViewList />, category: 'Cards' },
     { value: 'html-card', label: 'HTML Value Card', icon: <ViewModule />, category: 'Cards' },
-    
+
     // Tables
     { value: 'entities-table', label: 'Entities Table', icon: <TableChart />, category: 'Tables' },
     { value: 'timeseries-table', label: 'Timeseries Table', icon: <TableRows />, category: 'Tables' },
     { value: 'latest-values', label: 'Latest Values', icon: <ViewList />, category: 'Tables' },
     { value: 'alarms-table', label: 'Alarms Table', icon: <TableChart />, category: 'Tables' },
     { value: 'advanced-table', label: 'Advanced Table', icon: <ViewStream />, category: 'Tables' },
-    
+
     // Maps
     { value: 'openstreet-map', label: 'OpenStreet Map', icon: <MapOutlined />, category: 'Maps' },
     { value: 'google-map', label: 'Google Map', icon: <Public />, category: 'Maps' },
@@ -267,7 +228,7 @@ const ChartCustomizationDialog = ({
     { value: 'trip-animation', label: 'Trip Animation', icon: <Timeline />, category: 'Maps' },
     { value: 'here-map', label: 'Here Map', icon: <Map />, category: 'Maps' },
     { value: 'tencent-map', label: 'Tencent Map', icon: <Map />, category: 'Maps' },
-    
+
     // Control Widgets
     { value: 'knob-control', label: 'Knob Control', icon: <RotateRight />, category: 'Control' },
     { value: 'switch-control', label: 'Switch Control', icon: <ToggleOn />, category: 'Control' },
@@ -277,27 +238,27 @@ const ChartCustomizationDialog = ({
     { value: 'persistent-table', label: 'Persistent Add/Remove Table', icon: <TableChart />, category: 'Control' },
     { value: 'led-indicator', label: 'LED Indicator', icon: <Brightness1 />, category: 'Control' },
     { value: 'multiple-input-control', label: 'Multiple Input', icon: <Input />, category: 'Control' },
-    
+
     // Input Widgets
     { value: 'update-attribute', label: 'Update Attribute', icon: <Update />, category: 'Input' },
     { value: 'send-rpc', label: 'Send RPC', icon: <Send />, category: 'Input' },
     { value: 'command-button', label: 'Command Button', icon: <TouchApp />, category: 'Input' },
     { value: 'edge-rpc', label: 'Edge RPC', icon: <Router />, category: 'Input' },
-    
+
     // Date/Time & Navigation
     { value: 'date-range-navigator', label: 'Date Range Navigator', icon: <DateRange />, category: 'Navigation' },
     { value: 'timespan-selector', label: 'Timespan Selector', icon: <Timer />, category: 'Navigation' },
     { value: 'navigation-card', label: 'Navigation Card', icon: <Navigation />, category: 'Navigation' },
-    
+
     // Scheduling
     { value: 'scheduler-events', label: 'Scheduler Events', icon: <EventNote />, category: 'Scheduling' },
     { value: 'calendar-events', label: 'Calendar Scheduler', icon: <CalendarToday />, category: 'Scheduling' },
-    
+
     // Energy
     { value: 'power-button', label: 'Power Button', icon: <PowerSettingsNew />, category: 'Energy' },
     { value: 'energy-meter', label: 'Energy Meter', icon: <ElectricalServices />, category: 'Energy' },
     { value: 'solar-panel', label: 'Solar Panel', icon: <WbSunny />, category: 'Energy' },
-    
+
     // Industrial
     { value: 'liquid-level', label: 'Liquid Level', icon: <WaterDrop />, category: 'Industrial' },
     { value: 'wind-turbine', label: 'Wind Turbine', icon: <Air />, category: 'Industrial' },
@@ -305,20 +266,20 @@ const ChartCustomizationDialog = ({
     { value: 'valve-controller', label: 'Valve Controller', icon: <FilterAlt />, category: 'Industrial' },
     { value: 'pump-controller', label: 'Pump Controller', icon: <Compress />, category: 'Industrial' },
     { value: 'industrial-gauge', label: 'Industrial Gauge', icon: <Factory />, category: 'Industrial' },
-    
+
     // Gateway
     { value: 'gateway-remote-shell', label: 'Gateway Remote Shell', icon: <Router />, category: 'Gateway' },
     { value: 'gateway-config', label: 'Gateway Configuration', icon: <Settings />, category: 'Gateway' },
-    
+
     // Alarm
     { value: 'alarm-widget', label: 'Alarm Widget', icon: <MonitorHeart />, category: 'Alarm' },
     { value: 'alarm-table', label: 'Alarm Table', icon: <TableChart />, category: 'Alarm' },
-    
+
     // System
     { value: 'device-claiming', label: 'Device Claiming', icon: <DeviceHub />, category: 'System' },
     { value: 'entity-admin', label: 'Entity Admin', icon: <Settings />, category: 'System' },
     { value: 'json-input', label: 'JSON Input', icon: <Memory />, category: 'System' },
-    
+
     // Sensor Data
     { value: 'temperature-humidity', label: 'Temperature & Humidity', icon: <Thermostat />, category: 'Sensors' },
     { value: 'environmental', label: 'Environmental Sensors', icon: <Sensors />, category: 'Sensors' },
@@ -331,7 +292,7 @@ const ChartCustomizationDialog = ({
   const categories = [
     'All',
     'Timeseries',
-    'Charts', 
+    'Charts',
     'Analog Gauges',
     'Digital Gauges',
     'Cards',
@@ -350,8 +311,8 @@ const ChartCustomizationDialog = ({
   ];
 
   // Filter chart types by category
-  const filteredChartTypes = selectedCategory === 'All' 
-    ? chartTypes 
+  const filteredChartTypes = selectedCategory === 'All'
+    ? chartTypes
     : chartTypes.filter(type => type.category === selectedCategory);
 
   const timeRanges = [
@@ -376,8 +337,8 @@ const ChartCustomizationDialog = ({
   useEffect(() => {
     if (editingChart) {
       setChartConfig({ ...editingChart });
+      setSelectedMeasurement(editingChart.measurement || '');
     } else {
-      // Reset to default when creating new chart
       setChartConfig({
         id: null,
         name: '',
@@ -403,8 +364,9 @@ const ChartCustomizationDialog = ({
         aggregation: 'none',
         groupBy: 'device'
       });
+      setSelectedMeasurement(measurements[0] || '');
     }
-  }, [editingChart, open]);
+  }, [editingChart, open, measurements]);
 
   const handleConfigChange = (field, value) => {
     setChartConfig(prev => ({
@@ -416,7 +378,7 @@ const ChartCustomizationDialog = ({
   const handleDeviceToggle = (deviceId) => {
     const currentDevices = chartConfig.devices || [];
     const isSelected = currentDevices.includes(deviceId);
-    
+
     if (isSelected) {
       handleConfigChange('devices', currentDevices.filter(d => d !== deviceId));
     } else {
@@ -427,7 +389,7 @@ const ChartCustomizationDialog = ({
   const handleDataTypeToggle = (dataType) => {
     const currentTypes = chartConfig.dataTypes || [];
     const isSelected = currentTypes.includes(dataType);
-    
+
     if (isSelected) {
       handleConfigChange('dataTypes', currentTypes.filter(t => t !== dataType));
     } else {
@@ -443,7 +405,7 @@ const ChartCustomizationDialog = ({
     const labels = [];
     const datasets = [];
     const now = new Date();
-    
+
     // Generate time labels
     for (let i = 10; i >= 0; i--) {
       labels.push(new Date(now.getTime() - i * 60000).toLocaleTimeString());
@@ -455,19 +417,21 @@ const ChartCustomizationDialog = ({
       if (!device) return;
 
       chartConfig.dataTypes.forEach((dataType, typeIndex) => {
-        const dataTypeInfo = availableDataTypes.find(dt => dt.value === dataType);
-        if (!dataTypeInfo) return;
-
-        const color = chartConfig.customColors[deviceIndex * chartConfig.dataTypes.length + typeIndex] || 
-                     `hsl(${(deviceIndex * 360 / chartConfig.devices.length + typeIndex * 60) % 360}, 70%, 50%)`;
+        // Remove reference to availableDataTypes
+        // Use the measurement string directly
+        const color = chartConfig.customColors[deviceIndex * chartConfig.dataTypes.length + typeIndex] ||
+          `hsl(${(deviceIndex * 360 / chartConfig.devices.length + typeIndex * 60) % 360}, 70%, 50%)`;
 
         const data = labels.map(() => {
           // Generate realistic sample data based on data type
           switch (dataType) {
+            case 'Temperature':
             case 'temperature':
               return 20 + Math.random() * 10;
+            case 'Humidity':
             case 'humidity':
               return 40 + Math.random() * 40;
+            case 'Pressure':
             case 'pressure':
               return 1000 + Math.random() * 50;
             default:
@@ -476,7 +440,7 @@ const ChartCustomizationDialog = ({
         });
 
         datasets.push({
-          label: `${device.name} - ${dataTypeInfo.label}`,
+          label: `${device.name} - ${dataType}`,
           data: data,
           borderColor: color,
           backgroundColor: chartConfig.fillArea ? color + '20' : color,
@@ -553,19 +517,19 @@ const ChartCustomizationDialog = ({
       toast.error('Please enter a chart name');
       return;
     }
-
     if (!chartConfig.devices.length) {
       toast.error('Please select at least one device');
       return;
     }
-
-    if (!chartConfig.dataTypes.length) {
-      toast.error('Please select at least one data type');
+    if (!selectedMeasurement) {
+      toast.error('Please select a measurement');
       return;
     }
 
+    // Save chart with measurement
     const chartToSave = {
       ...chartConfig,
+      measurement: selectedMeasurement,
       id: editingChart?.id || Date.now().toString(),
       createdAt: editingChart?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -592,7 +556,7 @@ const ChartCustomizationDialog = ({
               required
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -654,10 +618,10 @@ const ChartCustomizationDialog = ({
                     <Box display="flex" alignItems="center">
                       {type.icon}
                       <Typography sx={{ ml: 1 }}>{type.label}</Typography>
-                      <Chip 
-                        label={type.category} 
-                        size="small" 
-                        sx={{ ml: 'auto', opacity: 0.7 }} 
+                      <Chip
+                        label={type.category}
+                        size="small"
+                        sx={{ ml: 'auto', opacity: 0.7 }}
                       />
                     </Box>
                   </MenuItem>
@@ -739,16 +703,34 @@ const ChartCustomizationDialog = ({
 
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
+              Select Measurement
+            </Typography>
+            <FormControl fullWidth>
+              <InputLabel>Measurement</InputLabel>
+              <Select
+                value={selectedMeasurement}
+                label="Measurement"
+                onChange={e => setSelectedMeasurement(e.target.value)}
+              >
+                {measurements.map(m => (
+                  <MenuItem key={m} value={m}>{m}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
               Select Data Types
             </Typography>
             <Grid container spacing={1}>
-              {availableDataTypes.map((dataType) => (
-                <Grid item key={dataType.value}>
+              {measurements.map((dataType) => (
+                <Grid item key={dataType}>
                   <Chip
-                    label={`${dataType.label} (${dataType.unit})`}
-                    onClick={() => handleDataTypeToggle(dataType.value)}
-                    color={chartConfig.dataTypes?.includes(dataType.value) ? 'secondary' : 'default'}
-                    variant={chartConfig.dataTypes?.includes(dataType.value) ? 'filled' : 'outlined'}
+                    label={dataType}
+                    onClick={() => handleDataTypeToggle(dataType)}
+                    color={chartConfig.dataTypes?.includes(dataType) ? 'secondary' : 'default'}
+                    variant={chartConfig.dataTypes?.includes(dataType) ? 'filled' : 'outlined'}
                   />
                 </Grid>
               ))}
@@ -935,6 +917,7 @@ const ChartCustomizationDialog = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
+          disabled={!selectedMeasurement}
         >
           {editingChart ? 'Update Chart' : 'Create Chart'}
         </Button>
