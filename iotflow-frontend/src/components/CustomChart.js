@@ -1,22 +1,22 @@
 import {
+  Assessment,
+  BarChart,
   Delete,
+  DeviceHub,
   Download,
   Edit,
   Fullscreen,
   MoreVert,
   Pause,
+  PieChart,
   PlayArrow,
   Refresh,
-  ShowChart,
-  Timeline,
-  BarChart,
-  PieChart,
   ScatterPlot,
+  ShowChart,
   Speed,
-  Assessment,
   Thermostat,
-  WaterDrop,
-  DeviceHub
+  Timeline,
+  WaterDrop
 } from '@mui/icons-material';
 import {
   Alert,
@@ -70,10 +70,10 @@ const CustomChart = ({
       setChartOption(null);
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const option = await generateEChartsOption();
       setChartOption(option);
@@ -103,82 +103,82 @@ const CustomChart = ({
 
   const generateEChartsOption = async () => {
     const telemetryArrays = Array.isArray(telemetryData[0]) ? telemetryData : [telemetryData];
-    
+
     // Generate time labels
     const timeLabels = telemetryArrays[0]?.map(point => {
       const date = new Date(point.timestamp);
-      return telemetryArrays[0].length > 0 && 
+      return telemetryArrays[0].length > 0 &&
         (telemetryArrays[0][telemetryArrays[0].length - 1].timestamp - telemetryArrays[0][0].timestamp < 24 * 60 * 60 * 1000)
         ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         : date.toLocaleDateString();
     }) || [];
 
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     switch (chartConfig.type) {
       case 'line':
       case 'spline':
       case 'area':
       case 'step-line':
         return generateLineChartOption(telemetryArrays, timeLabels, isDarkMode);
-      
+
       case 'bar':
       case 'stacked-bar':
       case 'horizontal-bar':
       case 'grouped-bar':
         return generateBarChartOption(telemetryArrays, timeLabels, isDarkMode);
-      
+
       case 'pie':
       case 'doughnut':
       case 'rose':
         return generatePieChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'scatter':
       case 'bubble':
         return generateScatterChartOption(telemetryArrays, timeLabels, isDarkMode);
-      
+
       case 'gauge':
       case 'speedometer':
       case 'progress-gauge':
       case 'multi-gauge':
         return generateGaugeChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'heatmap':
         return generateHeatmapChartOption(telemetryArrays, timeLabels, isDarkMode);
-      
+
       // Specialized IoT Gauges
       case 'thermometer':
         return generateThermometerChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'tank-level':
         return generateTankLevelChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'battery-level':
         return generateBatteryLevelChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'signal-strength':
         return generateSignalStrengthChartOption(telemetryArrays, isDarkMode);
-      
+
       // Advanced Charts
       case 'radar':
         return generateRadarChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'funnel':
         return generateFunnelChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'liquid-fill':
         return generateLiquidFillChartOption(telemetryArrays, isDarkMode);
-      
+
       case 'sunburst':
         return generateSunburstChartOption(telemetryArrays, isDarkMode);
-      
+
       // Cards
       case 'value-card':
       case 'metric-card':
       case 'status-card':
       case 'comparison-card':
         return generateCardChartOption(telemetryArrays, isDarkMode);
-      
+
       default:
         return generateLineChartOption(telemetryArrays, timeLabels, isDarkMode);
     }
@@ -244,7 +244,7 @@ const CustomChart = ({
         textStyle: {
           color: isDarkMode ? '#ffffff' : '#333333'
         },
-        formatter: function(params) {
+        formatter: function (params) {
           let result = `<div style="margin-bottom: 5px; font-weight: bold;">${params[0].axisValue}</div>`;
           params.forEach(param => {
             result += `<div style="margin: 2px 0;">
@@ -342,10 +342,10 @@ const CustomChart = ({
       barGap: chartConfig.type === 'grouped-bar' ? '10%' : null,
       itemStyle: {
         color: new echarts.graphic.LinearGradient(
-          isHorizontal ? 1 : 0, 
-          isHorizontal ? 0 : 0, 
-          isHorizontal ? 0 : 0, 
-          isHorizontal ? 0 : 1, 
+          isHorizontal ? 1 : 0,
+          isHorizontal ? 0 : 0,
+          isHorizontal ? 0 : 0,
+          isHorizontal ? 0 : 1,
           [
             { offset: 0, color: chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length] },
             { offset: 1, color: echarts.color.modifyAlpha(chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length], 0.7) }
@@ -695,7 +695,7 @@ const CustomChart = ({
     // Generate heatmap data - this is a simplified version
     const data = [];
     const dataArr = telemetryArrays[0] || [];
-    
+
     for (let i = 0; i < Math.min(timeLabels.length, 24); i++) {
       for (let j = 0; j < Math.min(7, dataArr.length); j++) {
         data.push([i, j, dataArr[j]?.value || 0]);
@@ -782,7 +782,7 @@ const CustomChart = ({
     const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
     const maxValue = chartConfig.yAxisMax || 100;
     const minValue = chartConfig.yAxisMin || 0;
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -864,7 +864,7 @@ const CustomChart = ({
     const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
     const maxValue = chartConfig.yAxisMax || 100;
     const percentage = Math.min(Math.max((currentValue / maxValue) * 100, 0), 100);
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -932,13 +932,13 @@ const CustomChart = ({
     const dataArr = telemetryArrays[0] || [];
     const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
     const percentage = Math.min(Math.max(currentValue, 0), 100);
-    
+
     const getBatteryColor = (level) => {
       if (level > 60) return '#52c41a';
       if (level > 30) return '#faad14';
       return '#ff4d4f';
     };
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -978,11 +978,11 @@ const CustomChart = ({
           type: 'rect',
           left: 'center',
           top: 'middle',
-          shape: { 
-            x: -77, 
-            y: -27, 
-            width: (percentage / 100) * 144, 
-            height: 54 
+          shape: {
+            x: -77,
+            y: -27,
+            width: (percentage / 100) * 144,
+            height: 54
           },
           style: {
             fill: getBatteryColor(percentage)
@@ -1009,12 +1009,12 @@ const CustomChart = ({
     const bars = 5;
     const percentage = Math.min(Math.max(currentValue / 100, 0), 1);
     const activeBars = Math.ceil(percentage * bars);
-    
+
     const barGraphics = [];
     for (let i = 0; i < bars; i++) {
       const height = (i + 1) * 15;
       const isActive = i < activeBars;
-      
+
       barGraphics.push({
         type: 'rect',
         left: 'center',
@@ -1026,12 +1026,12 @@ const CustomChart = ({
           height: height
         },
         style: {
-          fill: isActive ? (percentage > 0.6 ? '#52c41a' : percentage > 0.3 ? '#faad14' : '#ff4d4f') : 
-                (isDarkMode ? '#333333' : '#e8e8e8')
+          fill: isActive ? (percentage > 0.6 ? '#52c41a' : percentage > 0.3 ? '#faad14' : '#ff4d4f') :
+            (isDarkMode ? '#333333' : '#e8e8e8')
         }
       });
     }
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -1068,13 +1068,13 @@ const CustomChart = ({
     // Create radar chart with multiple measurements
     const measurements = chartConfig.measurements || ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5'];
     const indicator = measurements.map(name => ({ name, max: 100 }));
-    
+
     const series = telemetryArrays.map((dataArr, idx) => {
       const latestValues = measurements.map((_, i) => {
         const data = telemetryArrays[i] || [];
         return data.length > 0 ? data[data.length - 1].value : 0;
       });
-      
+
       return {
         name: chartConfig.measurements ? chartConfig.measurements[idx] : `Series ${idx + 1}`,
         type: 'radar',
@@ -1087,7 +1087,7 @@ const CustomChart = ({
         }]
       };
     });
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -1139,7 +1139,7 @@ const CustomChart = ({
         color: colorPalette[idx % colorPalette.length]
       }
     })).sort((a, b) => b.value - a.value);
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -1181,7 +1181,7 @@ const CustomChart = ({
     const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
     const maxValue = chartConfig.yAxisMax || 100;
     const percentage = Math.min(Math.max((currentValue / maxValue), 0), 1);
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -1229,7 +1229,7 @@ const CustomChart = ({
     const data = measurements.map((measurement, idx) => {
       const dataArr = telemetryArrays[idx] || [];
       const value = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : Math.random() * 100;
-      
+
       return {
         name: measurement,
         value: value,
@@ -1240,7 +1240,7 @@ const CustomChart = ({
         ]
       };
     });
-    
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -1274,7 +1274,7 @@ const CustomChart = ({
     const previousValue = dataArr.length > 1 ? dataArr[dataArr.length - 2].value : currentValue;
     const trend = currentValue > previousValue ? '↗' : currentValue < previousValue ? '↘' : '→';
     const trendColor = currentValue > previousValue ? '#52c41a' : currentValue < previousValue ? '#ff4d4f' : '#faad14';
-    
+
     return {
       backgroundColor: 'transparent',
       graphic: [
@@ -1366,7 +1366,7 @@ const CustomChart = ({
   // Special rendering for non-chart widget types
   const renderSpecialWidget = () => {
     const nonChartTypes = [
-      'digital-gauge', 'digital-thermometer', 'tank-level', 'battery-level', 
+      'digital-gauge', 'digital-thermometer', 'tank-level', 'battery-level',
       'signal-strength', 'value-card', 'simple-card', 'entities-hierarchy',
       'aggregation-card', 'count-card', 'entities-table', 'timeseries-table',
       'latest-values', 'openstreet-map', 'google-map', 'image-map', 'route-map',
@@ -1400,7 +1400,7 @@ const CustomChart = ({
             Advanced Widget Preview
           </Typography>
           <Alert severity="info" sx={{ maxWidth: 300 }}>
-            This represents a preview of advanced IoT dashboard widgets. 
+            This represents a preview of advanced IoT dashboard widgets.
             Interactive features and real-time controls coming soon.
           </Alert>
           {chartConfig.devices?.length > 0 && (
@@ -1428,16 +1428,16 @@ const CustomChart = ({
   }
 
   return (
-    <Card 
-      sx={{ 
-        height: 'auto', 
-        minHeight: isFullscreen ? '100vh' : 350, 
-        width: '100%', 
-        display: 'flex', 
+    <Card
+      sx={{
+        height: 'auto',
+        minHeight: isFullscreen ? '100vh' : 350,
+        width: '100%',
+        display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
-        boxShadow: theme.palette.mode === 'dark' 
-          ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+        boxShadow: theme.palette.mode === 'dark'
+          ? '0 8px 32px rgba(0, 0, 0, 0.3)'
           : '0 8px 32px rgba(0, 0, 0, 0.1)',
         border: `1px solid ${theme.palette.divider}`,
         overflow: 'hidden'
@@ -1515,12 +1515,12 @@ const CustomChart = ({
             return chartOption ? (
               <ReactECharts
                 option={chartOption}
-                style={{ 
-                  height: isFullscreen ? '80vh' : '300px', 
-                  width: '100%' 
+                style={{
+                  height: isFullscreen ? '80vh' : '300px',
+                  width: '100%'
                 }}
                 theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                opts={{ 
+                opts={{
                   renderer: 'canvas',
                   devicePixelRatio: window.devicePixelRatio || 1
                 }}
@@ -1571,8 +1571,8 @@ const CustomChart = ({
           sx: {
             mt: 1,
             borderRadius: 2,
-            boxShadow: theme.palette.mode === 'dark' 
-              ? '0 8px 32px rgba(0, 0, 0, 0.5)' 
+            boxShadow: theme.palette.mode === 'dark'
+              ? '0 8px 32px rgba(0, 0, 0, 0.5)'
               : '0 8px 32px rgba(0, 0, 0, 0.15)'
           }
         }}

@@ -1,54 +1,54 @@
-import React, { useState } from 'react';
 import {
+  Build,
+  CheckCircle,
+  Computer,
+  Delete,
+  Download,
+  Error,
+  Info,
+  Memory,
+  Monitor,
+  Refresh,
+  Router,
+  Security,
+  Settings,
+  Speed,
+  Storage,
+  Timeline,
+  Warning,
+} from '@mui/icons-material';
+import {
+  Alert,
+  Avatar,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
-  Grid,
-  Alert,
-  LinearProgress,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  Grid,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Switch,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  Avatar,
-  Switch,
-  FormControlLabel,
-  Tab,
   Tabs,
-  Divider,
-  Paper,
+  Typography,
 } from '@mui/material';
-import {
-  Storage,
-  Memory,
-  Router,
-  Security,
-  Refresh,
-  Delete,
-  Download,
-  Settings,
-  Monitor,
-  CheckCircle,
-  Warning,
-  Error,
-  Info,
-  Build,
-  Computer,
-  Speed,
-  Timeline,
-} from '@mui/icons-material';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 const Admin = () => {
@@ -211,29 +211,29 @@ const Admin = () => {
             />
           </Box>
         </Box>
-        
+
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             CPU Usage: {service.cpu}%
           </Typography>
-          <LinearProgress 
-            variant="determinate" 
-            value={service.cpu} 
+          <LinearProgress
+            variant="determinate"
+            value={service.cpu}
             sx={{ mb: 1, height: 6, borderRadius: 3 }}
             color={service.cpu > 80 ? 'error' : service.cpu > 60 ? 'warning' : 'success'}
           />
-          
+
           <Typography variant="body2" color="text.secondary" gutterBottom>
             Memory: {service.memory}%
           </Typography>
-          <LinearProgress 
-            variant="determinate" 
-            value={service.memory} 
+          <LinearProgress
+            variant="determinate"
+            value={service.memory}
             sx={{ mb: 1, height: 6, borderRadius: 3 }}
             color={service.memory > 80 ? 'error' : service.memory > 60 ? 'warning' : 'success'}
           />
         </Box>
-        
+
         <Typography variant="caption" color="text.secondary">
           Uptime: {service.uptime}
         </Typography>
@@ -314,8 +314,8 @@ const Admin = () => {
       </Box>
 
       {/* System Health Alert */}
-      <Alert 
-        severity={systemHealth.overall === 'good' ? 'success' : 'warning'} 
+      <Alert
+        severity={systemHealth.overall === 'good' ? 'success' : 'warning'}
         sx={{ mb: 3 }}
       >
         System Health: {systemHealth.overall.toUpperCase()} - All critical services are operational
@@ -355,14 +355,14 @@ const Admin = () => {
             </Grid>
           </Grid>
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
                 Resource Usage
               </Typography>
-              
+
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
@@ -387,7 +387,7 @@ const Admin = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Box sx={{ height: 100, position: 'relative', mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
@@ -412,20 +412,20 @@ const Admin = () => {
                   </Box>
                 </Grid>
               </Grid>
-              
+
               <Divider sx={{ my: 2 }} />
-              
+
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="text.secondary">CPU Usage</Typography>
                   <Typography variant="body2">{systemStats.cpuUsage}%</Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={systemStats.cpuUsage} 
+                <LinearProgress
+                  variant="determinate"
+                  value={systemStats.cpuUsage}
                   sx={{ mb: 2, height: 6, borderRadius: 3 }}
                 />
-                
+
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Network I/O
                 </Typography>
@@ -441,8 +441,8 @@ const Admin = () => {
       {/* Tabbed Content */}
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={activeTab} 
+          <Tabs
+            value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
           >
             <Tab label="System Logs" />
@@ -463,7 +463,7 @@ const Admin = () => {
                 Export Logs
               </Button>
             </Box>
-            
+
             <TableContainer component={Paper} variant="outlined">
               <Table>
                 <TableHead>
@@ -507,7 +507,7 @@ const Admin = () => {
             <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
               Cache Management
             </Typography>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Card variant="outlined">
@@ -540,7 +540,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Card variant="outlined">
                   <CardContent>
@@ -582,7 +582,7 @@ const Admin = () => {
             <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
               Performance Metrics
             </Typography>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
@@ -597,7 +597,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
@@ -611,7 +611,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
@@ -625,7 +625,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
@@ -649,7 +649,7 @@ const Admin = () => {
             <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
               Maintenance Operations
             </Typography>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Card variant="outlined">
@@ -688,7 +688,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Card variant="outlined">
                   <CardContent>
@@ -738,7 +738,7 @@ const Admin = () => {
         <DialogTitle>Clear Cache</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to clear all cache data? This will temporarily impact performance 
+            Are you sure you want to clear all cache data? This will temporarily impact performance
             as the cache rebuilds.
           </Typography>
         </DialogContent>

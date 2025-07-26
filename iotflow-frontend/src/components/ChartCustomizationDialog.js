@@ -104,54 +104,54 @@ const ChartCustomizationDialog = ({
     { value: 'spline', label: 'Smooth Line Chart', icon: <ShowChart />, category: 'Line Charts', description: 'Curved line chart with smooth transitions', status: 'ready' },
     { value: 'area', label: 'Area Chart', icon: <Timeline />, category: 'Line Charts', description: 'Filled area chart showing data trends', status: 'ready' },
     { value: 'step-line', label: 'Step Line Chart', icon: <Timeline />, category: 'Line Charts', description: 'Step-wise line chart for discrete data', status: 'ready' },
-    
+
     // Bar Charts - IMPLEMENTED
     { value: 'bar', label: 'Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Vertical bar chart for comparing values', status: 'ready' },
     { value: 'horizontal-bar', label: 'Horizontal Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Horizontal bar chart for comparing categories', status: 'ready' },
     { value: 'stacked-bar', label: 'Stacked Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Stacked bars showing data composition', status: 'ready' },
     { value: 'grouped-bar', label: 'Grouped Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Side-by-side bars for multiple series', status: 'ready' },
-    
+
     // Circular Charts - IMPLEMENTED
     { value: 'pie', label: 'Pie Chart', icon: <PieChart />, category: 'Circular Charts', description: 'Traditional pie chart for proportional data', status: 'ready' },
     { value: 'doughnut', label: 'Doughnut Chart', icon: <DonutLarge />, category: 'Circular Charts', description: 'Ring-shaped chart with center space', status: 'ready' },
     { value: 'rose', label: 'Rose/Nightingale Chart', icon: <Brightness1 />, category: 'Circular Charts', description: 'Polar chart with varying radius', status: 'ready' },
     { value: 'sunburst', label: 'Sunburst Chart', icon: <WbSunny />, category: 'Circular Charts', description: 'Multi-level hierarchical chart', status: 'ready' },
-    
+
     // Scientific Charts - IMPLEMENTED
     { value: 'scatter', label: 'Scatter Plot', icon: <ScatterPlot />, category: 'Scientific Charts', description: 'X-Y scatter plot for correlation analysis', status: 'ready' },
     { value: 'bubble', label: 'Bubble Chart', icon: <BubbleChart />, category: 'Scientific Charts', description: '3D scatter plot with bubble sizes', status: 'ready' },
     { value: 'heatmap', label: 'Heat Map', icon: <GridView />, category: 'Scientific Charts', description: 'Color-coded data matrix visualization', status: 'ready' },
     { value: 'candlestick', label: 'Candlestick Chart', icon: <Assessment />, category: 'Scientific Charts', description: 'OHLC financial data visualization', status: 'coming-soon' },
-    
+
     // Gauges & Meters - IMPLEMENTED
     { value: 'gauge', label: 'Analog Gauge', icon: <Speed />, category: 'Gauges', description: 'Classic circular gauge meter', status: 'ready' },
     { value: 'speedometer', label: 'Speedometer', icon: <Speed />, category: 'Gauges', description: 'Automotive-style speedometer gauge', status: 'ready' },
     { value: 'progress-gauge', label: 'Progress Gauge', icon: <Assessment />, category: 'Gauges', description: 'Progress indicator gauge', status: 'ready' },
     { value: 'multi-gauge', label: 'Multi-Needle Gauge', icon: <Speed />, category: 'Gauges', description: 'Multiple values on single gauge', status: 'ready' },
-    
+
     // Specialized Gauges - IMPLEMENTED
     { value: 'thermometer', label: 'Thermometer', icon: <Thermostat />, category: 'Specialized', description: 'Temperature display thermometer', status: 'ready' },
     { value: 'tank-level', label: 'Tank Level Indicator', icon: <WaterDrop />, category: 'Specialized', description: 'Liquid level indicator', status: 'ready' },
     { value: 'battery-level', label: 'Battery Level', icon: <BatteryFull />, category: 'Specialized', description: 'Battery charge indicator', status: 'ready' },
     { value: 'signal-strength', label: 'Signal Strength', icon: <SignalWifi4Bar />, category: 'Specialized', description: 'Wireless signal indicator', status: 'ready' },
-    
+
     // Geographic & Network - COMING SOON
     { value: 'map-scatter', label: 'Map Scatter', icon: <Map />, category: 'Geographic', description: 'Geo-located data points on map', status: 'coming-soon' },
     { value: 'heatmap-geo', label: 'Geographic Heatmap', icon: <MapOutlined />, category: 'Geographic', description: 'Heat intensity on geographic map', status: 'coming-soon' },
     { value: 'network-graph', label: 'Network Graph', icon: <AccountTree />, category: 'Network', description: 'Node-link network visualization', status: 'coming-soon' },
     { value: 'sankey', label: 'Sankey Diagram', icon: <Waves />, category: 'Network', description: 'Flow diagram showing connections', status: 'coming-soon' },
-    
+
     // Time Series Specialized - COMING SOON
     { value: 'timeline', label: 'Timeline Chart', icon: <Timeline />, category: 'Timeline', description: 'Event timeline visualization', status: 'coming-soon' },
     { value: 'gantt', label: 'Gantt Chart', icon: <DateRange />, category: 'Timeline', description: 'Project timeline and scheduling', status: 'coming-soon' },
     { value: 'calendar', label: 'Calendar Heatmap', icon: <CalendarToday />, category: 'Timeline', description: 'Calendar-based data visualization', status: 'coming-soon' },
-    
+
     // Industrial & IoT - IMPLEMENTED
     { value: 'funnel', label: 'Funnel Chart', icon: <CompareArrows />, category: 'Industrial', description: 'Process funnel visualization', status: 'ready' },
     { value: 'radar', label: 'Radar Chart', icon: <Navigation />, category: 'Industrial', description: 'Multi-dimensional data comparison', status: 'ready' },
     { value: 'liquid-fill', label: 'Liquid Fill Gauge', icon: <LocalGasStation />, category: 'Industrial', description: 'Animated liquid-filled gauge', status: 'ready' },
     { value: 'tree', label: 'Tree Diagram', icon: <AccountTree />, category: 'Industrial', description: 'Hierarchical tree structure', status: 'coming-soon' },
-    
+
     // Information Cards - IMPLEMENTED
     { value: 'value-card', label: 'Value Display Card', icon: <ViewModule />, category: 'Cards', description: 'Simple numeric value display', status: 'ready' },
     { value: 'metric-card', label: 'Metric Card', icon: <Assessment />, category: 'Cards', description: 'KPI metric with trend indicator', status: 'ready' },
@@ -164,7 +164,7 @@ const ChartCustomizationDialog = ({
     'All',
     'Ready Now',
     'Line Charts',
-    'Bar Charts', 
+    'Bar Charts',
     'Circular Charts',
     'Scientific Charts',
     'Gauges',
@@ -411,11 +411,11 @@ const ChartCustomizationDialog = ({
 
     // Chart preview placeholder - ECharts integration coming soon
     return (
-      <Box 
-        sx={{ 
-          height: 300, 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          height: 300,
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.paper',
           border: '1px dashed',
@@ -502,7 +502,7 @@ const ChartCustomizationDialog = ({
               Widget Type Selection
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Choose from our comprehensive collection of ECharts-based visualization widgets. 
+              Choose from our comprehensive collection of ECharts-based visualization widgets.
               Charts marked with ✓ Ready are fully implemented, while 🔄 Soon indicates features in development.
             </Typography>
           </Grid>
@@ -563,12 +563,12 @@ const ChartCustomizationDialog = ({
                           />
                         </Box>
                       </Box>
-                      <Typography 
-                        variant="caption" 
-                        color="text.secondary" 
-                        sx={{ 
-                          ml: 3, 
-                          mt: 0.5, 
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          ml: 3,
+                          mt: 0.5,
                           fontStyle: 'italic',
                           opacity: type.status === 'coming-soon' ? 0.6 : 1
                         }}

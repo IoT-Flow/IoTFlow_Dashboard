@@ -1,53 +1,53 @@
-import React, { useState, useEffect } from 'react';
 import {
+  CheckCircle,
+  ContentCopy,
+  Error,
+  Info,
+  Message,
+  PlayArrow,
+  Refresh,
+  Router,
+  Settings,
+  Speed,
+  Stop,
+  Topic,
+  Warning,
+} from '@mui/icons-material';
+import {
+  Alert,
+  Avatar,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
-  Grid,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Switch,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  IconButton,
-  Alert,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Switch,
-  FormControlLabel,
-  Tab,
   Tabs,
+  TextField,
+  Typography,
 } from '@mui/material';
-import {
-  Router,
-  Refresh,
-  PlayArrow,
-  Stop,
-  Settings,
-  Message,
-  Topic,
-  Speed,
-  CheckCircle,
-  Warning,
-  Error,
-  Info,
-  ContentCopy,
-} from '@mui/icons-material';
-import { useWebSocket } from '../contexts/WebSocketContext';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useWebSocket } from '../contexts/WebSocketContext';
 
 const MQTT = () => {
   const { connected } = useWebSocket();
@@ -361,8 +361,8 @@ const MQTT = () => {
       </Box>
 
       {/* Broker Status */}
-      <Alert 
-        severity={mqttBrokerStats.status === 'connected' ? 'success' : 'error'} 
+      <Alert
+        severity={mqttBrokerStats.status === 'connected' ? 'success' : 'error'}
         sx={{ mb: 3 }}
         icon={getStatusIcon(mqttBrokerStats.status)}
       >
@@ -449,8 +449,8 @@ const MQTT = () => {
       {/* Tabbed Content */}
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={activeTab} 
+          <Tabs
+            value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
           >
             <Tab label="Topics" />
@@ -491,9 +491,9 @@ const MQTT = () => {
                       </TableCell>
                       <TableCell align="center">{topic.messagesPerSecond}</TableCell>
                       <TableCell align="center">
-                        <Chip 
-                          label={`QoS ${topic.qos}`} 
-                          size="small" 
+                        <Chip
+                          label={`QoS ${topic.qos}`}
+                          size="small"
                           color={topic.qos === 0 ? 'default' : topic.qos === 1 ? 'primary' : 'secondary'}
                         />
                       </TableCell>
@@ -582,8 +582,8 @@ const MQTT = () => {
             <List>
               {recentMessages.map((message, index) => (
                 <React.Fragment key={message.id}>
-                  <ListItem 
-                    button 
+                  <ListItem
+                    button
                     onClick={() => handleMessageClick(message)}
                     sx={{ borderRadius: 1, mb: 1 }}
                   >
@@ -606,8 +606,8 @@ const MQTT = () => {
                       secondary={
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
                           <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                            {message.payload.length > 50 
-                              ? `${message.payload.substring(0, 50)}...` 
+                            {message.payload.length > 50
+                              ? `${message.payload.substring(0, 50)}...`
                               : message.payload}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -736,7 +736,7 @@ const MQTT = () => {
                     multiline
                     rows={8}
                     value={formatPayload(selectedMessage.payload)}
-                    InputProps={{ 
+                    InputProps={{
                       readOnly: true,
                       endAdornment: (
                         <IconButton

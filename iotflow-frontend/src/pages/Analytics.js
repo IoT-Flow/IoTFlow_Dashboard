@@ -1,49 +1,49 @@
-import React, { useState } from 'react';
 import {
+  Analytics as AnalyticsIcon,
+  Assessment,
+  Delete,
+  Download,
+  Edit,
+  PlayArrow,
+  Refresh,
+  Save,
+  ShowChart,
+  Timeline,
+  TrendingDown,
+  TrendingUp,
+  Visibility,
+} from '@mui/icons-material';
+import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
   Chip,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
+  TextField,
   Tooltip,
-  Alert,
+  Typography,
 } from '@mui/material';
-import {
-  TrendingUp,
-  TrendingDown,
-  Analytics as AnalyticsIcon,
-  Assessment,
-  Timeline,
-  ShowChart,
-  Download,
-  Refresh,
-  PlayArrow,
-  Save,
-  Delete,
-  Edit,
-  Visibility,
-} from '@mui/icons-material';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 const Analytics = () => {
@@ -393,7 +393,7 @@ const Analytics = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Devices</InputLabel>
@@ -410,7 +410,7 @@ const Analytics = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Time Range</InputLabel>
@@ -427,7 +427,7 @@ const Analytics = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} md={3}>
                 <Button
                   fullWidth
@@ -505,10 +505,10 @@ const Analytics = () => {
             <Grid item xs={12} md={8}>
               <Card>
                 <CardContent>
-                  <Box sx={{ 
-                    height: 400, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    height: 400,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: 'background.paper',
                     border: '1px dashed',
@@ -565,10 +565,10 @@ const Analytics = () => {
             <Grid item xs={12}>
               <Card>
                 <CardContent>
-                  <Box sx={{ 
-                    height: 400, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    height: 400,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: 'background.paper',
                     border: '1px dashed',
@@ -590,10 +590,10 @@ const Analytics = () => {
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
-                  <Box sx={{ 
-                    height: 300, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    height: 300,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: 'background.paper',
                     border: '1px dashed',
@@ -623,7 +623,7 @@ const Analytics = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                       <Typography variant="body2" color="success.main">Valid Records</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }} color="success.main">
-                        {analyticsData.dataQuality.valid.toLocaleString()} 
+                        {analyticsData.dataQuality.valid.toLocaleString()}
                         ({((analyticsData.dataQuality.valid / analyticsData.dataQuality.total) * 100).toFixed(1)}%)
                       </Typography>
                     </Box>
@@ -671,8 +671,8 @@ const Analytics = () => {
                         {query.name}
                       </TableCell>
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                        {query.query.length > 50 
-                          ? `${query.query.substring(0, 50)}...` 
+                        {query.query.length > 50
+                          ? `${query.query.substring(0, 50)}...`
                           : query.query}
                       </TableCell>
                       <TableCell>
@@ -695,8 +695,8 @@ const Analytics = () => {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete Query">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleDeleteQuery(query.id)}
                           >
                             <Delete />

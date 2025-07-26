@@ -621,8 +621,8 @@ const Telemetry = () => {
                       id: 'main-telemetry-chart',
                       name: `${devices.find(d => d.id === selectedDevice)?.name || 'Device'} - ${measurementFilter === 'all' ? 'All Measurements' : measurementFilter}`,
                       type: chartType,
-                      measurements: measurementFilter === 'all' 
-                        ? Object.keys(telemetryHistory[selectedDevice]) 
+                      measurements: measurementFilter === 'all'
+                        ? Object.keys(telemetryHistory[selectedDevice])
                         : [measurementFilter],
                       timeRange: timeRange,
                       showLegend: true,
@@ -630,26 +630,26 @@ const Telemetry = () => {
                       animations: true,
                       refreshInterval: autoRefresh ? 30 : null,
                       devices: [selectedDevice],
-                      dataTypes: measurementFilter === 'all' 
-                        ? Object.keys(telemetryHistory[selectedDevice]) 
+                      dataTypes: measurementFilter === 'all'
+                        ? Object.keys(telemetryHistory[selectedDevice])
                         : [measurementFilter]
                     }}
                     telemetryData={
                       measurementFilter === 'all'
-                        ? Object.keys(telemetryHistory[selectedDevice]).map(m => 
-                            telemetryHistory[selectedDevice][m] || []
-                          )
+                        ? Object.keys(telemetryHistory[selectedDevice]).map(m =>
+                          telemetryHistory[selectedDevice][m] || []
+                        )
                         : [telemetryHistory[selectedDevice][measurementFilter] || []]
                     }
-                    onEdit={() => {}}
-                    onDelete={() => {}}
+                    onEdit={() => { }}
+                    onDelete={() => { }}
                   />
                 ) : (
-                  <Box sx={{ 
-                    height: 400, 
-                    display: 'flex', 
+                  <Box sx={{
+                    height: 400,
+                    display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center', 
+                    alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: 'background.paper',
                     border: '1px dashed',
@@ -688,7 +688,7 @@ const Telemetry = () => {
                     const telemetryForMeasurements = chart.measurements?.map(m =>
                       telemetryHistory[selectedDevice]?.[m] || []
                     ) || [];
-                    
+
                     return (
                       <Grid item xs={12} md={6} lg={4} key={chart.id}>
                         {telemetryForMeasurements.length > 0 && telemetryForMeasurements.some(data => data.length > 0) ? (
@@ -706,12 +706,12 @@ const Telemetry = () => {
                             >
                               <MoreVert />
                             </IconButton>
-                            <CardContent sx={{ 
-                              height: '100%', 
-                              display: 'flex', 
+                            <CardContent sx={{
+                              height: '100%',
+                              display: 'flex',
                               flexDirection: 'column',
-                              alignItems: 'center', 
-                              justifyContent: 'center' 
+                              alignItems: 'center',
+                              justifyContent: 'center'
                             }}>
                               <Alert severity="warning" sx={{ mb: 2 }}>
                                 No telemetry data available for measurement(s): {chart.measurements?.join(', ') || 'N/A'}
