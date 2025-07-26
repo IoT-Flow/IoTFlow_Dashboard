@@ -49,7 +49,6 @@ import {
   Speed,
   Timeline,
 } from '@mui/icons-material';
-import { Doughnut } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 
 const Admin = () => {
@@ -367,8 +366,10 @@ const Admin = () => {
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Box sx={{ height: 100, position: 'relative', mb: 1 }}>
-                      <Doughnut data={systemUsageData} options={doughnutOptions} />
+                    <Box sx={{ height: 100, position: 'relative', mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        CPU Chart Placeholder
+                      </Typography>
                       <Box sx={{
                         position: 'absolute',
                         top: '50%',
@@ -389,8 +390,10 @@ const Admin = () => {
                 
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Box sx={{ height: 100, position: 'relative', mb: 1 }}>
-                      <Doughnut data={memoryUsageData} options={doughnutOptions} />
+                    <Box sx={{ height: 100, position: 'relative', mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Memory Chart Placeholder
+                      </Typography>
                       <Box sx={{
                         position: 'absolute',
                         top: '50%',

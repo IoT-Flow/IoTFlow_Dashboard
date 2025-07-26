@@ -46,7 +46,6 @@ import {
   Info,
   ContentCopy,
 } from '@mui/icons-material';
-import { Line } from 'react-chartjs-2';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import toast from 'react-hot-toast';
 
@@ -420,7 +419,11 @@ const MQTT = () => {
                 Message Throughput
               </Typography>
               <Box sx={{ height: 200 }}>
-                <Line data={messagesChartData} options={chartOptions} />
+                <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Messages Chart Placeholder
+                  </Typography>
+                </Box>
               </Box>
             </CardContent>
           </Card>
@@ -432,7 +435,11 @@ const MQTT = () => {
                 Active Connections
               </Typography>
               <Box sx={{ height: 200 }}>
-                <Line data={connectionsChartData} options={chartOptions} />
+                <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Connections Chart Placeholder
+                  </Typography>
+                </Box>
               </Box>
             </CardContent>
           </Card>

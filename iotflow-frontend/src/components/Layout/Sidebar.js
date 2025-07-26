@@ -1,26 +1,25 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import {
+  Analytics as AnalyticsIcon,
+  BarChart as BarChartIcon,
+  Dashboard as DashboardIcon,
+  DeviceHub as DeviceHubIcon,
+  Person as PersonIcon,
+  Router as RouterIcon,
+  Settings as SettingsIcon,
+} from '@mui/icons-material';
+import {
+  Box,
   Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Box,
   Typography,
-  useTheme,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  DeviceHub as DeviceHubIcon,
-  Analytics as AnalyticsIcon,
-  Router as RouterIcon,
-  Settings as SettingsIcon,
-  BarChart as BarChartIcon,
-  Person as PersonIcon,
-} from '@mui/icons-material';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar = ({ open, onToggle }) => {
@@ -31,52 +30,52 @@ const Sidebar = ({ open, onToggle }) => {
   const { user } = useAuth();
 
   const navigationItems = [
-    { 
-      label: 'Overview', 
-      path: '/overview', 
+    {
+      label: 'Overview',
+      path: '/overview',
       icon: <DashboardIcon />,
       description: 'Dashboard & device summary',
       roles: ['user', 'admin']
     },
-    { 
-      label: 'Devices', 
-      path: '/devices', 
+    {
+      label: 'Devices',
+      path: '/devices',
       icon: <DeviceHubIcon />,
       description: 'Device management',
       roles: ['user', 'admin']
     },
-    { 
-      label: 'Telemetry', 
-      path: '/telemetry', 
+    {
+      label: 'Telemetry',
+      path: '/telemetry',
       icon: <AnalyticsIcon />,
       description: 'Data visualization',
       roles: ['user', 'admin']
     },
-    { 
-      label: 'Analytics', 
-      path: '/analytics', 
+    {
+      label: 'Analytics',
+      path: '/analytics',
       icon: <BarChartIcon />,
       description: 'Device data analysis',
       roles: ['user', 'admin']
     },
-    { 
-      label: 'Profile', 
-      path: '/profile', 
+    {
+      label: 'Profile',
+      path: '/profile',
       icon: <PersonIcon />,
       description: 'User profile & settings',
       roles: ['user', 'admin']
     },
     // Admin-only features
-    { 
-      label: 'MQTT', 
-      path: '/mqtt', 
+    {
+      label: 'MQTT',
+      path: '/mqtt',
       icon: <RouterIcon />,
       description: 'Message broker monitoring',
       roles: ['admin']
     },
-    { 
-      label: 'Admin', 
-      path: '/admin', 
+    {
+      label: 'Admin',
+      path: '/admin',
       icon: <SettingsIcon />,
       description: 'System administration',
       roles: ['admin']
@@ -138,7 +137,7 @@ const Sidebar = ({ open, onToggle }) => {
         <List sx={{ px: 1 }}>
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.path;
-            
+
             return (
               <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
@@ -167,18 +166,18 @@ const Sidebar = ({ open, onToggle }) => {
                   </ListItemIcon>
                   {open && (
                     <Box>
-                      <ListItemText 
+                      <ListItemText
                         primary={item.label}
-                        sx={{ 
-                          '& .MuiTypography-root': { 
+                        sx={{
+                          '& .MuiTypography-root': {
                             fontWeight: isActive ? 600 : 400,
                             fontSize: '0.9rem'
-                          } 
+                          }
                         }}
                       />
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
+                      <Typography
+                        variant="caption"
+                        sx={{
                           color: isActive ? 'rgba(255,255,255,0.7)' : 'text.secondary',
                           display: 'block',
                           lineHeight: 1,

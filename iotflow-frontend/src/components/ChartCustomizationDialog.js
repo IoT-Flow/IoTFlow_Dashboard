@@ -1,6 +1,5 @@
 import {
   AccountTree,
-  Air,
   Assessment,
   BarChart,
   BatteryFull,
@@ -9,60 +8,27 @@ import {
   CalendarToday,
   Close,
   CompareArrows,
-  Compress,
   DateRange,
   DeviceHub,
   DonutLarge,
-  ElectricalServices,
-  Engineering,
-  EventNote,
-  Explore,
-  Factory,
-  FilterAlt,
-  Functions,
   GridView,
-  Input,
-  LinearScale as LinearScaleIcon,
   LocalGasStation,
-  LocationOn,
   Map,
   MapOutlined,
-  Memory,
-  MonitorHeart,
   Navigation,
-  OfflineBolt,
   Palette,
   PieChart,
-  PieChartOutline,
-  PowerSettingsNew,
   Preview,
-  Public,
-  QueryStats,
-  RadioButtonChecked,
-  RotateRight,
-  Router,
   Save,
   ScatterPlot,
-  Send,
-  Sensors,
   Settings,
   ShowChart,
   SignalWifi4Bar,
-  SmartButton,
   Speed,
-  TableChart,
-  TableRows,
   Thermostat,
   Timeline,
-  Timer,
-  ToggleOn,
-  TouchApp,
-  Tune,
-  Update,
   ViewCompact,
-  ViewList,
   ViewModule,
-  ViewStream,
   WaterDrop,
   Waves,
   WbSunny
@@ -90,37 +56,8 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import {
-  ArcElement,
-  BarElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Tooltip as ChartTooltip,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  TimeScale,
-  Title,
-} from 'chart.js';
-import 'chartjs-adapter-date-fns';
 import { useEffect, useState } from 'react';
-import { Bar, Doughnut, Line, Pie, Scatter } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  ArcElement,
-  TimeScale
-);
 
 const ChartCustomizationDialog = ({
   open,
@@ -162,158 +99,89 @@ const ChartCustomizationDialog = ({
   // const [selectedMeasurement, setSelectedMeasurement] = useState('');
 
   const chartTypes = [
-    // Timeseries Widgets
-    { value: 'line', label: 'Timeseries Line Chart', icon: <Timeline />, category: 'Timeseries' },
-    { value: 'spline', label: 'Timeseries Spline Chart', icon: <ShowChart />, category: 'Timeseries' },
-    { value: 'bar', label: 'Timeseries Bar Chart', icon: <BarChart />, category: 'Timeseries' },
-    { value: 'area', label: 'Area Chart', icon: <Timeline />, category: 'Timeseries' },
-    { value: 'stacked-bar', label: 'Stacked Bar Chart', icon: <BarChart />, category: 'Timeseries' },
-    { value: 'state', label: 'State Chart', icon: <Timeline />, category: 'Timeseries' },
-    { value: 'timeseries-table-new', label: 'Timeseries Table', icon: <TableChart />, category: 'Timeseries' },
-    { value: 'flot-bar', label: 'Flot Bar Chart', icon: <BarChart />, category: 'Timeseries' },
-    { value: 'flot-line', label: 'Flot Line Chart', icon: <ShowChart />, category: 'Timeseries' },
-
-    // Charts Widgets
-    { value: 'pie', label: 'Pie Chart', icon: <PieChart />, category: 'Charts' },
-    { value: 'doughnut', label: 'Doughnut Chart', icon: <DonutLarge />, category: 'Charts' },
-    { value: 'polar-area', label: 'Polar Area Chart', icon: <PieChartOutline />, category: 'Charts' },
-    { value: 'radar', label: 'Radar Chart', icon: <DeviceHub />, category: 'Charts' },
-    { value: 'scatter', label: 'Scatter Plot', icon: <ScatterPlot />, category: 'Charts' },
-    { value: 'bubble', label: 'Bubble Chart', icon: <BubbleChart />, category: 'Charts' },
-    { value: 'heatmap', label: 'Heat Map', icon: <GridView />, category: 'Charts' },
-    { value: 'flot-pie', label: 'Flot Pie Chart', icon: <PieChart />, category: 'Charts' },
-    { value: 'chartjs-bar', label: 'Chart.js Bar', icon: <BarChart />, category: 'Charts' },
-    { value: 'chartjs-line', label: 'Chart.js Line', icon: <ShowChart />, category: 'Charts' },
-    { value: 'chartjs-doughnut', label: 'Chart.js Doughnut', icon: <DonutLarge />, category: 'Charts' },
-
-    // Analog Gauges
-    { value: 'gauge', label: 'Analog Gauge', icon: <Speed />, category: 'Analog Gauges' },
-    { value: 'compass', label: 'Compass', icon: <Explore />, category: 'Analog Gauges' },
-    { value: 'thermometer', label: 'Thermometer Scale', icon: <Thermostat />, category: 'Analog Gauges' },
-    { value: 'linear-gauge', label: 'Linear Gauge', icon: <LinearScaleIcon />, category: 'Analog Gauges' },
-    { value: 'radial-gauge', label: 'Radial Gauge', icon: <RadioButtonChecked />, category: 'Analog Gauges' },
-
-    // Digital Gauges  
-    { value: 'digital-gauge', label: 'Digital Gauge', icon: <Assessment />, category: 'Digital Gauges' },
-    { value: 'digital-thermometer', label: 'Digital Thermometer', icon: <Thermostat />, category: 'Digital Gauges' },
-    { value: 'tank-level', label: 'Tank Level', icon: <WaterDrop />, category: 'Digital Gauges' },
-    { value: 'battery-level', label: 'Battery Level', icon: <BatteryFull />, category: 'Digital Gauges' },
-    { value: 'signal-strength', label: 'Signal Strength', icon: <SignalWifi4Bar />, category: 'Digital Gauges' },
-    { value: 'speedometer', label: 'Speedometer', icon: <Speed />, category: 'Digital Gauges' },
-    { value: 'level', label: 'Level Indicator', icon: <CompareArrows />, category: 'Digital Gauges' },
-    { value: 'simple-gauge', label: 'Simple Gauge', icon: <Brightness1 />, category: 'Digital Gauges' },
-
-    // Cards Widgets
-    { value: 'value-card', label: 'Value Card', icon: <ViewModule />, category: 'Cards' },
-    { value: 'simple-card', label: 'Simple Card', icon: <ViewCompact />, category: 'Cards' },
-    { value: 'entities-hierarchy', label: 'Entities Hierarchy', icon: <AccountTree />, category: 'Cards' },
-    { value: 'aggregation-card', label: 'Aggregation Card', icon: <Functions />, category: 'Cards' },
-    { value: 'count-card', label: 'Count Card', icon: <QueryStats />, category: 'Cards' },
-    { value: 'label-card', label: 'Label Value Card', icon: <ViewModule />, category: 'Cards' },
-    { value: 'multiple-input', label: 'Multiple Input Widgets', icon: <ViewList />, category: 'Cards' },
-    { value: 'html-card', label: 'HTML Value Card', icon: <ViewModule />, category: 'Cards' },
-
-    // Tables
-    { value: 'entities-table', label: 'Entities Table', icon: <TableChart />, category: 'Tables' },
-    { value: 'timeseries-table', label: 'Timeseries Table', icon: <TableRows />, category: 'Tables' },
-    { value: 'latest-values', label: 'Latest Values', icon: <ViewList />, category: 'Tables' },
-    { value: 'alarms-table', label: 'Alarms Table', icon: <TableChart />, category: 'Tables' },
-    { value: 'advanced-table', label: 'Advanced Table', icon: <ViewStream />, category: 'Tables' },
-
-    // Maps
-    { value: 'openstreet-map', label: 'OpenStreet Map', icon: <MapOutlined />, category: 'Maps' },
-    { value: 'google-map', label: 'Google Map', icon: <Public />, category: 'Maps' },
-    { value: 'image-map', label: 'Image Map', icon: <LocationOn />, category: 'Maps' },
-    { value: 'route-map', label: 'Route Map', icon: <Navigation />, category: 'Maps' },
-    { value: 'trip-animation', label: 'Trip Animation', icon: <Timeline />, category: 'Maps' },
-    { value: 'here-map', label: 'Here Map', icon: <Map />, category: 'Maps' },
-    { value: 'tencent-map', label: 'Tencent Map', icon: <Map />, category: 'Maps' },
-
-    // Control Widgets
-    { value: 'knob-control', label: 'Knob Control', icon: <RotateRight />, category: 'Control' },
-    { value: 'switch-control', label: 'Switch Control', icon: <ToggleOn />, category: 'Control' },
-    { value: 'button-control', label: 'Button Control', icon: <SmartButton />, category: 'Control' },
-    { value: 'slider-control', label: 'Slider Control', icon: <Tune />, category: 'Control' },
-    { value: 'round-switch', label: 'Round Switch', icon: <RadioButtonChecked />, category: 'Control' },
-    { value: 'persistent-table', label: 'Persistent Add/Remove Table', icon: <TableChart />, category: 'Control' },
-    { value: 'led-indicator', label: 'LED Indicator', icon: <Brightness1 />, category: 'Control' },
-    { value: 'multiple-input-control', label: 'Multiple Input', icon: <Input />, category: 'Control' },
-
-    // Input Widgets
-    { value: 'update-attribute', label: 'Update Attribute', icon: <Update />, category: 'Input' },
-    { value: 'send-rpc', label: 'Send RPC', icon: <Send />, category: 'Input' },
-    { value: 'command-button', label: 'Command Button', icon: <TouchApp />, category: 'Input' },
-    { value: 'edge-rpc', label: 'Edge RPC', icon: <Router />, category: 'Input' },
-
-    // Date/Time & Navigation
-    { value: 'date-range-navigator', label: 'Date Range Navigator', icon: <DateRange />, category: 'Navigation' },
-    { value: 'timespan-selector', label: 'Timespan Selector', icon: <Timer />, category: 'Navigation' },
-    { value: 'navigation-card', label: 'Navigation Card', icon: <Navigation />, category: 'Navigation' },
-
-    // Scheduling
-    { value: 'scheduler-events', label: 'Scheduler Events', icon: <EventNote />, category: 'Scheduling' },
-    { value: 'calendar-events', label: 'Calendar Scheduler', icon: <CalendarToday />, category: 'Scheduling' },
-
-    // Energy
-    { value: 'power-button', label: 'Power Button', icon: <PowerSettingsNew />, category: 'Energy' },
-    { value: 'energy-meter', label: 'Energy Meter', icon: <ElectricalServices />, category: 'Energy' },
-    { value: 'solar-panel', label: 'Solar Panel', icon: <WbSunny />, category: 'Energy' },
-
-    // Industrial
-    { value: 'liquid-level', label: 'Liquid Level', icon: <WaterDrop />, category: 'Industrial' },
-    { value: 'wind-turbine', label: 'Wind Turbine', icon: <Air />, category: 'Industrial' },
-    { value: 'motor-controller', label: 'Motor Controller', icon: <Engineering />, category: 'Industrial' },
-    { value: 'valve-controller', label: 'Valve Controller', icon: <FilterAlt />, category: 'Industrial' },
-    { value: 'pump-controller', label: 'Pump Controller', icon: <Compress />, category: 'Industrial' },
-    { value: 'industrial-gauge', label: 'Industrial Gauge', icon: <Factory />, category: 'Industrial' },
-
-    // Gateway
-    { value: 'gateway-remote-shell', label: 'Gateway Remote Shell', icon: <Router />, category: 'Gateway' },
-    { value: 'gateway-config', label: 'Gateway Configuration', icon: <Settings />, category: 'Gateway' },
-
-    // Alarm
-    { value: 'alarm-widget', label: 'Alarm Widget', icon: <MonitorHeart />, category: 'Alarm' },
-    { value: 'alarm-table', label: 'Alarm Table', icon: <TableChart />, category: 'Alarm' },
-
-    // System
-    { value: 'device-claiming', label: 'Device Claiming', icon: <DeviceHub />, category: 'System' },
-    { value: 'entity-admin', label: 'Entity Admin', icon: <Settings />, category: 'System' },
-    { value: 'json-input', label: 'JSON Input', icon: <Memory />, category: 'System' },
-
-    // Sensor Data
-    { value: 'temperature-humidity', label: 'Temperature & Humidity', icon: <Thermostat />, category: 'Sensors' },
-    { value: 'environmental', label: 'Environmental Sensors', icon: <Sensors />, category: 'Sensors' },
-    { value: 'gas-sensor', label: 'Gas Sensor', icon: <LocalGasStation />, category: 'Sensors' },
-    { value: 'vibration-sensor', label: 'Vibration Sensor', icon: <Waves />, category: 'Sensors' },
-    { value: 'electrical-meter', label: 'Electrical Meter', icon: <OfflineBolt />, category: 'Sensors' }
+    // Line & Area Charts - IMPLEMENTED
+    { value: 'line', label: 'Line Chart', icon: <Timeline />, category: 'Line Charts', description: 'Classic line chart for time series data', status: 'ready' },
+    { value: 'spline', label: 'Smooth Line Chart', icon: <ShowChart />, category: 'Line Charts', description: 'Curved line chart with smooth transitions', status: 'ready' },
+    { value: 'area', label: 'Area Chart', icon: <Timeline />, category: 'Line Charts', description: 'Filled area chart showing data trends', status: 'ready' },
+    { value: 'step-line', label: 'Step Line Chart', icon: <Timeline />, category: 'Line Charts', description: 'Step-wise line chart for discrete data', status: 'ready' },
+    
+    // Bar Charts - IMPLEMENTED
+    { value: 'bar', label: 'Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Vertical bar chart for comparing values', status: 'ready' },
+    { value: 'horizontal-bar', label: 'Horizontal Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Horizontal bar chart for comparing categories', status: 'ready' },
+    { value: 'stacked-bar', label: 'Stacked Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Stacked bars showing data composition', status: 'ready' },
+    { value: 'grouped-bar', label: 'Grouped Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Side-by-side bars for multiple series', status: 'ready' },
+    
+    // Circular Charts - IMPLEMENTED
+    { value: 'pie', label: 'Pie Chart', icon: <PieChart />, category: 'Circular Charts', description: 'Traditional pie chart for proportional data', status: 'ready' },
+    { value: 'doughnut', label: 'Doughnut Chart', icon: <DonutLarge />, category: 'Circular Charts', description: 'Ring-shaped chart with center space', status: 'ready' },
+    { value: 'rose', label: 'Rose/Nightingale Chart', icon: <Brightness1 />, category: 'Circular Charts', description: 'Polar chart with varying radius', status: 'ready' },
+    { value: 'sunburst', label: 'Sunburst Chart', icon: <WbSunny />, category: 'Circular Charts', description: 'Multi-level hierarchical chart', status: 'ready' },
+    
+    // Scientific Charts - IMPLEMENTED
+    { value: 'scatter', label: 'Scatter Plot', icon: <ScatterPlot />, category: 'Scientific Charts', description: 'X-Y scatter plot for correlation analysis', status: 'ready' },
+    { value: 'bubble', label: 'Bubble Chart', icon: <BubbleChart />, category: 'Scientific Charts', description: '3D scatter plot with bubble sizes', status: 'ready' },
+    { value: 'heatmap', label: 'Heat Map', icon: <GridView />, category: 'Scientific Charts', description: 'Color-coded data matrix visualization', status: 'ready' },
+    { value: 'candlestick', label: 'Candlestick Chart', icon: <Assessment />, category: 'Scientific Charts', description: 'OHLC financial data visualization', status: 'coming-soon' },
+    
+    // Gauges & Meters - IMPLEMENTED
+    { value: 'gauge', label: 'Analog Gauge', icon: <Speed />, category: 'Gauges', description: 'Classic circular gauge meter', status: 'ready' },
+    { value: 'speedometer', label: 'Speedometer', icon: <Speed />, category: 'Gauges', description: 'Automotive-style speedometer gauge', status: 'ready' },
+    { value: 'progress-gauge', label: 'Progress Gauge', icon: <Assessment />, category: 'Gauges', description: 'Progress indicator gauge', status: 'ready' },
+    { value: 'multi-gauge', label: 'Multi-Needle Gauge', icon: <Speed />, category: 'Gauges', description: 'Multiple values on single gauge', status: 'ready' },
+    
+    // Specialized Gauges - IMPLEMENTED
+    { value: 'thermometer', label: 'Thermometer', icon: <Thermostat />, category: 'Specialized', description: 'Temperature display thermometer', status: 'ready' },
+    { value: 'tank-level', label: 'Tank Level Indicator', icon: <WaterDrop />, category: 'Specialized', description: 'Liquid level indicator', status: 'ready' },
+    { value: 'battery-level', label: 'Battery Level', icon: <BatteryFull />, category: 'Specialized', description: 'Battery charge indicator', status: 'ready' },
+    { value: 'signal-strength', label: 'Signal Strength', icon: <SignalWifi4Bar />, category: 'Specialized', description: 'Wireless signal indicator', status: 'ready' },
+    
+    // Geographic & Network - COMING SOON
+    { value: 'map-scatter', label: 'Map Scatter', icon: <Map />, category: 'Geographic', description: 'Geo-located data points on map', status: 'coming-soon' },
+    { value: 'heatmap-geo', label: 'Geographic Heatmap', icon: <MapOutlined />, category: 'Geographic', description: 'Heat intensity on geographic map', status: 'coming-soon' },
+    { value: 'network-graph', label: 'Network Graph', icon: <AccountTree />, category: 'Network', description: 'Node-link network visualization', status: 'coming-soon' },
+    { value: 'sankey', label: 'Sankey Diagram', icon: <Waves />, category: 'Network', description: 'Flow diagram showing connections', status: 'coming-soon' },
+    
+    // Time Series Specialized - COMING SOON
+    { value: 'timeline', label: 'Timeline Chart', icon: <Timeline />, category: 'Timeline', description: 'Event timeline visualization', status: 'coming-soon' },
+    { value: 'gantt', label: 'Gantt Chart', icon: <DateRange />, category: 'Timeline', description: 'Project timeline and scheduling', status: 'coming-soon' },
+    { value: 'calendar', label: 'Calendar Heatmap', icon: <CalendarToday />, category: 'Timeline', description: 'Calendar-based data visualization', status: 'coming-soon' },
+    
+    // Industrial & IoT - IMPLEMENTED
+    { value: 'funnel', label: 'Funnel Chart', icon: <CompareArrows />, category: 'Industrial', description: 'Process funnel visualization', status: 'ready' },
+    { value: 'radar', label: 'Radar Chart', icon: <Navigation />, category: 'Industrial', description: 'Multi-dimensional data comparison', status: 'ready' },
+    { value: 'liquid-fill', label: 'Liquid Fill Gauge', icon: <LocalGasStation />, category: 'Industrial', description: 'Animated liquid-filled gauge', status: 'ready' },
+    { value: 'tree', label: 'Tree Diagram', icon: <AccountTree />, category: 'Industrial', description: 'Hierarchical tree structure', status: 'coming-soon' },
+    
+    // Information Cards - IMPLEMENTED
+    { value: 'value-card', label: 'Value Display Card', icon: <ViewModule />, category: 'Cards', description: 'Simple numeric value display', status: 'ready' },
+    { value: 'metric-card', label: 'Metric Card', icon: <Assessment />, category: 'Cards', description: 'KPI metric with trend indicator', status: 'ready' },
+    { value: 'status-card', label: 'Status Card', icon: <ViewCompact />, category: 'Cards', description: 'Device/system status display', status: 'ready' },
+    { value: 'comparison-card', label: 'Comparison Card', icon: <CompareArrows />, category: 'Cards', description: 'Side-by-side value comparison', status: 'ready' }
   ];
 
   // Widget categories
   const categories = [
     'All',
-    'Timeseries',
-    'Charts',
-    'Analog Gauges',
-    'Digital Gauges',
-    'Cards',
-    'Tables',
-    'Maps',
-    'Control',
-    'Input',
-    'Navigation',
-    'Scheduling',
-    'Energy',
+    'Ready Now',
+    'Line Charts',
+    'Bar Charts', 
+    'Circular Charts',
+    'Scientific Charts',
+    'Gauges',
+    'Specialized',
+    'Geographic',
+    'Network',
+    'Timeline',
     'Industrial',
-    'Gateway',
-    'Alarm',
-    'System',
-    'Sensors'
+    'Cards'
   ];
 
   // Filter chart types by category
   const filteredChartTypes = selectedCategory === 'All'
     ? chartTypes
-    : chartTypes.filter(type => type.category === selectedCategory);
+    : selectedCategory === 'Ready Now'
+      ? chartTypes.filter(type => type.status === 'ready')
+      : chartTypes.filter(type => type.category === selectedCategory);
 
   const timeRanges = [
     { value: '15m', label: 'Last 15 minutes' },
@@ -364,7 +232,7 @@ const ChartCustomizationDialog = ({
       setChartConfig({ ...defaultConfig, ...editingChart });
       // setSelectedMeasurement(editingChart.measurement || measurements[0] || '');
       const foundType = chartTypes.find(t => t.value === (editingChart.type || 'line'));
-      setSelectedCategory(foundType ? foundType.category : 'All');
+      setSelectedCategory(foundType ? foundType.category : 'Ready Now');
       console.debug('[ChartCustomizationDialog] Editing chart:', editingChart);
     } else {
       setChartConfig({
@@ -393,7 +261,7 @@ const ChartCustomizationDialog = ({
         groupBy: 'device'
       });
       // setSelectedMeasurement(measurements[0] || '');
-      setSelectedCategory('All');
+      setSelectedCategory('Ready Now');
     }
   }, [editingChart, open, measurements]);
 
@@ -541,18 +409,23 @@ const ChartCustomizationDialog = ({
       },
     };
 
-    const ChartComponent = {
-      line: Line,
-      bar: Bar,
-      area: Line,
-      scatter: Scatter,
-      pie: Pie,
-      doughnut: Doughnut
-    }[chartConfig.type] || Line;
-
+    // Chart preview placeholder - ECharts integration coming soon
     return (
-      <Box sx={{ height: 300 }}>
-        <ChartComponent data={data} options={options} />
+      <Box 
+        sx={{ 
+          height: 300, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          bgcolor: 'background.paper',
+          border: '1px dashed',
+          borderColor: 'divider',
+          borderRadius: 1
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          Chart Preview ({chartConfig.type})
+        </Typography>
       </Box>
     );
   };
@@ -629,7 +502,8 @@ const ChartCustomizationDialog = ({
               Widget Type Selection
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Choose from our comprehensive collection of ThingsBoard-style widgets
+              Choose from our comprehensive collection of ECharts-based visualization widgets. 
+              Charts marked with ✓ Ready are fully implemented, while 🔄 Soon indicates features in development.
             </Typography>
           </Grid>
 
@@ -657,22 +531,66 @@ const ChartCustomizationDialog = ({
                 value={chartConfig.type}
                 label="Widget Type"
                 onChange={(e) => handleConfigChange('type', e.target.value)}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 400,
+                    },
+                  },
+                }}
               >
                 {filteredChartTypes.map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    <Box display="flex" alignItems="center">
-                      {type.icon}
-                      <Typography sx={{ ml: 1 }}>{type.label}</Typography>
-                      <Chip
-                        label={type.category}
-                        size="small"
-                        sx={{ ml: 'auto', opacity: 0.7 }}
-                      />
+                  <MenuItem key={type.value} value={type.value} disabled={type.status === 'coming-soon'}>
+                    <Box display="flex" flexDirection="column" width="100%" py={0.5}>
+                      <Box display="flex" alignItems="center" width="100%">
+                        {type.icon}
+                        <Typography sx={{ ml: 1, flexGrow: 1, opacity: type.status === 'coming-soon' ? 0.6 : 1 }}>
+                          {type.label}
+                        </Typography>
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <Chip
+                            label={type.status === 'ready' ? '✓ Ready' : '🔄 Soon'}
+                            size="small"
+                            variant={type.status === 'ready' ? 'filled' : 'outlined'}
+                            color={type.status === 'ready' ? 'success' : 'warning'}
+                            sx={{ fontSize: '0.65rem', height: '20px' }}
+                          />
+                          <Chip
+                            label={type.category}
+                            size="small"
+                            variant="outlined"
+                            sx={{ opacity: 0.7, fontSize: '0.65rem', height: '20px' }}
+                          />
+                        </Box>
+                      </Box>
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary" 
+                        sx={{ 
+                          ml: 3, 
+                          mt: 0.5, 
+                          fontStyle: 'italic',
+                          opacity: type.status === 'coming-soon' ? 0.6 : 1
+                        }}
+                      >
+                        {type.description}
+                        {type.status === 'coming-soon' && ' (Implementation in progress)'}
+                      </Typography>
                     </Box>
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              💡 Selected: {(() => {
+                const selectedType = filteredChartTypes.find(t => t.value === chartConfig.type);
+                if (!selectedType) return 'Select a chart type above';
+                return `${selectedType.description} ${selectedType.status === 'ready' ? '(✓ Ready to use)' : '(🔄 Coming soon)'}`;
+              })()}
+            </Typography>
           </Grid>
 
           <Grid item xs={12} md={6}>

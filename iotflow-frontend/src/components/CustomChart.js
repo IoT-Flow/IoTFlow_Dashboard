@@ -1,75 +1,22 @@
 import {
-  AccountTree,
-  Air,
-  Assessment,
-  BarChart,
-  BatteryFull,
-  Brightness1,
-  BubbleChart,
-  CalendarToday,
-  CompareArrows,
-  Compress,
-  DateRange,
   Delete,
-  DeviceHub,
-  DonutLarge,
   Download,
   Edit,
-  ElectricalServices,
-  Engineering,
-  EventNote,
-  Explore,
-  Factory,
-  FilterAlt,
   Fullscreen,
-  Functions,
-  GridView,
-  Input,
-  LinearScale as LinearScaleIcon,
-  LocalGasStation,
-  LocationOn,
-  Map,
-  MapOutlined,
-  Memory,
-  MonitorHeart,
   MoreVert,
-  Navigation,
-  OfflineBolt,
   Pause,
-  PieChart,
-  PieChartOutline,
   PlayArrow,
-  PowerSettingsNew,
-  Public,
-  QueryStats,
-  RadioButtonChecked,
   Refresh,
-  RotateRight,
-  Router,
-  ScatterPlot,
-  Send,
-  Sensors,
-  Settings,
   ShowChart,
-  SignalWifi4Bar,
-  SmartButton,
-  Speed,
-  TableChart,
-  TableRows,
-  Thermostat,
   Timeline,
-  Timer,
-  ToggleOn,
-  TouchApp,
-  Tune,
-  Update,
-  ViewCompact,
-  ViewList,
-  ViewModule,
-  ViewStream,
+  BarChart,
+  PieChart,
+  ScatterPlot,
+  Speed,
+  Assessment,
+  Thermostat,
   WaterDrop,
-  Waves,
-  WbSunny
+  DeviceHub
 } from '@mui/icons-material';
 import {
   Alert,
@@ -83,40 +30,14 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Typography
+  Typography,
+  useTheme
 } from '@mui/material';
-import {
-  ArcElement,
-  BarElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Tooltip as ChartTooltip,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  TimeScale,
-  Title,
-} from 'chart.js';
-import 'chartjs-adapter-date-fns';
+import * as echarts from 'echarts';
+import ReactECharts from 'echarts-for-react';
 import html2canvas from 'html2canvas';
 import { useEffect, useRef, useState } from 'react';
-import { Bar, Doughnut, Line, Pie, Scatter } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  ArcElement,
-  TimeScale
-);
 
 const CustomChart = ({
   chartConfig,
@@ -126,27 +47,36 @@ const CustomChart = ({
   isFullscreen = false,
   onToggleFullscreen
 }) => {
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [chartData, setChartData] = useState(null);
+  const [chartOption, setChartOption] = useState(null);
   const [error, setError] = useState(null);
   const chartRef = useRef(null);
   const refreshIntervalRef = useRef(null);
 
+  // Professional color palette
+  const colorPalette = [
+    '#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE',
+    '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC', '#FFC64B',
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'
+  ];
+
   const loadChartData = async () => {
-    // Accept telemetryData as an array
     if (!Array.isArray(telemetryData) || telemetryData.length === 0) {
       setError('No telemetry data available for this measurement');
-      setChartData(null);
+      setChartOption(null);
       return;
     }
+    
     setLoading(true);
     setError(null);
+    
     try {
-      const chartData = await generateChartData();
-      setChartData(chartData);
+      const option = await generateEChartsOption();
+      setChartOption(option);
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to load chart data:', err);
@@ -171,89 +101,1215 @@ const CustomChart = ({
     };
   }, [chartConfig, autoRefresh, telemetryData]);
 
-  const generateChartData = async () => {
-    // If telemetryData is an array of arrays (one per measurement)
-    const datasets = [];
-    let labels = [];
-
-    // If telemetryData is a single array (for backward compatibility)
+  const generateEChartsOption = async () => {
     const telemetryArrays = Array.isArray(telemetryData[0]) ? telemetryData : [telemetryData];
+    
+    // Generate time labels
+    const timeLabels = telemetryArrays[0]?.map(point => {
+      const date = new Date(point.timestamp);
+      return telemetryArrays[0].length > 0 && 
+        (telemetryArrays[0][telemetryArrays[0].length - 1].timestamp - telemetryArrays[0][0].timestamp < 24 * 60 * 60 * 1000)
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleDateString();
+    }) || [];
 
-    telemetryArrays.forEach((dataArr, idx) => {
-      if (!dataArr || dataArr.length === 0) return;
-
-      // Use the first array for labels
-      if (labels.length === 0) {
-        labels = dataArr.map(point => {
-          const date = new Date(point.timestamp);
-          return dataArr.length > 0 && (dataArr[dataArr.length - 1].timestamp - dataArr[0].timestamp < 24 * 60 * 60 * 1000)
-            ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : date.toLocaleDateString();
-        });
-      }
-
-      datasets.push({
-        label: chartConfig.measurements ? chartConfig.measurements[idx] : chartConfig.name,
-        data: dataArr.map(point => point.value),
-        borderColor: chartConfig.customColors?.[idx] || chartConfig.borderColor || '#1976d2',
-        backgroundColor: chartConfig.fillArea
-          ? (chartConfig.customColors?.[idx] || chartConfig.borderColor || '#1976d2') + '20'
-          : (chartConfig.customColors?.[idx] || chartConfig.borderColor || '#1976d2'),
-        fill: chartConfig.fillArea,
-        borderWidth: chartConfig.lineWidth || 2,
-        pointStyle: chartConfig.pointStyle || 'circle',
-        tension: chartConfig.type === 'line' ? 0.4 : 0,
-      });
-    });
-
-    return { labels, datasets };
+    const isDarkMode = theme.palette.mode === 'dark';
+    
+    switch (chartConfig.type) {
+      case 'line':
+      case 'spline':
+      case 'area':
+      case 'step-line':
+        return generateLineChartOption(telemetryArrays, timeLabels, isDarkMode);
+      
+      case 'bar':
+      case 'stacked-bar':
+      case 'horizontal-bar':
+      case 'grouped-bar':
+        return generateBarChartOption(telemetryArrays, timeLabels, isDarkMode);
+      
+      case 'pie':
+      case 'doughnut':
+      case 'rose':
+        return generatePieChartOption(telemetryArrays, isDarkMode);
+      
+      case 'scatter':
+      case 'bubble':
+        return generateScatterChartOption(telemetryArrays, timeLabels, isDarkMode);
+      
+      case 'gauge':
+      case 'speedometer':
+      case 'progress-gauge':
+      case 'multi-gauge':
+        return generateGaugeChartOption(telemetryArrays, isDarkMode);
+      
+      case 'heatmap':
+        return generateHeatmapChartOption(telemetryArrays, timeLabels, isDarkMode);
+      
+      // Specialized IoT Gauges
+      case 'thermometer':
+        return generateThermometerChartOption(telemetryArrays, isDarkMode);
+      
+      case 'tank-level':
+        return generateTankLevelChartOption(telemetryArrays, isDarkMode);
+      
+      case 'battery-level':
+        return generateBatteryLevelChartOption(telemetryArrays, isDarkMode);
+      
+      case 'signal-strength':
+        return generateSignalStrengthChartOption(telemetryArrays, isDarkMode);
+      
+      // Advanced Charts
+      case 'radar':
+        return generateRadarChartOption(telemetryArrays, isDarkMode);
+      
+      case 'funnel':
+        return generateFunnelChartOption(telemetryArrays, isDarkMode);
+      
+      case 'liquid-fill':
+        return generateLiquidFillChartOption(telemetryArrays, isDarkMode);
+      
+      case 'sunburst':
+        return generateSunburstChartOption(telemetryArrays, isDarkMode);
+      
+      // Cards
+      case 'value-card':
+      case 'metric-card':
+      case 'status-card':
+      case 'comparison-card':
+        return generateCardChartOption(telemetryArrays, isDarkMode);
+      
+      default:
+        return generateLineChartOption(telemetryArrays, timeLabels, isDarkMode);
+    }
   };
 
-  const getChartOptions = () => {
+  const generateLineChartOption = (telemetryArrays, timeLabels, isDarkMode) => {
+    const series = telemetryArrays.map((dataArr, idx) => ({
+      name: chartConfig.measurements ? chartConfig.measurements[idx] : `Series ${idx + 1}`,
+      type: 'line',
+      data: dataArr?.map(point => point.value) || [],
+      smooth: chartConfig.type === 'spline',
+      step: chartConfig.type === 'step-line' ? 'end' : false,
+      areaStyle: chartConfig.type === 'area' ? {
+        opacity: 0.3,
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length] },
+          { offset: 1, color: 'transparent' }
+        ])
+      } : null,
+      lineStyle: {
+        width: chartConfig.lineWidth || 3,
+        color: chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length]
+      },
+      itemStyle: {
+        color: chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length],
+        borderWidth: 2,
+        borderColor: '#fff'
+      },
+      emphasis: {
+        focus: 'series',
+        itemStyle: {
+          borderWidth: 3,
+          shadowBlur: 10,
+          shadowColor: 'rgba(0, 0, 0, 0.3)'
+        }
+      }
+    }));
+
     return {
-      responsive: true,
-      maintainAspectRatio: !isFullscreen,
-      aspectRatio: isFullscreen ? undefined : (chartConfig.aspectRatio || 2),
-      plugins: {
-        legend: {
-          display: chartConfig.showLegend !== false,
-          position: 'top',
-        },
-        title: {
-          display: !!chartConfig.title,
-          text: chartConfig.title,
-          font: {
-            size: isFullscreen ? 18 : 14
-          }
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
         }
       },
-      scales: chartConfig.type === 'pie' || chartConfig.type === 'doughnut' ? {} : {
-        y: {
-          grid: {
-            display: chartConfig.showGrid !== false,
-          },
-          min: chartConfig.yAxisMin,
-          max: chartConfig.yAxisMax,
-          beginAtZero: chartConfig.yAxisMin === null && chartConfig.yAxisMax === null,
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          animation: true,
+          lineStyle: {
+            color: isDarkMode ? '#ffffff' : '#333333',
+            width: 1,
+            opacity: 0.8
+          }
         },
-        x: {
-          grid: {
-            display: chartConfig.showGrid !== false,
-          },
+        backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDarkMode ? '#555555' : '#cccccc',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
         },
+        formatter: function(params) {
+          let result = `<div style="margin-bottom: 5px; font-weight: bold;">${params[0].axisValue}</div>`;
+          params.forEach(param => {
+            result += `<div style="margin: 2px 0;">
+              <span style="display: inline-block; width: 10px; height: 10px; background-color: ${param.color}; border-radius: 50%; margin-right: 5px;"></span>
+              ${param.seriesName}: <strong>${param.value}</strong>
+            </div>`;
+          });
+          return result;
+        }
       },
-      animation: {
-        duration: chartConfig.animations !== false ? 750 : 0,
+      legend: {
+        show: chartConfig.showLegend !== false,
+        top: 'bottom',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
       },
-      interaction: {
-        mode: 'nearest',
-        axis: 'x',
-        intersect: false
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: chartConfig.showLegend !== false ? '15%' : '3%',
+        top: chartConfig.title ? '15%' : '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: timeLabels,
+        boundaryGap: false,
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisTick: {
+          show: true,
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666',
+          fontSize: 12
+        },
+        splitLine: {
+          show: chartConfig.showGrid !== false,
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#f0f0f0',
+            type: 'dashed'
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        min: chartConfig.yAxisMin,
+        max: chartConfig.yAxisMax,
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisTick: {
+          show: true,
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666',
+          fontSize: 12
+        },
+        splitLine: {
+          show: chartConfig.showGrid !== false,
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#f0f0f0',
+            type: 'dashed'
+          }
+        }
+      },
+      series: series,
+      animation: chartConfig.animations !== false,
+      animationDuration: 750,
+      animationEasing: 'cubicOut'
+    };
+  };
+
+  const generateBarChartOption = (telemetryArrays, timeLabels, isDarkMode) => {
+    const isHorizontal = chartConfig.type === 'horizontal-bar';
+    const series = telemetryArrays.map((dataArr, idx) => ({
+      name: chartConfig.measurements ? chartConfig.measurements[idx] : `Series ${idx + 1}`,
+      type: 'bar',
+      data: dataArr?.map(point => point.value) || [],
+      stack: chartConfig.type === 'stacked-bar' ? 'total' : null,
+      barGap: chartConfig.type === 'grouped-bar' ? '10%' : null,
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(
+          isHorizontal ? 1 : 0, 
+          isHorizontal ? 0 : 0, 
+          isHorizontal ? 0 : 0, 
+          isHorizontal ? 0 : 1, 
+          [
+            { offset: 0, color: chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length] },
+            { offset: 1, color: echarts.color.modifyAlpha(chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length], 0.7) }
+          ]
+        ),
+        borderRadius: isHorizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowColor: 'rgba(0, 0, 0, 0.3)'
+        }
       }
+    }));
+
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDarkMode ? '#555555' : '#cccccc',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      legend: {
+        show: chartConfig.showLegend !== false,
+        top: 'bottom',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: chartConfig.showLegend !== false ? '15%' : '3%',
+        top: chartConfig.title ? '15%' : '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: isHorizontal ? 'value' : 'category',
+        data: isHorizontal ? null : timeLabels,
+        min: isHorizontal ? chartConfig.yAxisMin : null,
+        max: isHorizontal ? chartConfig.yAxisMax : null,
+        axisLine: {
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666'
+        },
+        splitLine: isHorizontal ? {
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#f0f0f0',
+            type: 'dashed'
+          }
+        } : undefined
+      },
+      yAxis: {
+        type: isHorizontal ? 'category' : 'value',
+        data: isHorizontal ? timeLabels : null,
+        min: isHorizontal ? null : chartConfig.yAxisMin,
+        max: isHorizontal ? null : chartConfig.yAxisMax,
+        axisLine: {
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666'
+        },
+        splitLine: !isHorizontal ? {
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#f0f0f0',
+            type: 'dashed'
+          }
+        } : undefined
+      },
+      series: series,
+      animation: true,
+      animationDuration: 750
+    };
+  };
+
+  const generatePieChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const data = dataArr.map((point, idx) => ({
+      value: point.value,
+      name: `Point ${idx + 1}`,
+      itemStyle: {
+        color: colorPalette[idx % colorPalette.length]
+      }
+    }));
+
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)',
+        backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDarkMode ? '#555555' : '#cccccc',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      legend: {
+        show: chartConfig.showLegend !== false,
+        bottom: '5%',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      series: [{
+        name: chartConfig.name,
+        type: 'pie',
+        radius: chartConfig.type === 'doughnut' ? ['40%', '70%'] : '70%',
+        center: ['50%', '50%'],
+        roseType: chartConfig.type === 'rose' ? 'area' : null,
+        data: data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        animationType: 'scale',
+        animationEasing: 'elasticOut'
+      }],
+      animation: true,
+      animationDuration: 1000
+    };
+  };
+
+  const generateScatterChartOption = (telemetryArrays, timeLabels, isDarkMode) => {
+    const series = telemetryArrays.map((dataArr, idx) => ({
+      name: chartConfig.measurements ? chartConfig.measurements[idx] : `Series ${idx + 1}`,
+      type: 'scatter',
+      data: dataArr?.map((point, index) => [index, point.value]) || [],
+      itemStyle: {
+        color: chartConfig.customColors?.[idx] || colorPalette[idx % colorPalette.length]
+      },
+      symbolSize: 8
+    }));
+
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDarkMode ? '#555555' : '#cccccc',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      legend: {
+        show: chartConfig.showLegend !== false,
+        top: 'bottom',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '15%',
+        top: '15%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'value',
+        axisLine: {
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666'
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#f0f0f0',
+            type: 'dashed'
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: {
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666'
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#f0f0f0',
+            type: 'dashed'
+          }
+        }
+      },
+      series: series,
+      animation: true
+    };
+  };
+
+  const generateGaugeChartOption = (telemetryArrays, isDarkMode) => {
+    const currentValue = telemetryArrays[0]?.[telemetryArrays[0].length - 1]?.value || 0;
+    const maxValue = chartConfig.yAxisMax || 100;
+
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        top: '10%',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      series: [{
+        name: chartConfig.name,
+        type: 'gauge',
+        center: ['50%', '60%'],
+        startAngle: 200,
+        endAngle: -40,
+        min: chartConfig.yAxisMin || 0,
+        max: maxValue,
+        splitNumber: 10,
+        itemStyle: {
+          color: '#58D9F9',
+          shadowColor: 'rgba(0,138,255,0.45)',
+          shadowBlur: 10,
+          shadowOffsetX: 2,
+          shadowOffsetY: 2
+        },
+        progress: {
+          show: true,
+          roundCap: true,
+          width: 18
+        },
+        pointer: {
+          icon: 'path://M2090.36389,615.30999 L2090.36389,615.30999 C2091.48372,615.30999 2092.40383,616.194028 2092.44859,617.312956 L2096.90698,728.755929 C2097.05155,732.369577 2094.2393,735.416212 2090.62566,735.56078 C2090.53845,735.564269 2090.45117,735.566014 2090.36389,735.566014 L2090.36389,735.566014 C2086.74736,735.566014 2083.81557,732.63423 2083.81557,729.017692 C2083.81557,728.930412 2083.81732,728.84314 2083.82081,728.755929 L2088.2792,617.312956 C2088.32396,616.194028 2089.24407,615.30999 2090.36389,615.30999 Z',
+          length: '75%',
+          width: 16,
+          offsetCenter: [0, '5%']
+        },
+        axisLine: {
+          roundCap: true,
+          lineStyle: {
+            width: 18,
+            color: [[1, isDarkMode ? '#333333' : '#E6EBF8']]
+          }
+        },
+        axisTick: {
+          distance: -45,
+          splitNumber: 5,
+          lineStyle: {
+            width: 2,
+            color: isDarkMode ? '#666666' : '#999999'
+          }
+        },
+        splitLine: {
+          distance: -52,
+          length: 14,
+          lineStyle: {
+            width: 3,
+            color: isDarkMode ? '#666666' : '#999999'
+          }
+        },
+        axisLabel: {
+          distance: -20,
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: 12
+        },
+        title: {
+          show: false
+        },
+        detail: {
+          backgroundColor: isDarkMode ? '#333333' : '#ffffff',
+          borderColor: isDarkMode ? '#555555' : '#999999',
+          borderWidth: 2,
+          width: '60%',
+          lineHeight: 40,
+          height: 40,
+          borderRadius: 8,
+          offsetCenter: [0, '35%'],
+          valueAnimation: true,
+          formatter: function (value) {
+            return '{value|' + value.toFixed(1) + '}{unit|units}';
+          },
+          rich: {
+            value: {
+              fontSize: 20,
+              fontWeight: 'bolder',
+              color: isDarkMode ? '#ffffff' : '#333333'
+            },
+            unit: {
+              fontSize: 12,
+              color: isDarkMode ? '#cccccc' : '#999999',
+              padding: [0, 0, -20, 10]
+            }
+          }
+        },
+        data: [{
+          value: currentValue
+        }]
+      }],
+      animation: true,
+      animationDuration: 1000
+    };
+  };
+
+  const generateHeatmapChartOption = (telemetryArrays, timeLabels, isDarkMode) => {
+    // Generate heatmap data - this is a simplified version
+    const data = [];
+    const dataArr = telemetryArrays[0] || [];
+    
+    for (let i = 0; i < Math.min(timeLabels.length, 24); i++) {
+      for (let j = 0; j < Math.min(7, dataArr.length); j++) {
+        data.push([i, j, dataArr[j]?.value || 0]);
+      }
+    }
+
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        position: 'top',
+        backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDarkMode ? '#555555' : '#cccccc',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      grid: {
+        height: '50%',
+        top: '20%'
+      },
+      xAxis: {
+        type: 'category',
+        data: timeLabels.slice(0, 24),
+        splitArea: {
+          show: true
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666'
+        }
+      },
+      yAxis: {
+        type: 'category',
+        data: ['Series 1', 'Series 2', 'Series 3', 'Series 4', 'Series 5', 'Series 6', 'Series 7'],
+        splitArea: {
+          show: true
+        },
+        axisLabel: {
+          color: isDarkMode ? '#cccccc' : '#666666'
+        }
+      },
+      visualMap: {
+        min: 0,
+        max: Math.max(...dataArr.map(d => d.value), 100),
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '15%',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      series: [{
+        name: chartConfig.name,
+        type: 'heatmap',
+        data: data,
+        label: {
+          show: true,
+          color: isDarkMode ? '#ffffff' : '#333333'
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }],
+      animation: true
+    };
+  };
+
+  // ==================== NEW CHART GENERATORS ====================
+
+  const generateThermometerChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const maxValue = chartConfig.yAxisMax || 100;
+    const minValue = chartConfig.yAxisMin || 0;
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        formatter: `Temperature: ${currentValue.toFixed(1)}°C`
+      },
+      series: [{
+        type: 'gauge',
+        startAngle: 180,
+        endAngle: 0,
+        min: minValue,
+        max: maxValue,
+        splitNumber: 10,
+        radius: '80%',
+        center: ['50%', '75%'],
+        axisLine: {
+          lineStyle: {
+            width: 20,
+            color: [
+              [0.2, '#67e0e3'],
+              [0.4, '#37a2da'],
+              [0.6, '#fd666d'],
+              [0.8, '#ffb64d'],
+              [1, '#ff4757']
+            ]
+          }
+        },
+        pointer: {
+          icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z',
+          length: '12%',
+          width: 20,
+          offsetCenter: [0, '-60%'],
+          itemStyle: {
+            color: 'auto'
+          }
+        },
+        axisTick: {
+          length: 12,
+          lineStyle: {
+            color: 'auto',
+            width: 2
+          }
+        },
+        splitLine: {
+          length: 20,
+          lineStyle: {
+            color: 'auto',
+            width: 5
+          }
+        },
+        axisLabel: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: 12,
+          distance: -60,
+          formatter: '{value}°C'
+        },
+        detail: {
+          fontSize: 24,
+          offsetCenter: [0, '-35%'],
+          valueAnimation: true,
+          formatter: '{value}°C',
+          color: isDarkMode ? '#ffffff' : '#333333'
+        },
+        data: [{ value: currentValue, name: 'Temperature' }]
+      }]
+    };
+  };
+
+  const generateTankLevelChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const maxValue = chartConfig.yAxisMax || 100;
+    const percentage = Math.min(Math.max((currentValue / maxValue) * 100, 0), 100);
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        formatter: `Level: ${currentValue.toFixed(1)} (${percentage.toFixed(1)}%)`
+      },
+      graphic: [
+        {
+          type: 'rect',
+          left: 'center',
+          top: 'middle',
+          shape: {
+            x: -50,
+            y: -100,
+            width: 100,
+            height: 200
+          },
+          style: {
+            fill: 'transparent',
+            stroke: isDarkMode ? '#ffffff' : '#333333',
+            lineWidth: 3
+          }
+        },
+        {
+          type: 'rect',
+          left: 'center',
+          top: 'middle',
+          shape: {
+            x: -47,
+            y: -97 + (200 - (percentage * 2)),
+            width: 94,
+            height: percentage * 2
+          },
+          style: {
+            fill: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+              { offset: 0, color: '#4facfe' },
+              { offset: 1, color: '#00f2fe' }
+            ])
+          }
+        },
+        {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: `${percentage.toFixed(1)}%`,
+            fontSize: 20,
+            fontWeight: 'bold',
+            fill: isDarkMode ? '#ffffff' : '#333333'
+          }
+        }
+      ]
+    };
+  };
+
+  const generateBatteryLevelChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const percentage = Math.min(Math.max(currentValue, 0), 100);
+    
+    const getBatteryColor = (level) => {
+      if (level > 60) return '#52c41a';
+      if (level > 30) return '#faad14';
+      return '#ff4d4f';
+    };
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        formatter: `Battery: ${percentage.toFixed(1)}%`
+      },
+      graphic: [
+        {
+          type: 'rect',
+          left: 'center',
+          top: 'middle',
+          shape: { x: -80, y: -30, width: 150, height: 60 },
+          style: {
+            fill: 'transparent',
+            stroke: isDarkMode ? '#ffffff' : '#333333',
+            lineWidth: 3
+          }
+        },
+        {
+          type: 'rect',
+          left: 'center',
+          top: 'middle',
+          shape: { x: 70, y: -15, width: 10, height: 30 },
+          style: {
+            fill: isDarkMode ? '#ffffff' : '#333333'
+          }
+        },
+        {
+          type: 'rect',
+          left: 'center',
+          top: 'middle',
+          shape: { 
+            x: -77, 
+            y: -27, 
+            width: (percentage / 100) * 144, 
+            height: 54 
+          },
+          style: {
+            fill: getBatteryColor(percentage)
+          }
+        },
+        {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: `${percentage.toFixed(1)}%`,
+            fontSize: 16,
+            fontWeight: 'bold',
+            fill: isDarkMode ? '#ffffff' : '#333333'
+          }
+        }
+      ]
+    };
+  };
+
+  const generateSignalStrengthChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const bars = 5;
+    const percentage = Math.min(Math.max(currentValue / 100, 0), 1);
+    const activeBars = Math.ceil(percentage * bars);
+    
+    const barGraphics = [];
+    for (let i = 0; i < bars; i++) {
+      const height = (i + 1) * 15;
+      const isActive = i < activeBars;
+      
+      barGraphics.push({
+        type: 'rect',
+        left: 'center',
+        top: 'middle',
+        shape: {
+          x: -50 + (i * 25),
+          y: 30 - height,
+          width: 20,
+          height: height
+        },
+        style: {
+          fill: isActive ? (percentage > 0.6 ? '#52c41a' : percentage > 0.3 ? '#faad14' : '#ff4d4f') : 
+                (isDarkMode ? '#333333' : '#e8e8e8')
+        }
+      });
+    }
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        formatter: `Signal: ${(percentage * 100).toFixed(1)}%`
+      },
+      graphic: [
+        ...barGraphics,
+        {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: `${(percentage * 100).toFixed(1)}%`,
+            fontSize: 16,
+            fontWeight: 'bold',
+            fill: isDarkMode ? '#ffffff' : '#333333',
+            y: 50
+          }
+        }
+      ]
+    };
+  };
+
+  const generateRadarChartOption = (telemetryArrays, isDarkMode) => {
+    // Create radar chart with multiple measurements
+    const measurements = chartConfig.measurements || ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5'];
+    const indicator = measurements.map(name => ({ name, max: 100 }));
+    
+    const series = telemetryArrays.map((dataArr, idx) => {
+      const latestValues = measurements.map((_, i) => {
+        const data = telemetryArrays[i] || [];
+        return data.length > 0 ? data[data.length - 1].value : 0;
+      });
+      
+      return {
+        name: chartConfig.measurements ? chartConfig.measurements[idx] : `Series ${idx + 1}`,
+        type: 'radar',
+        data: [{
+          value: latestValues,
+          name: `Dataset ${idx + 1}`,
+          itemStyle: {
+            color: colorPalette[idx % colorPalette.length]
+          }
+        }]
+      };
+    });
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'item'
+      },
+      legend: {
+        show: chartConfig.showLegend !== false,
+        bottom: '5%',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        }
+      },
+      radar: {
+        indicator: indicator,
+        radius: '60%',
+        axisName: {
+          color: isDarkMode ? '#ffffff' : '#333333'
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDarkMode ? '#333333' : '#e8e8e8'
+          }
+        },
+        axisLine: {
+          lineStyle: {
+            color: isDarkMode ? '#555555' : '#cccccc'
+          }
+        }
+      },
+      series: series
+    };
+  };
+
+  const generateFunnelChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const data = dataArr.map((point, idx) => ({
+      value: point.value,
+      name: `Stage ${idx + 1}`,
+      itemStyle: {
+        color: colorPalette[idx % colorPalette.length]
+      }
+    })).sort((a, b) => b.value - a.value);
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+      },
+      series: [{
+        name: chartConfig.name,
+        type: 'funnel',
+        left: '10%',
+        width: '80%',
+        maxSize: '80%',
+        data: data,
+        itemStyle: {
+          borderColor: isDarkMode ? '#333333' : '#ffffff',
+          borderWidth: 2
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    };
+  };
+
+  const generateLiquidFillChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const maxValue = chartConfig.yAxisMax || 100;
+    const percentage = Math.min(Math.max((currentValue / maxValue), 0), 1);
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      series: [{
+        type: 'gauge',
+        startAngle: 0,
+        endAngle: 360,
+        radius: '80%',
+        min: 0,
+        max: 1,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { show: false },
+        splitLine: { show: false },
+        pointer: { show: false },
+        detail: {
+          show: true,
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: isDarkMode ? '#ffffff' : '#333333',
+          formatter: `${(percentage * 100).toFixed(1)}%`
+        },
+        data: [{ value: percentage }],
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+            { offset: 0, color: '#4facfe' },
+            { offset: 1, color: '#00f2fe' }
+          ])
+        }
+      }]
+    };
+  };
+
+  const generateSunburstChartOption = (telemetryArrays, isDarkMode) => {
+    // Create hierarchical data for sunburst
+    const measurements = chartConfig.measurements || ['Category 1', 'Category 2', 'Category 3'];
+    const data = measurements.map((measurement, idx) => {
+      const dataArr = telemetryArrays[idx] || [];
+      const value = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : Math.random() * 100;
+      
+      return {
+        name: measurement,
+        value: value,
+        children: [
+          { name: `${measurement} A`, value: value * 0.4 },
+          { name: `${measurement} B`, value: value * 0.3 },
+          { name: `${measurement} C`, value: value * 0.3 }
+        ]
+      };
+    });
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: chartConfig.title,
+        left: 'center',
+        textStyle: {
+          color: isDarkMode ? '#ffffff' : '#333333',
+          fontSize: isFullscreen ? 18 : 14,
+          fontWeight: 'bold'
+        }
+      },
+      series: [{
+        type: 'sunburst',
+        data: data,
+        radius: [0, '80%'],
+        itemStyle: {
+          borderRadius: 7,
+          borderWidth: 2,
+          borderColor: isDarkMode ? '#333333' : '#ffffff'
+        },
+        emphasis: {
+          focus: 'ancestor'
+        }
+      }]
+    };
+  };
+
+  const generateCardChartOption = (telemetryArrays, isDarkMode) => {
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const previousValue = dataArr.length > 1 ? dataArr[dataArr.length - 2].value : currentValue;
+    const trend = currentValue > previousValue ? '↗' : currentValue < previousValue ? '↘' : '→';
+    const trendColor = currentValue > previousValue ? '#52c41a' : currentValue < previousValue ? '#ff4d4f' : '#faad14';
+    
+    return {
+      backgroundColor: 'transparent',
+      graphic: [
+        {
+          type: 'text',
+          left: 'center',
+          top: '25%',
+          style: {
+            text: chartConfig.title || 'Value',
+            fontSize: 16,
+            fill: isDarkMode ? '#cccccc' : '#666666'
+          }
+        },
+        {
+          type: 'text',
+          left: 'center',
+          top: '50%',
+          style: {
+            text: currentValue.toFixed(1),
+            fontSize: 36,
+            fontWeight: 'bold',
+            fill: isDarkMode ? '#ffffff' : '#333333'
+          }
+        },
+        {
+          type: 'text',
+          left: 'center',
+          top: '75%',
+          style: {
+            text: `${trend} ${Math.abs(currentValue - previousValue).toFixed(1)}`,
+            fontSize: 14,
+            fill: trendColor
+          }
+        }
+      ]
     };
   };
 
@@ -288,40 +1344,39 @@ const CustomChart = ({
     handleMenuClose();
   };
 
-  const ChartComponent = {
-    // Timeseries widgets
-    line: Line,
-    spline: Line,
-    bar: Bar,
-    area: Line,
-    'stacked-bar': Bar,
-    state: Line,
-    'timeseries-table-new': Line,
-    'flot-bar': Bar,
-    'flot-line': Line,
+  const getWidgetIcon = (type) => {
+    const iconMap = {
+      'line': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'spline': <ShowChart sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'area': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'stacked-bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'pie': <PieChart sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'doughnut': <PieChart sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'scatter': <ScatterPlot sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'gauge': <Speed sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'heatmap': <Assessment sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'thermometer': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
+      'tank-level': <WaterDrop sx={{ fontSize: 48, color: 'primary.main' }} />
+    };
 
-    // Chart widgets
-    scatter: Scatter,
-    pie: Pie,
-    doughnut: Doughnut,
-    'polar-area': Pie,
-    radar: Pie,
-    bubble: Scatter,
-    heatmap: Line, // Will need custom implementation
-    'flot-pie': Pie,
-    'chartjs-bar': Bar,
-    'chartjs-line': Line,
-    'chartjs-doughnut': Doughnut,
-
-    // For other widget types, we'll render informational cards
-    default: Line
-  }[chartConfig.type] || Line;
+    return iconMap[type] || <DeviceHub sx={{ fontSize: 48, color: 'primary.main' }} />;
+  };
 
   // Special rendering for non-chart widget types
   const renderSpecialWidget = () => {
-    const category = getWidgetCategory(chartConfig.type);
+    const nonChartTypes = [
+      'digital-gauge', 'digital-thermometer', 'tank-level', 'battery-level', 
+      'signal-strength', 'value-card', 'simple-card', 'entities-hierarchy',
+      'aggregation-card', 'count-card', 'entities-table', 'timeseries-table',
+      'latest-values', 'openstreet-map', 'google-map', 'image-map', 'route-map',
+      'knob-control', 'switch-control', 'button-control', 'slider-control',
+      'round-switch', 'update-attribute', 'send-rpc', 'date-range-navigator',
+      'timespan-selector', 'scheduler-events', 'power-button', 'energy-meter',
+      'liquid-level', 'wind-turbine', 'motor-controller'
+    ];
 
-    if (['Analog Gauges', 'Digital Gauges', 'Cards', 'Tables', 'Maps', 'Control', 'Input', 'Navigation', 'Scheduling', 'Energy', 'Industrial', 'Gateway', 'Alarm', 'System', 'Sensors'].includes(category)) {
+    if (nonChartTypes.includes(chartConfig.type)) {
       return (
         <Box
           display="flex"
@@ -331,278 +1386,35 @@ const CustomChart = ({
           height="100%"
           textAlign="center"
           sx={{
-            background: 'linear-gradient(45deg, #f5f5f5 25%, transparent 25%)',
-            backgroundSize: '20px 20px',
-            borderRadius: 1,
-            p: 2
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}10 0%, ${theme.palette.secondary.main}10 100%)`,
+            borderRadius: 2,
+            p: 3,
+            border: `1px dashed ${theme.palette.divider}`
           }}
         >
           {getWidgetIcon(chartConfig.type)}
-          <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-            {getWidgetLabel(chartConfig.type)}
+          <Typography variant="h6" sx={{ mt: 2, mb: 1, color: 'primary.main' }}>
+            {chartConfig.name}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {category} Widget
+            Advanced Widget Preview
           </Typography>
           <Alert severity="info" sx={{ maxWidth: 300 }}>
-            This widget type represents a preview of ThingsBoard's {category.toLowerCase()} widgets.
-            Full implementation with interactive controls and real-time data coming soon.
+            This represents a preview of advanced IoT dashboard widgets. 
+            Interactive features and real-time controls coming soon.
           </Alert>
-          {chartData && chartData.datasets?.length > 0 && (
+          {chartConfig.devices?.length > 0 && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="caption" color="text.secondary">
-                Connected to {chartConfig.devices?.length || 0} device(s)
+                Connected to {chartConfig.devices.length} device(s)
               </Typography>
             </Box>
           )}
-          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {chartConfig.dataTypes?.map(dataType => (
-              <Chip
-                key={dataType}
-                label={dataType}
-                size="small"
-                variant="outlined"
-              />
-            ))}
-          </Box>
         </Box>
       );
     }
 
     return null;
-  };
-
-  const getWidgetCategory = (type) => {
-    const chartTypes = [
-      // Timeseries Widgets
-      { value: 'line', category: 'Timeseries' },
-      { value: 'spline', category: 'Timeseries' },
-      { value: 'bar', category: 'Timeseries' },
-      { value: 'area', category: 'Timeseries' },
-      { value: 'stacked-bar', category: 'Timeseries' },
-      { value: 'state', category: 'Timeseries' },
-
-      // Charts Widgets
-      { value: 'pie', category: 'Charts' },
-      { value: 'doughnut', category: 'Charts' },
-      { value: 'polar-area', category: 'Charts' },
-      { value: 'radar', category: 'Charts' },
-      { value: 'scatter', category: 'Charts' },
-      { value: 'bubble', category: 'Charts' },
-      { value: 'heatmap', category: 'Charts' },
-
-      // Other categories
-      { value: 'gauge', category: 'Analog Gauges' },
-      { value: 'compass', category: 'Analog Gauges' },
-      { value: 'thermometer', category: 'Analog Gauges' },
-      { value: 'digital-gauge', category: 'Digital Gauges' },
-      { value: 'digital-thermometer', category: 'Digital Gauges' },
-      { value: 'tank-level', category: 'Digital Gauges' },
-      { value: 'battery-level', category: 'Digital Gauges' },
-      { value: 'signal-strength', category: 'Digital Gauges' },
-      { value: 'value-card', category: 'Cards' },
-      { value: 'simple-card', category: 'Cards' },
-      { value: 'entities-hierarchy', category: 'Cards' },
-      { value: 'aggregation-card', category: 'Cards' },
-      { value: 'count-card', category: 'Cards' },
-      { value: 'entities-table', category: 'Tables' },
-      { value: 'timeseries-table', category: 'Tables' },
-      { value: 'latest-values', category: 'Tables' },
-      { value: 'openstreet-map', category: 'Maps' },
-      { value: 'google-map', category: 'Maps' },
-      { value: 'image-map', category: 'Maps' },
-      { value: 'route-map', category: 'Maps' },
-      { value: 'knob-control', category: 'Control' },
-      { value: 'switch-control', category: 'Control' },
-      { value: 'button-control', category: 'Control' },
-      { value: 'slider-control', category: 'Control' },
-      { value: 'round-switch', category: 'Control' },
-      { value: 'update-attribute', category: 'Input' },
-      { value: 'send-rpc', category: 'Input' },
-      { value: 'date-range-navigator', category: 'Navigation' },
-      { value: 'timespan-selector', category: 'Navigation' },
-      { value: 'scheduler-events', category: 'Scheduling' },
-      { value: 'power-button', category: 'Energy' },
-      { value: 'energy-meter', category: 'Energy' },
-      { value: 'liquid-level', category: 'Industrial' },
-      { value: 'wind-turbine', category: 'Industrial' },
-      { value: 'motor-controller', category: 'Industrial' }
-    ];
-
-    return chartTypes.find(t => t.value === type)?.category || 'Charts';
-  };
-
-  const getWidgetLabel = (type) => {
-    const labels = {
-      'gauge': 'Analog Gauge',
-      'compass': 'Compass',
-      'thermometer': 'Thermometer Scale',
-      'digital-gauge': 'Digital Gauge',
-      'digital-thermometer': 'Digital Thermometer',
-      'tank-level': 'Tank Level',
-      'battery-level': 'Battery Level',
-      'signal-strength': 'Signal Strength',
-      'value-card': 'Value Card',
-      'simple-card': 'Simple Card',
-      'entities-hierarchy': 'Entities Hierarchy',
-      'aggregation-card': 'Aggregation Card',
-      'count-card': 'Count Card',
-      'entities-table': 'Entities Table',
-      'timeseries-table': 'Timeseries Table',
-      'latest-values': 'Latest Values',
-      'openstreet-map': 'OpenStreet Map',
-      'google-map': 'Google Map',
-      'image-map': 'Image Map',
-      'route-map': 'Route Map',
-      'knob-control': 'Knob Control',
-      'switch-control': 'Switch Control',
-      'button-control': 'Button Control',
-      'slider-control': 'Slider Control',
-      'round-switch': 'Round Switch',
-      'update-attribute': 'Update Attribute',
-      'send-rpc': 'Send RPC',
-      'date-range-navigator': 'Date Range Navigator',
-      'timespan-selector': 'Timespan Selector',
-      'scheduler-events': 'Scheduler Events',
-      'power-button': 'Power Button',
-      'energy-meter': 'Energy Meter',
-      'liquid-level': 'Liquid Level',
-      'wind-turbine': 'Wind Turbine',
-      'motor-controller': 'Motor Controller'
-    };
-
-    return labels[type] || type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const getWidgetIcon = (type) => {
-    const iconMap = {
-      // Timeseries
-      'line': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'spline': <ShowChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'area': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'stacked-bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'state': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'timeseries-table-new': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'flot-bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'flot-line': <ShowChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Charts
-      'pie': <PieChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'doughnut': <DonutLarge sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'polar-area': <PieChartOutline sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'radar': <DeviceHub sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'scatter': <ScatterPlot sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'bubble': <BubbleChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'heatmap': <GridView sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'flot-pie': <PieChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'chartjs-bar': <BarChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'chartjs-line': <ShowChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'chartjs-doughnut': <DonutLarge sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Analog Gauges
-      'gauge': <Speed sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'compass': <Explore sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'thermometer': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'linear-gauge': <LinearScaleIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'radial-gauge': <RadioButtonChecked sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Digital Gauges
-      'digital-gauge': <Assessment sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'digital-thermometer': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'tank-level': <WaterDrop sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'battery-level': <BatteryFull sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'signal-strength': <SignalWifi4Bar sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'speedometer': <Speed sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'level': <CompareArrows sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'simple-gauge': <Brightness1 sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Cards
-      'value-card': <ViewModule sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'simple-card': <ViewCompact sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'entities-hierarchy': <AccountTree sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'aggregation-card': <Functions sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'count-card': <QueryStats sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'label-card': <ViewModule sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'multiple-input': <ViewList sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'html-card': <ViewModule sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Tables
-      'entities-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'timeseries-table': <TableRows sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'latest-values': <ViewList sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'alarms-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'advanced-table': <ViewStream sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Maps
-      'openstreet-map': <MapOutlined sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'google-map': <Public sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'image-map': <LocationOn sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'route-map': <Navigation sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'trip-animation': <Timeline sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'here-map': <Map sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'tencent-map': <Map sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Control
-      'knob-control': <RotateRight sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'switch-control': <ToggleOn sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'button-control': <SmartButton sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'slider-control': <Tune sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'round-switch': <RadioButtonChecked sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'persistent-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'led-indicator': <Brightness1 sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'multiple-input-control': <Input sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Input
-      'update-attribute': <Update sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'send-rpc': <Send sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'command-button': <TouchApp sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'edge-rpc': <Router sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Navigation
-      'date-range-navigator': <DateRange sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'timespan-selector': <Timer sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'navigation-card': <Navigation sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Scheduling
-      'scheduler-events': <EventNote sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'calendar-events': <CalendarToday sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Energy
-      'power-button': <PowerSettingsNew sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'energy-meter': <ElectricalServices sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'solar-panel': <WbSunny sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Industrial
-      'liquid-level': <WaterDrop sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'wind-turbine': <Air sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'motor-controller': <Engineering sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'valve-controller': <FilterAlt sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'pump-controller': <Compress sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'industrial-gauge': <Factory sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Gateway
-      'gateway-remote-shell': <Router sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'gateway-config': <Settings sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Alarm
-      'alarm-widget': <MonitorHeart sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'alarm-table': <TableChart sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // System
-      'device-claiming': <DeviceHub sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'entity-admin': <Settings sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'json-input': <Memory sx={{ fontSize: 48, color: 'primary.main' }} />,
-
-      // Sensors
-      'temperature-humidity': <Thermostat sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'environmental': <Sensors sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'gas-sensor': <LocalGasStation sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'vibration-sensor': <Waves sx={{ fontSize: 48, color: 'primary.main' }} />,
-      'electrical-meter': <OfflineBolt sx={{ fontSize: 48, color: 'primary.main' }} />
-    };
-
-    return iconMap[type] || <DeviceHub sx={{ fontSize: 48, color: 'primary.main' }} />;
   };
 
   if (error) {
@@ -616,11 +1428,25 @@ const CustomChart = ({
   }
 
   return (
-    <Card sx={{ height: 'auto', minHeight: isFullscreen ? '100vh' : 300, width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card 
+      sx={{ 
+        height: 'auto', 
+        minHeight: isFullscreen ? '100vh' : 350, 
+        width: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        borderRadius: 2,
+        boxShadow: theme.palette.mode === 'dark' 
+          ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+          : '0 8px 32px rgba(0, 0, 0, 0.1)',
+        border: `1px solid ${theme.palette.divider}`,
+        overflow: 'hidden'
+      }}
+    >
       <CardContent sx={{ flexGrow: 1, pb: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box>
-            <Typography variant="h6" component="h3">
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
               {chartConfig.name}
             </Typography>
             {chartConfig.description && (
@@ -645,6 +1471,7 @@ const CustomChart = ({
             label={chartConfig.type}
             size="small"
             variant="outlined"
+            color="primary"
           />
           <Chip
             label={chartConfig.timeRange}
@@ -673,7 +1500,7 @@ const CustomChart = ({
             flexGrow: 1,
             width: '100%',
             maxWidth: '100%',
-            minHeight: 200,
+            minHeight: 250,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -685,44 +1512,27 @@ const CustomChart = ({
               return specialWidget;
             }
 
-            return chartData ? (
-              <ChartComponent
-                data={chartConfig.type === 'stacked-bar' ? { ...chartData, datasets: chartData.datasets.map(d => ({ ...d, stack: 'stack1' })) } : chartData}
-                options={{
-                  ...getChartOptions(),
-                  ...(chartConfig.type === 'stacked-bar' && {
-                    scales: {
-                      ...getChartOptions().scales,
-                      y: {
-                        ...getChartOptions().scales?.y,
-                        stacked: true
-                      },
-                      x: {
-                        ...getChartOptions().scales?.x,
-                        stacked: true
-                      }
-                    }
-                  }),
-                  ...(chartConfig.type === 'area' && {
-                    elements: {
-                      line: {
-                        fill: true,
-                        tension: 0.4
-                      }
-                    }
-                  }),
-                  ...(chartConfig.type === 'spline' && {
-                    elements: {
-                      line: {
-                        tension: 0.5
-                      }
-                    }
-                  })
+            return chartOption ? (
+              <ReactECharts
+                option={chartOption}
+                style={{ 
+                  height: isFullscreen ? '80vh' : '300px', 
+                  width: '100%' 
                 }}
+                theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                opts={{ 
+                  renderer: 'canvas',
+                  devicePixelRatio: window.devicePixelRatio || 1
+                }}
+                notMerge={true}
+                lazyUpdate={true}
               />
             ) : (
-              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                <CircularProgress />
+              <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+                <CircularProgress size={40} />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Loading chart data...
+                </Typography>
               </Box>
             );
           })()}
@@ -730,12 +1540,13 @@ const CustomChart = ({
       </CardContent>
 
       {!isFullscreen && (
-        <CardActions>
+        <CardActions sx={{ px: 2, py: 1 }}>
           <Button
             size="small"
             onClick={loadChartData}
             startIcon={<Refresh />}
             disabled={loading}
+            variant="outlined"
           >
             Refresh
           </Button>
@@ -744,6 +1555,7 @@ const CustomChart = ({
               size="small"
               onClick={onToggleFullscreen}
               startIcon={<Fullscreen />}
+              variant="outlined"
             >
               Fullscreen
             </Button>
@@ -755,6 +1567,15 @@ const CustomChart = ({
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
         onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            borderRadius: 2,
+            boxShadow: theme.palette.mode === 'dark' 
+              ? '0 8px 32px rgba(0, 0, 0, 0.5)' 
+              : '0 8px 32px rgba(0, 0, 0, 0.15)'
+          }
+        }}
       >
         <MenuItem onClick={() => { onEdit(chartConfig); handleMenuClose(); }}>
           <Edit sx={{ mr: 1 }} /> Edit Chart
@@ -766,7 +1587,7 @@ const CustomChart = ({
         <MenuItem onClick={handleExportChart}>
           <Download sx={{ mr: 1 }} /> Export as PNG
         </MenuItem>
-        <MenuItem onClick={() => { onDelete(chartConfig.id); handleMenuClose(); }}>
+        <MenuItem onClick={() => { onDelete(chartConfig.id); handleMenuClose(); }} sx={{ color: 'error.main' }}>
           <Delete sx={{ mr: 1 }} /> Delete Chart
         </MenuItem>
       </Menu>

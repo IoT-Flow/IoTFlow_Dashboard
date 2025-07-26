@@ -42,36 +42,9 @@ import {
   Edit,
   Visibility,
 } from '@mui/icons-material';
-import { Line, Bar, Doughnut, Scatter } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  ArcElement,
-  TimeScale,
-} from 'chart.js';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import toast from 'react-hot-toast';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  ArcElement,
-  TimeScale
-);
 
 const Analytics = () => {
   const [analysisType, setAnalysisType] = useState('trends');
@@ -515,7 +488,11 @@ const Analytics = () => {
               <Card>
                 <CardContent>
                   <Box sx={{ height: 400 }}>
-                    <Line data={trendsChartData} options={trendsChartOptions} />
+                    <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                      <Typography variant="body1" color="text.secondary">
+                        Analytics Chart Placeholder - Upgrade to ECharts Coming Soon
+                      </Typography>
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
@@ -528,8 +505,19 @@ const Analytics = () => {
             <Grid item xs={12} md={8}>
               <Card>
                 <CardContent>
-                  <Box sx={{ height: 400 }}>
-                    <Bar data={performanceChartData} options={performanceChartOptions} />
+                  <Box sx={{ 
+                    height: 400, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    bgcolor: 'background.paper',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1
+                  }}>
+                    <Typography variant="body1" color="text.secondary">
+                      Performance Chart (Bar) - ECharts Integration Coming Soon
+                    </Typography>
                   </Box>
                 </CardContent>
               </Card>
@@ -577,8 +565,19 @@ const Analytics = () => {
             <Grid item xs={12}>
               <Card>
                 <CardContent>
-                  <Box sx={{ height: 400 }}>
-                    <Scatter data={correlationChartData} options={correlationChartOptions} />
+                  <Box sx={{ 
+                    height: 400, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    bgcolor: 'background.paper',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1
+                  }}>
+                    <Typography variant="body1" color="text.secondary">
+                      Correlation Chart (Scatter) - ECharts Integration Coming Soon
+                    </Typography>
                   </Box>
                 </CardContent>
               </Card>
@@ -591,8 +590,19 @@ const Analytics = () => {
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
-                  <Box sx={{ height: 300 }}>
-                    <Doughnut data={dataQualityChartData} options={doughnutOptions} />
+                  <Box sx={{ 
+                    height: 300, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    bgcolor: 'background.paper',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1
+                  }}>
+                    <Typography variant="body1" color="text.secondary">
+                      Data Quality Chart (Doughnut) - ECharts Integration Coming Soon
+                    </Typography>
                   </Box>
                 </CardContent>
               </Card>

@@ -40,22 +40,7 @@ import {
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import {
-  ArcElement,
-  BarElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  TimeScale,
-  Title,
-  Tooltip,
-} from 'chart.js';
-import 'chartjs-adapter-date-fns';
 import { useEffect, useState } from 'react';
-import { Line } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 import ChartCustomizationDialog from '../components/ChartCustomizationDialog';
 import CustomChart from '../components/CustomChart';
@@ -63,19 +48,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import api from '../services/api'; // Import your API service
 import apiService from '../services/apiService';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  TimeScale
-);
 
 const Telemetry = () => {
   const { subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
@@ -321,33 +293,10 @@ const Telemetry = () => {
     }
   };
 
-  // Filtered chart data for main chart
+  // eslint-disable-next-line no-unused-vars
   const getFilteredChartData = () => {
-    if (!selectedDevice || !telemetryHistory[selectedDevice]) {
-      return { datasets: [] };
-    }
-    const deviceMeasurements = telemetryHistory[selectedDevice];
-    const colors = ['#1976d2', '#dc004e', '#ed6c02', '#2e7d32', '#9c27b0'];
-    let colorIndex = 0;
-    const datasets = [];
-    for (const measurement in deviceMeasurements) {
-      if (
-        deviceMeasurements.hasOwnProperty(measurement) &&
-        (measurementFilter === 'all' || measurement === measurementFilter)
-      ) {
-        const data = deviceMeasurements[measurement] || [];
-        datasets.push({
-          label: `${devices.find(d => d.id === selectedDevice)?.name} - ${measurement}`,
-          data: data.map(item => ({ x: item.timestamp, y: item.value })),
-          borderColor: colors[colorIndex % colors.length],
-          backgroundColor: `${colors[colorIndex % colors.length]}20`,
-          tension: 0.4,
-          fill: chartType === 'area',
-        });
-        colorIndex++;
-      }
-    }
-    return { datasets };
+    // Legacy function - now handled by CustomChart component
+    return { datasets: [] };
   };
 
   const getRealtimeStats = () => {
@@ -470,50 +419,10 @@ const Telemetry = () => {
     );
   };
 
+  // eslint-disable-next-line no-unused-vars
   const chartOptions = {
+    // Legacy options - now handled by ECharts in CustomChart component
     responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-      },
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false,
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          displayFormats: {
-            minute: 'HH:mm',
-            hour: 'HH:mm',
-            day: 'MMM dd',
-          },
-        },
-        grid: {
-          color: 'rgba(0,0,0,0.1)',
-        },
-      },
-      y: {
-        beginAtZero: false,
-        grid: {
-          color: 'rgba(0,0,0,0.1)',
-        },
-      },
-    },
-    elements: {
-      point: {
-        radius: 2,
-        hoverRadius: 6,
-      },
-    },
   };
 
   return (
@@ -666,11 +575,17 @@ const Telemetry = () => {
                 <ToggleButton value="line" aria-label="line chart">
                   <Timeline />
                 </ToggleButton>
+                <ToggleButton value="spline" aria-label="spline chart">
+                  <Timeline />
+                </ToggleButton>
+                <ToggleButton value="area" aria-label="area chart">
+                  <Timeline />
+                </ToggleButton>
                 <ToggleButton value="bar" aria-label="bar chart">
                   <BarChart />
                 </ToggleButton>
-                <ToggleButton value="area" aria-label="area chart">
-                  <i className="fas fa-chart-area" style={{ fontSize: '1.25rem' }}></i>
+                <ToggleButton value="scatter" aria-label="scatter chart">
+                  <i className="fas fa-chart-scatter" style={{ fontSize: '1.25rem' }}></i>
                 </ToggleButton>
               </ToggleButtonGroup>
               <ToggleButton
@@ -700,9 +615,55 @@ const Telemetry = () => {
             {/* Main Chart */}
             <Card>
               <CardContent>
-                <Box sx={{ height: 400 }}>
-                  <Line data={getFilteredChartData()} options={chartOptions} />
-                </Box>
+                {telemetryHistory[selectedDevice] && Object.keys(telemetryHistory[selectedDevice]).length > 0 ? (
+                  <CustomChart
+                    chartConfig={{
+                      id: 'main-telemetry-chart',
+                      name: `${devices.find(d => d.id === selectedDevice)?.name || 'Device'} - ${measurementFilter === 'all' ? 'All Measurements' : measurementFilter}`,
+                      type: chartType,
+                      measurements: measurementFilter === 'all' 
+                        ? Object.keys(telemetryHistory[selectedDevice]) 
+                        : [measurementFilter],
+                      timeRange: timeRange,
+                      showLegend: true,
+                      showGrid: true,
+                      animations: true,
+                      refreshInterval: autoRefresh ? 30 : null,
+                      devices: [selectedDevice],
+                      dataTypes: measurementFilter === 'all' 
+                        ? Object.keys(telemetryHistory[selectedDevice]) 
+                        : [measurementFilter]
+                    }}
+                    telemetryData={
+                      measurementFilter === 'all'
+                        ? Object.keys(telemetryHistory[selectedDevice]).map(m => 
+                            telemetryHistory[selectedDevice][m] || []
+                          )
+                        : [telemetryHistory[selectedDevice][measurementFilter] || []]
+                    }
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                  />
+                ) : (
+                  <Box sx={{ 
+                    height: 400, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    bgcolor: 'background.paper',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1
+                  }}>
+                    <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+                      No Telemetry Data Available
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedDevice ? 'No data found for the selected time range' : 'Please select a device'}
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
             </Card>
 
@@ -710,14 +671,14 @@ const Telemetry = () => {
             <Box sx={{ mt: 4 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5" component="h2">
-                  Custom Dashboards
+                  Custom Analytics Charts
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={handleAddChart}
                 >
-                  Add Chart
+                  Add Custom Chart
                 </Button>
               </Box>
 
@@ -727,25 +688,41 @@ const Telemetry = () => {
                     const telemetryForMeasurements = chart.measurements?.map(m =>
                       telemetryHistory[selectedDevice]?.[m] || []
                     ) || [];
+                    
                     return (
                       <Grid item xs={12} md={6} lg={4} key={chart.id}>
-                        <Card sx={{ position: 'relative' }}>
-                          <IconButton
-                            sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
-                            onClick={(e) => handleChartMenuOpen(e, chart)}
-                          >
-                            <MoreVert />
-                          </IconButton>
-                          {telemetryForMeasurements.length > 0 ? (
-                            <CustomChart
-                              chartConfig={chart}
-                              telemetryData={telemetryForMeasurements}
-                              device={devices.find(d => d.id === selectedDevice)}
-                            />
-                          ) : (
-                            <Alert severity="warning">No telemetry data available for measurement "{chart.measurement}".</Alert>
-                          )}
-                        </Card>
+                        {telemetryForMeasurements.length > 0 && telemetryForMeasurements.some(data => data.length > 0) ? (
+                          <CustomChart
+                            chartConfig={chart}
+                            telemetryData={telemetryForMeasurements}
+                            onEdit={handleEditChart}
+                            onDelete={handleDeleteChart}
+                          />
+                        ) : (
+                          <Card sx={{ position: 'relative', minHeight: 350 }}>
+                            <IconButton
+                              sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                              onClick={(e) => handleChartMenuOpen(e, chart)}
+                            >
+                              <MoreVert />
+                            </IconButton>
+                            <CardContent sx={{ 
+                              height: '100%', 
+                              display: 'flex', 
+                              flexDirection: 'column',
+                              alignItems: 'center', 
+                              justifyContent: 'center' 
+                            }}>
+                              <Alert severity="warning" sx={{ mb: 2 }}>
+                                No telemetry data available for measurement(s): {chart.measurements?.join(', ') || 'N/A'}
+                              </Alert>
+                              <Typography variant="h6" sx={{ mb: 1 }}>{chart.name}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Chart Type: {chart.type} | Time Range: {chart.timeRange}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        )}
                       </Grid>
                     );
                   })}
