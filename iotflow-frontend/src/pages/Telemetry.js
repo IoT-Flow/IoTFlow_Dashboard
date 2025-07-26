@@ -724,7 +724,9 @@ const Telemetry = () => {
               {customCharts.length > 0 ? (
                 <Grid container spacing={3}>
                   {customCharts.map(chart => {
-                    const telemetryForMeasurement = telemetryHistory[selectedDevice]?.[chart.measurement] || [];
+                    const telemetryForMeasurements = chart.measurements?.map(m =>
+                      telemetryHistory[selectedDevice]?.[m] || []
+                    ) || [];
                     return (
                       <Grid item xs={12} md={6} lg={4} key={chart.id}>
                         <Card sx={{ position: 'relative' }}>
@@ -734,10 +736,10 @@ const Telemetry = () => {
                           >
                             <MoreVert />
                           </IconButton>
-                          {telemetryForMeasurement.length > 0 ? (
+                          {telemetryForMeasurements.length > 0 ? (
                             <CustomChart
                               chartConfig={chart}
-                              telemetryData={telemetryForMeasurement}
+                              telemetryData={telemetryForMeasurements}
                               device={devices.find(d => d.id === selectedDevice)}
                             />
                           ) : (
@@ -799,7 +801,7 @@ const Telemetry = () => {
           onSaveChart={handleSaveChart}
           devices={devices}
           measurements={selectedDevice && telemetryHistory[selectedDevice] ? Object.keys(telemetryHistory[selectedDevice]) : []}
-          existingChart={editingChart}
+          editingChart={editingChart}
         />
       </Box>
     </LocalizationProvider>

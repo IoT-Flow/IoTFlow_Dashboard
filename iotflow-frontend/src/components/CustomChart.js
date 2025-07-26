@@ -172,25 +172,40 @@ const CustomChart = ({
   }, [chartConfig, autoRefresh, telemetryData]);
 
   const generateChartData = async () => {
-    // Format timestamps for labels
-    const labels = telemetryData.map(point => {
-      const date = new Date(point.timestamp);
-      // If less than 1 day, show time; else show date
-      return telemetryData.length > 0 && (telemetryData[telemetryData.length - 1].timestamp - telemetryData[0].timestamp < 24 * 60 * 60 * 1000)
-        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : date.toLocaleDateString();
+    // If telemetryData is an array of arrays (one per measurement)
+    const datasets = [];
+    let labels = [];
+
+    // If telemetryData is a single array (for backward compatibility)
+    const telemetryArrays = Array.isArray(telemetryData[0]) ? telemetryData : [telemetryData];
+
+    telemetryArrays.forEach((dataArr, idx) => {
+      if (!dataArr || dataArr.length === 0) return;
+
+      // Use the first array for labels
+      if (labels.length === 0) {
+        labels = dataArr.map(point => {
+          const date = new Date(point.timestamp);
+          return dataArr.length > 0 && (dataArr[dataArr.length - 1].timestamp - dataArr[0].timestamp < 24 * 60 * 60 * 1000)
+            ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : date.toLocaleDateString();
+        });
+      }
+
+      datasets.push({
+        label: chartConfig.measurements ? chartConfig.measurements[idx] : chartConfig.name,
+        data: dataArr.map(point => point.value),
+        borderColor: chartConfig.customColors?.[idx] || chartConfig.borderColor || '#1976d2',
+        backgroundColor: chartConfig.fillArea
+          ? (chartConfig.customColors?.[idx] || chartConfig.borderColor || '#1976d2') + '20'
+          : (chartConfig.customColors?.[idx] || chartConfig.borderColor || '#1976d2'),
+        fill: chartConfig.fillArea,
+        borderWidth: chartConfig.lineWidth || 2,
+        pointStyle: chartConfig.pointStyle || 'circle',
+        tension: chartConfig.type === 'line' ? 0.4 : 0,
+      });
     });
-    const data = telemetryData.map(point => point.value);
-    const datasets = [{
-      label: chartConfig.name || chartConfig.measurement,
-      data,
-      borderColor: chartConfig.borderColor || '#1976d2',
-      backgroundColor: chartConfig.fillArea ? (chartConfig.borderColor || '#1976d2') + '20' : (chartConfig.borderColor || '#1976d2'),
-      fill: chartConfig.fillArea,
-      borderWidth: chartConfig.lineWidth || 2,
-      pointStyle: chartConfig.pointStyle || 'circle',
-      tension: chartConfig.type === 'line' ? 0.4 : 0,
-    }];
+
     return { labels, datasets };
   };
 
@@ -601,8 +616,8 @@ const CustomChart = ({
   }
 
   return (
-    <Card sx={{ height: isFullscreen ? '100vh' : 400, display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+    <Card sx={{ height: 'auto', minHeight: isFullscreen ? '100vh' : 300, width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1, pb: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
         <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
           <Box>
             <Typography variant="h6" component="h3">
@@ -652,7 +667,18 @@ const CustomChart = ({
           )}
         </Box>
 
-        <Box ref={chartRef} sx={{ flexGrow: 1, minHeight: isFullscreen ? 'calc(100vh - 200px)' : 300 }}>
+        <Box
+          ref={chartRef}
+          sx={{
+            flexGrow: 1,
+            width: '100%',
+            maxWidth: '100%',
+            minHeight: 200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
           {(() => {
             const specialWidget = renderSpecialWidget();
             if (specialWidget) {

@@ -126,7 +126,7 @@ const ChartCustomizationDialog = ({
   open,
   onClose,
   devices = [],
-  measurements = [], // <-- Accept measurements prop
+  measurements = [],
   onSaveChart,
   editingChart = null
 }) => {
@@ -139,7 +139,7 @@ const ChartCustomizationDialog = ({
     title: '',
     description: '',
     devices: [],
-    dataTypes: [],
+    measurements: [], // <-- only this, remove dataTypes
     timeRange: '1h',
     refreshInterval: 30,
     showLegend: true,
@@ -158,8 +158,8 @@ const ChartCustomizationDialog = ({
     groupBy: 'device'
   });
 
-  // Replace static availableDataTypes with measurements from prop
-  const [selectedMeasurement, setSelectedMeasurement] = useState('');
+  // // Replace static availableDataTypes with measurements from prop
+  // const [selectedMeasurement, setSelectedMeasurement] = useState('');
 
   const chartTypes = [
     // Timeseries Widgets
@@ -336,8 +336,36 @@ const ChartCustomizationDialog = ({
 
   useEffect(() => {
     if (editingChart) {
-      setChartConfig({ ...editingChart });
-      setSelectedMeasurement(editingChart.measurement || '');
+      const defaultConfig = {
+        id: null,
+        name: '',
+        type: 'line',
+        title: '',
+        description: '',
+        devices: [],
+        measurements: [], // <-- only this, remove dataTypes
+        timeRange: '1h',
+        refreshInterval: 30,
+        showLegend: true,
+        showGrid: true,
+        animations: true,
+        backgroundColor: '#ffffff',
+        borderColor: '#1976d2',
+        fillArea: false,
+        pointStyle: 'circle',
+        lineWidth: 2,
+        aspectRatio: 2,
+        yAxisMin: null,
+        yAxisMax: null,
+        customColors: [],
+        aggregation: 'none',
+        groupBy: 'device'
+      };
+      setChartConfig({ ...defaultConfig, ...editingChart });
+      // setSelectedMeasurement(editingChart.measurement || measurements[0] || '');
+      const foundType = chartTypes.find(t => t.value === (editingChart.type || 'line'));
+      setSelectedCategory(foundType ? foundType.category : 'All');
+      console.debug('[ChartCustomizationDialog] Editing chart:', editingChart);
     } else {
       setChartConfig({
         id: null,
@@ -346,7 +374,7 @@ const ChartCustomizationDialog = ({
         title: '',
         description: '',
         devices: [],
-        dataTypes: [],
+        measurements: [], // <-- only this, remove dataTypes
         timeRange: '1h',
         refreshInterval: 30,
         showLegend: true,
@@ -364,7 +392,8 @@ const ChartCustomizationDialog = ({
         aggregation: 'none',
         groupBy: 'device'
       });
-      setSelectedMeasurement(measurements[0] || '');
+      // setSelectedMeasurement(measurements[0] || '');
+      setSelectedCategory('All');
     }
   }, [editingChart, open, measurements]);
 
@@ -386,19 +415,35 @@ const ChartCustomizationDialog = ({
     }
   };
 
-  const handleDataTypeToggle = (dataType) => {
-    const currentTypes = chartConfig.dataTypes || [];
-    const isSelected = currentTypes.includes(dataType);
+  // const handleDataTypeToggle = (dataType) => {
+  //   const currentTypes = chartConfig.dataTypes || [];
+  //   const isSelected = currentTypes.includes(dataType);
 
+  //   if (isSelected) {
+  //     handleConfigChange('dataTypes', currentTypes.filter(t => t !== dataType));
+  //   } else {
+  //     handleConfigChange('dataTypes', [...currentTypes, dataType]);
+  //   }
+  // };
+
+  const handleMeasurementToggle = (measurement) => {
+    const current = chartConfig.measurements || [];
+    const isSelected = current.includes(measurement);
     if (isSelected) {
-      handleConfigChange('dataTypes', currentTypes.filter(t => t !== dataType));
+      setChartConfig(prev => ({
+        ...prev,
+        measurements: current.filter(m => m !== measurement)
+      }));
     } else {
-      handleConfigChange('dataTypes', [...currentTypes, dataType]);
+      setChartConfig(prev => ({
+        ...prev,
+        measurements: [...current, measurement]
+      }));
     }
   };
 
   const generatePreviewData = () => {
-    if (!chartConfig.devices.length || !chartConfig.dataTypes.length) {
+    if (!chartConfig.devices.length || !chartConfig.measurements.length) {
       return null;
     }
 
@@ -416,10 +461,10 @@ const ChartCustomizationDialog = ({
       const device = devices.find(d => d.id === deviceId);
       if (!device) return;
 
-      chartConfig.dataTypes.forEach((dataType, typeIndex) => {
+      chartConfig.measurements.forEach((dataType, typeIndex) => {
         // Remove reference to availableDataTypes
         // Use the measurement string directly
-        const color = chartConfig.customColors[deviceIndex * chartConfig.dataTypes.length + typeIndex] ||
+        const color = chartConfig.customColors[deviceIndex * chartConfig.measurements.length + typeIndex] ||
           `hsl(${(deviceIndex * 360 / chartConfig.devices.length + typeIndex * 60) % 360}, 70%, 50%)`;
 
         const data = labels.map(() => {
@@ -521,15 +566,15 @@ const ChartCustomizationDialog = ({
       toast.error('Please select at least one device');
       return;
     }
-    if (!selectedMeasurement) {
-      toast.error('Please select a measurement');
+    if (!chartConfig.measurements.length) {
+      toast.error('Please select at least one measurement');
       return;
     }
 
     // Save chart with measurement
     const chartToSave = {
       ...chartConfig,
-      measurement: selectedMeasurement,
+      // measurement: selectedMeasurement,
       id: editingChart?.id || Date.now().toString(),
       createdAt: editingChart?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -703,23 +748,23 @@ const ChartCustomizationDialog = ({
 
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
-              Select Measurement
+              Select Measurements
             </Typography>
-            <FormControl fullWidth>
-              <InputLabel>Measurement</InputLabel>
-              <Select
-                value={selectedMeasurement}
-                label="Measurement"
-                onChange={e => setSelectedMeasurement(e.target.value)}
-              >
-                {measurements.map(m => (
-                  <MenuItem key={m} value={m}>{m}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Grid container spacing={1}>
+              {measurements.map((m) => (
+                <Grid item key={m}>
+                  <Chip
+                    label={m}
+                    onClick={() => handleMeasurementToggle(m)}
+                    color={chartConfig.measurements?.includes(m) ? 'secondary' : 'default'}
+                    variant={chartConfig.measurements?.includes(m) ? 'filled' : 'outlined'}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           </Grid>
 
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
               Select Data Types
             </Typography>
@@ -735,7 +780,7 @@ const ChartCustomizationDialog = ({
                 </Grid>
               ))}
             </Grid>
-          </Grid>
+          </Grid> */}
 
           {chartConfig.devices?.length > 0 && chartConfig.dataTypes?.length > 0 && (
             <Grid item xs={12}>
@@ -917,7 +962,7 @@ const ChartCustomizationDialog = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
-          disabled={!selectedMeasurement}
+          disabled={!chartConfig.measurements.length}
         >
           {editingChart ? 'Update Chart' : 'Create Chart'}
         </Button>
