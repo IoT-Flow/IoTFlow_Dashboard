@@ -9,7 +9,6 @@ import Admin from './pages/Admin';
 import Analytics from './pages/Analytics';
 import Devices from './pages/Devices';
 import Login from './pages/Login';
-import MQTT from './pages/MQTT';
 import Overview from './pages/Overview';
 import Profile from './pages/Profile';
 import Telemetry from './pages/Telemetry';
@@ -80,7 +79,6 @@ const AppContent = () => {
               <Route path="/overview" element={<Overview />} />
               <Route path="/devices" element={<Devices />} />
               <Route path="/telemetry" element={<Telemetry />} />
-              <Route path="/mqtt" element={<MQTT />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />
               {user?.role === 'admin' && (
