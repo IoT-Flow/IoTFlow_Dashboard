@@ -387,7 +387,7 @@ const Devices = () => {
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
             Manage and monitor your IoT devices with real-time telemetry from IoTDB
-            {user && ` • Logged in as ${user.firstName} ${user.lastName}`}
+            {user && ` • Logged in as ${user.username}`}
           </Typography>
         </Box>
         <Button

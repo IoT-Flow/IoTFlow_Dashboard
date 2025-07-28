@@ -29,7 +29,14 @@ class UserController {
       
       const { password_hash: _, ...userResponse } = newUser.toJSON();
 
-      res.status(201).json(userResponse);
+      // Generate JWT token for the new user
+      const token = jwt.sign(
+        { id: newUser.id, email: newUser.email },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      res.status(201).json({ user: userResponse, token });
     } catch (error) {
       res.status(500).json({ message: 'Failed to register user', error: error.message });
     }

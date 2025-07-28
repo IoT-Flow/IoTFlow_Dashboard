@@ -27,9 +27,7 @@ const Login = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: ''
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -71,8 +69,7 @@ const Login = () => {
 
     // Validation
     if (!registerData.username.trim() || !registerData.email.trim() ||
-      !registerData.password.trim() || !registerData.firstName.trim() ||
-      !registerData.lastName.trim()) {
+      !registerData.password.trim()) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
@@ -271,27 +268,6 @@ const Login = () => {
                 <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Create Account
                 </Typography>
-
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    value={registerData.firstName}
-                    onChange={handleRegisterChange('firstName')}
-                    placeholder="Enter your first name"
-                    variant="outlined"
-                    required
-                  />
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    value={registerData.lastName}
-                    onChange={handleRegisterChange('lastName')}
-                    placeholder="Enter your last name"
-                    variant="outlined"
-                    required
-                  />
-                </Box>
 
                 <TextField
                   fullWidth

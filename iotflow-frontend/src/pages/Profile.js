@@ -1,38 +1,34 @@
-import React, { useState } from 'react';
 import {
+  Edit,
+  Save,
+  Security
+} from '@mui/icons-material';
+import {
+  Alert,
+  Avatar,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Avatar,
-  Divider,
-  Alert,
-  Tab,
-  Tabs,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   Chip,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  List,
+  ListItem,
+  ListItemSecondaryAction,
+  ListItemText,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
 } from '@mui/material';
-import {
-  Person,
-  Email,
-  Security,
-  Save,
-  Edit,
-  History,
-  Devices,
-} from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -40,10 +36,8 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  
+
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
     email: user?.email || '',
     username: user?.username || '',
   });
@@ -106,12 +100,12 @@ const Profile = () => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const updatedUser = {
         ...user,
         ...profileData
       };
-      
+
       updateUser(updatedUser);
       setIsEditing(false);
       toast.success('Profile updated successfully');
@@ -137,7 +131,7 @@ const Profile = () => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -150,10 +144,6 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
 
   return (
@@ -183,10 +173,10 @@ const Profile = () => {
                   mb: 2
                 }}
               >
-                {getInitials(user?.firstName, user?.lastName)}
+                {user?.username?.charAt(0)?.toUpperCase()}
               </Avatar>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                {user?.firstName} {user?.lastName}
+                {user?.username}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 @{user?.username}
@@ -197,9 +187,9 @@ const Profile = () => {
                 size="small"
                 sx={{ mt: 1 }}
               />
-              
+
               <Divider sx={{ my: 3 }} />
-              
+
               <Box sx={{ textAlign: 'left' }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Account Information
@@ -222,8 +212,8 @@ const Profile = () => {
         <Grid item xs={12} md={8}>
           <Card>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs 
-                value={activeTab} 
+              <Tabs
+                value={activeTab}
                 onChange={(e, newValue) => setActiveTab(newValue)}
               >
                 <Tab label="Personal Information" />
@@ -250,26 +240,6 @@ const Profile = () => {
                 </Box>
 
                 <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="First Name"
-                      value={profileData.firstName}
-                      onChange={handleProfileChange('firstName')}
-                      disabled={!isEditing}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Last Name"
-                      value={profileData.lastName}
-                      onChange={handleProfileChange('lastName')}
-                      disabled={!isEditing}
-                      variant="outlined"
-                    />
-                  </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
@@ -307,7 +277,7 @@ const Profile = () => {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Security Settings
                 </Typography>
-                
+
                 <List>
                   <ListItem>
                     <ListItemText
@@ -358,7 +328,7 @@ const Profile = () => {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Recent Activity
                 </Typography>
-                
+
                 <List>
                   {activityLog.map((activity, index) => (
                     <React.Fragment key={activity.id}>
@@ -424,8 +394,8 @@ const Profile = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setChangePasswordOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleChangePassword} 
+          <Button
+            onClick={handleChangePassword}
             variant="contained"
             disabled={loading}
           >

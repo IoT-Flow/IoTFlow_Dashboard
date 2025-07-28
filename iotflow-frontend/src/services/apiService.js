@@ -118,8 +118,6 @@ class ApiService {
           id: 1,
           username: 'admin',
           email: 'admin@iotflow.com',
-          firstName: 'Admin',
-          lastName: 'User',
           role: 'admin',
           tenant_id: 1,
           permissions: ['admin', 'user_management', 'system_access'],
@@ -134,8 +132,6 @@ class ApiService {
           id: 2,
           username: 'john',
           email: 'john@iotflow.com',
-          firstName: 'John',
-          lastName: 'Smith',
           role: 'user',
           tenant_id: 2,
           permissions: ['device_access', 'telemetry_read'],
@@ -150,8 +146,6 @@ class ApiService {
           id: 3,
           username: 'alice',
           email: 'alice@iotflow.com',
-          firstName: 'Alice',
-          lastName: 'Johnson',
           role: 'user',
           tenant_id: 3,
           permissions: ['device_access', 'telemetry_read', 'analytics_read'],
@@ -315,8 +309,8 @@ class ApiService {
         password: userData.password
       });
 
-      // Backend returns user data directly
-      const user = response.data;
+      // Backend returns { user, token }
+      const { user, token } = response.data;
 
       console.log('Backend registration successful:', {
         userId: user.id,
@@ -326,8 +320,8 @@ class ApiService {
       return {
         success: true,
         data: {
-          token: 'registered_token_' + user.id,
-          user: user,
+          token,
+          user,
           message: 'Registration successful'
         }
       };
@@ -341,8 +335,6 @@ class ApiService {
         id: newUserId,
         username: userData.username,
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
         role: 'user',
         tenant_id: newUserId, // Each new user gets their own tenant
         permissions: ['device_access', 'telemetry_read'],
@@ -669,7 +661,7 @@ class ApiService {
       if (!error.response || error.response.status >= 500) {
         console.log('Backend device creation failed, using demo...', error.message);
 
-        // Enhanced demo device registration matching backend structure
+        // Enhanced demo registration matching backend structure
         const currentUser = this.getCurrentUserFromStorage();
         if (!currentUser) {
           this.handleUnauthorized();

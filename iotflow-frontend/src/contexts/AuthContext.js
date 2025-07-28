@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setUser(user);
 
-        toast.success(`Welcome back, ${user.profile?.firstName || user.username}!`);
+        toast.success(`Welcome back, ${user.username}!`);
         return { success: true };
       } else {
         return { success: false, error: response.message || 'Login failed' };
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
         setUser(user);
 
         console.log('📝 REGISTER: Registration successful');
-        toast.success(`Welcome to IoTFlow, ${user.profile?.firstName || user.username}!`);
+        toast.success(`Welcome to IoTFlow, ${user.username}!`);
         return { success: true };
       } else {
         console.error('📝 REGISTER: Registration failed:', response);

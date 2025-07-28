@@ -1,28 +1,28 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Badge,
-  Avatar,
-  Box,
-  Menu,
-  MenuItem,
-  Chip,
-  ListItemIcon,
-  Divider,
-} from '@mui/material';
-import {
+  Logout,
   Menu as MenuIcon,
   Notifications,
-  Wifi,
-  WifiOff,
   Person,
   Settings,
-  Logout,
+  Wifi,
+  WifiOff,
 } from '@mui/icons-material';
+import {
+  AppBar,
+  Avatar,
+  Badge,
+  Box,
+  Chip,
+  Divider,
+  IconButton,
+  ListItemIcon,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Typography,
+} from '@mui/material';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
@@ -50,14 +50,10 @@ const TopBar = ({ onMenuClick }) => {
     handleClose();
   };
 
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-  };
-
   return (
-    <AppBar 
-      position="fixed" 
-      sx={{ 
+    <AppBar
+      position="fixed"
+      sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
         backgroundColor: '#fff',
         color: '#333',
@@ -74,7 +70,7 @@ const TopBar = ({ onMenuClick }) => {
         >
           <MenuIcon />
         </IconButton>
-        
+
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
           IoTFlow Dashboard
         </Typography>
@@ -100,7 +96,7 @@ const TopBar = ({ onMenuClick }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {user?.firstName} {user?.lastName}
+                {user?.username}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {user?.role}
@@ -115,11 +111,11 @@ const TopBar = ({ onMenuClick }) => {
               color="inherit"
             >
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                {getInitials(user?.firstName, user?.lastName)}
+                {user?.username?.charAt(0)?.toUpperCase()}
               </Avatar>
             </IconButton>
           </Box>
-          
+
           <Menu
             id="menu-appbar"
             anchorEl={anchorEl}
@@ -140,7 +136,7 @@ const TopBar = ({ onMenuClick }) => {
           >
             <Box sx={{ px: 2, py: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {user?.firstName} {user?.lastName}
+                {user?.username}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {user?.email}

@@ -155,7 +155,7 @@ const MultiTenantDashboard = () => {
             </Grid>
             <Grid item xs>
               <Typography variant="h6">
-                Welcome, {user.firstName} {user.lastName}
+                Welcome, {user.username}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                 <Chip
