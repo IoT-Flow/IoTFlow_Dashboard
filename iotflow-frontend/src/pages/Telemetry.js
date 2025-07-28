@@ -1,6 +1,7 @@
 import {
   Add,
   BarChart,
+  ContentCopy,
   Delete,
   DeviceHub,
   Download,
@@ -48,12 +49,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import api from '../services/api'; // Import your API service
 import apiService from '../services/apiService';
+import chartService from '../services/chartService';
 
 const Telemetry = () => {
   const { subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
   const { user, token } = useAuth(); // Get token from auth context
   const [selectedDevice, setSelectedDevice] = useState(null);
-  const [timeRange, setTimeRange] = useState('1h');
+  const [timeRange, setTimeRange] = useState('lifetime'); // Default to lifetime
   const [chartType, setChartType] = useState('line');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -101,22 +103,32 @@ const Telemetry = () => {
     fetchDevices();
   }, [user, token]);
 
-  // Load custom charts from localStorage
+  // Load custom charts from database
   useEffect(() => {
-    const savedCharts = localStorage.getItem(`telemetry_charts_${user?.email || 'demo'}`);
-    if (savedCharts) {
-      try {
-        setCustomCharts(JSON.parse(savedCharts));
-      } catch (error) {
-        console.error('Error loading saved charts:', error);
-      }
-    }
-  }, [user]);
+    const loadCharts = async () => {
+      console.log('Telemetry page: Loading charts for user:', user);
+      if (user) {
+        try {
+          setLoading(true);
+          console.log('Telemetry page: Calling chartService.getCharts()');
+          const charts = await chartService.getCharts();
+          console.log('Telemetry page: Charts received:', charts);
 
-  // Save custom charts to localStorage
-  const saveChartsToStorage = (charts) => {
-    localStorage.setItem(`telemetry_charts_${user?.email || 'demo'}`, JSON.stringify(charts));
-  };
+          const transformedCharts = charts.map(chart =>
+            chartService.transformFromBackendFormat(chart)
+          );
+          console.log('Telemetry page: Transformed charts:', transformedCharts);
+          setCustomCharts(transformedCharts);
+        } catch (error) {
+          console.error('Error loading charts:', error);
+          toast.error('Failed to load charts: ' + error.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    loadCharts();
+  }, [user]);
 
   // Custom chart management functions
   const handleAddChart = () => {
@@ -130,36 +142,51 @@ const Telemetry = () => {
     setChartMenuAnchor(null);
   };
 
-  const handleDeleteChart = (chartId) => {
-    const updatedCharts = customCharts.filter(chart => chart.id !== chartId);
-    setCustomCharts(updatedCharts);
-    saveChartsToStorage(updatedCharts);
-    setChartMenuAnchor(null);
-    toast.success('Chart deleted successfully');
-  };
-
-  const handleSaveChart = (chartConfig) => {
-    let updatedCharts;
-
-    if (editingChart) {
-      // Update existing chart
-      updatedCharts = customCharts.map(chart =>
-        chart.id === editingChart.id ? { ...chartConfig, id: editingChart.id } : chart
-      );
-      toast.success('Chart updated successfully');
-    } else {
-      // Add new chart
-      const newChart = {
-        ...chartConfig,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-      };
-      updatedCharts = [...customCharts, newChart];
-      toast.success('Chart created successfully');
+  const handleDeleteChart = async (chartId) => {
+    if (!window.confirm('Are you sure you want to delete this chart?')) {
+      return;
     }
 
-    setCustomCharts(updatedCharts);
-    saveChartsToStorage(updatedCharts);
+    try {
+      await chartService.deleteChart(chartId);
+      setCustomCharts(prev => prev.filter(chart => chart.id !== chartId));
+      setChartMenuAnchor(null);
+      toast.success('Chart deleted successfully');
+    } catch (error) {
+      console.error('Error deleting chart:', error);
+      toast.error('Failed to delete chart: ' + error.message);
+    }
+  };
+
+  const handleSaveChart = async (chartConfig) => {
+    try {
+      console.log('Telemetry page: Saving chart with config:', chartConfig);
+      console.log('Telemetry page: Editing chart?', !!editingChart);
+
+      if (editingChart) {
+        // Update existing chart
+        console.log('Telemetry page: Updating chart:', editingChart.id);
+        const updatedChart = await chartService.updateChart(editingChart.id, chartConfig);
+        const transformedChart = chartService.transformFromBackendFormat(updatedChart);
+        setCustomCharts(prev =>
+          prev.map(chart => chart.id === editingChart.id ? transformedChart : chart)
+        );
+        toast.success('Chart updated successfully');
+      } else {
+        // Create new chart
+        console.log('Telemetry page: Creating new chart');
+        const newChart = await chartService.createChart(chartConfig);
+        console.log('Telemetry page: New chart created:', newChart);
+        const transformedChart = chartService.transformFromBackendFormat(newChart);
+        console.log('Telemetry page: Transformed new chart:', transformedChart);
+        setCustomCharts(prev => [...prev, transformedChart]);
+        toast.success('Chart created successfully');
+      }
+    } catch (error) {
+      console.error('Error saving chart:', error);
+      console.error('Error details:', error.message, error.stack);
+      toast.error('Failed to save chart: ' + error.message);
+    }
     setChartCustomizationOpen(false);
     setEditingChart(null);
   };
@@ -173,6 +200,19 @@ const Telemetry = () => {
   const handleChartMenuClose = () => {
     setChartMenuAnchor(null);
     setSelectedChartForMenu(null);
+  };
+
+  const handleDuplicateChart = async (chartId) => {
+    try {
+      const duplicatedChart = await chartService.duplicateChart(chartId);
+      const transformedChart = chartService.transformFromBackendFormat(duplicatedChart);
+      setCustomCharts(prev => [...prev, transformedChart]);
+      setChartMenuAnchor(null);
+      toast.success('Chart duplicated successfully');
+    } catch (error) {
+      console.error('Error duplicating chart:', error);
+      toast.error('Failed to duplicate chart: ' + error.message);
+    }
   };
 
   // Fetch telemetry data when selected device or time range changes
@@ -280,6 +320,9 @@ const Telemetry = () => {
         break;
       case '7d':
         startTime = new Date(now.getTime() - 7 * 24 * 3600000);
+        break;
+      case 'lifetime':
+        startTime = new Date(0); // Unix epoch, earliest possible
         break;
       default:
         startTime = new Date(now.getTime() - 3600000);
@@ -565,6 +608,7 @@ const Telemetry = () => {
                 <ToggleButton value="6h" aria-label="6 hours">6h</ToggleButton>
                 <ToggleButton value="24h" aria-label="24 hours">24h</ToggleButton>
                 <ToggleButton value="7d" aria-label="7 days">7d</ToggleButton>
+                <ToggleButton value="lifetime" aria-label="lifetime">Lifetime</ToggleButton>
               </ToggleButtonGroup>
               <ToggleButtonGroup
                 value={chartType}
@@ -751,6 +795,10 @@ const Telemetry = () => {
           <MenuItem onClick={() => handleDeleteChart(selectedChartForMenu.id)}>
             <ListItemIcon><Delete fontSize="small" /></ListItemIcon>
             <ListItemText>Delete</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleDuplicateChart(selectedChartForMenu.id)}>
+            <ListItemIcon><ContentCopy fontSize="small" /></ListItemIcon>
+            <ListItemText>Duplicate</ListItemText>
           </MenuItem>
         </Menu>
 

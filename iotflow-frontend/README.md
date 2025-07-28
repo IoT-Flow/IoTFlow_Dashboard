@@ -43,7 +43,7 @@ A modern, responsive web dashboard for IoTFlow - an enterprise IoT connectivity 
 - **Log Viewer**: Real-time log streaming with filtering capabilities
 
 ### 📈 Advanced Analytics
-- **Interactive Charts**: Chart.js powered time-series visualizations
+- **Interactive Charts**: ECharts powered time-series visualizations
 - **Trend Analysis**: Statistical trends and anomaly detection
 - **Custom Queries**: IoTDB query builder interface
 - **Data Correlations**: Multi-device data comparison tools
@@ -54,7 +54,7 @@ A modern, responsive web dashboard for IoTFlow - an enterprise IoT connectivity 
 ### Frontend
 - **React 18.2** - Modern React with hooks and functional components
 - **Material-UI 5.11** - Professional UI component library
-- **Chart.js 4.2** - Interactive and responsive charts
+- **Apache ECharts 5.4** - Professional-grade interactive and responsive charts
 - **Socket.io Client** - Real-time WebSocket communication
 - **React Router 6** - Client-side routing and navigation
 - **Axios** - HTTP client for API communication

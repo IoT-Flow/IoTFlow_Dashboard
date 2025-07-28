@@ -19,8 +19,8 @@ const requiredFiles = [
 const requiredDependencies = [
   'react',
   '@mui/material',
-  'react-chartjs-2',
-  'chart.js'
+  'echarts',
+  'echarts-for-react'
 ];
 
 function checkFile(filePath) {

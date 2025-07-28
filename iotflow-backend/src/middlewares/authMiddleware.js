@@ -5,6 +5,7 @@ const Device = require('../models/device');
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.warn('[Auth] No Authorization header or Bearer token');
     return res.status(401).json({ message: 'Access token is required' });
   }
 
@@ -13,12 +14,15 @@ const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const user = await User.findByPk(decoded.id);
     if (!user) {
+      console.warn('[Auth] Token valid but user not found:', decoded.id);
       return res.status(404).json({ message: 'User not found' });
     }
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    console.error('[Auth] Invalid or expired token:', token);
+    console.error('[Auth] JWT error:', error.message);
+    return res.status(401).json({ message: 'Invalid or expired token', error: error.message });
   }
 };
 
