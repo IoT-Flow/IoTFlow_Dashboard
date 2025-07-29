@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import Admin from './pages/Admin';
 import Analytics from './pages/Analytics';
+import DeviceControl from './pages/DeviceControl';
 import Devices from './pages/Devices';
 import Login from './pages/Login';
 import Overview from './pages/Overview';
@@ -78,6 +79,7 @@ const AppContent = () => {
               <Route path="/" element={<Navigate to="/overview" replace />} />
               <Route path="/overview" element={<Overview />} />
               <Route path="/devices" element={<Devices />} />
+              <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/telemetry" element={<Telemetry />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />

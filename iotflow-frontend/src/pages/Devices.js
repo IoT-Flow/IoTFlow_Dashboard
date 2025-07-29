@@ -51,12 +51,14 @@ import {
 import { alpha } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import DeviceControlDialog from '../components/DeviceControlDialog';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/apiService';
 
 const Devices = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDevices, setSelectedDevices] = useState([]);
@@ -390,14 +392,24 @@ const Devices = () => {
             {user && ` • Logged in as ${user.username}`}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleCreateDevice}
-          size="large"
-        >
-          Add Device
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<ControlPoint />}
+            onClick={() => navigate('/device-control')}
+            size="large"
+          >
+            Device Control
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleCreateDevice}
+            size="large"
+          >
+            Add Device
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters and Search */}

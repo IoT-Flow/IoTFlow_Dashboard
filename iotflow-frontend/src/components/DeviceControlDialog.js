@@ -1,12 +1,15 @@
 import {
+  Add,
   CheckCircle,
   Close,
+  Delete,
   Error,
   History,
   PlayArrow,
   Power,
   Refresh,
   Schedule,
+  Send,
   Settings,
   Stop,
   Warning
@@ -29,9 +32,12 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Slider,
   Switch,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography
@@ -51,6 +57,14 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
   const [commandLoading, setCommandLoading] = useState({}); // Per-command loading
   const [controlValues, setControlValues] = useState({}); // UI control values
   const [showHistory, setShowHistory] = useState(false); // Show/hide history
+  const [tabValue, setTabValue] = useState(0); // Tab control (0: Standard, 1: Custom)
+
+  // Custom Command State
+  const [customCommand, setCustomCommand] = useState('');
+  const [customParameters, setCustomParameters] = useState([{ key: '', value: '' }]);
+  const [customCommandLoading, setCustomCommandLoading] = useState(false);
+  const [sentCommands, setSentCommands] = useState([]); // Track sent custom commands
+  const [pollingIntervals, setPollingIntervals] = useState({}); // Status polling intervals
 
   // --- Effects ---
   // Load device data and subscribe when dialog opens
@@ -60,7 +74,11 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       subscribeToDevice(device.id);
     }
     return () => {
-      if (device) unsubscribeFromDevice(device.id);
+      if (device) {
+        unsubscribeFromDevice(device.id);
+        // Clear all polling intervals
+        Object.values(pollingIntervals).forEach(clearInterval);
+      }
     };
   }, [open, device, subscribeToDevice, unsubscribeFromDevice]);
 
@@ -68,6 +86,18 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
   useEffect(() => {
     // To sync deviceState from context, use getDeviceStatus or getDeviceTelemetry if needed
   }, [device]);
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setTabValue(0);
+      setCustomCommand('');
+      setCustomParameters([{ key: '', value: '' }]);
+      setSentCommands([]);
+      Object.values(pollingIntervals).forEach(clearInterval);
+      setPollingIntervals({});
+    }
+  }, [open]);
 
   // --- Data Loaders ---
   const loadDeviceData = async () => {
@@ -85,6 +115,9 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       }
       if (commandsResult.success) setAvailableCommands(commandsResult.data.commands || []);
       if (historyResult.success) setCommandHistory(historyResult.data.commands || []);
+
+      // Load pending custom commands
+      await loadPendingCommands();
     } catch (error) {
       console.error('Failed to load device data:', error);
       toast.error('Failed to load device information');
@@ -128,6 +161,141 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       toast.error('Failed to execute command');
     } finally {
       setCommandLoading(prev => ({ ...prev, [commandKey]: false }));
+    }
+  };
+
+  // --- Custom Command Handlers ---
+  const addParameter = () => {
+    setCustomParameters([...customParameters, { key: '', value: '' }]);
+  };
+
+  const removeParameter = (index) => {
+    setCustomParameters(customParameters.filter((_, i) => i !== index));
+  };
+
+  const updateParameter = (index, field, value) => {
+    const updated = [...customParameters];
+    updated[index][field] = value;
+    setCustomParameters(updated);
+  };
+
+  const sendCustomCommand = async () => {
+    if (!customCommand.trim()) {
+      toast.error('Please enter a command');
+      return;
+    }
+
+    setCustomCommandLoading(true);
+
+    try {
+      // Build parameters object from key-value pairs
+      const parameters = {};
+      customParameters.forEach(param => {
+        if (param.key.trim() && param.value.trim()) {
+          // Try to parse value as number if possible
+          const numValue = Number(param.value);
+          parameters[param.key.trim()] = isNaN(numValue) ? param.value.trim() : numValue;
+        }
+      });
+
+      const result = await apiService.sendCustomDeviceControl(device.id, customCommand.trim(), parameters);
+
+      if (result.success) {
+        const commandData = {
+          ...result.data,
+          sentAt: new Date().toISOString()
+        };
+        setSentCommands(prev => [commandData, ...prev]);
+        toast.success(`Custom command '${customCommand}' sent successfully`);
+
+        // Start polling for status updates
+        startStatusPolling(commandData.control_id);
+
+        // Reset form
+        setCustomCommand('');
+        setCustomParameters([{ key: '', value: '' }]);
+      } else {
+        throw new Error(result.message || 'Failed to send command');
+      }
+    } catch (error) {
+      console.error('Custom command error:', error);
+      toast.error('Failed to send custom command');
+    } finally {
+      setCustomCommandLoading(false);
+    }
+  };
+
+  const startStatusPolling = (controlId) => {
+    // Clear existing interval if any
+    if (pollingIntervals[controlId]) {
+      clearInterval(pollingIntervals[controlId]);
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const statusResult = await apiService.getControlCommandStatus(device.id, controlId);
+        if (statusResult.success) {
+          // Update the command status in sentCommands
+          setSentCommands(prev => prev.map(cmd =>
+            cmd.control_id === controlId
+              ? { ...cmd, ...statusResult.data, lastUpdated: new Date().toISOString() }
+              : cmd
+          ));
+
+          // Stop polling if command is completed or failed
+          if (['completed', 'failed'].includes(statusResult.data.status)) {
+            clearInterval(interval);
+            setPollingIntervals(prev => {
+              const updated = { ...prev };
+              delete updated[controlId];
+              return updated;
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Status polling error:', error);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    setPollingIntervals(prev => ({
+      ...prev,
+      [controlId]: interval
+    }));
+
+    // Auto-stop polling after 2 minutes
+    setTimeout(() => {
+      if (pollingIntervals[controlId]) {
+        clearInterval(pollingIntervals[controlId]);
+        setPollingIntervals(prev => {
+          const updated = { ...prev };
+          delete updated[controlId];
+          return updated;
+        });
+      }
+    }, 120000);
+  };
+
+  const loadPendingCommands = async () => {
+    try {
+      const result = await apiService.getPendingControlCommands(device.id);
+      if (result.success && result.data.pending_commands) {
+        // Debug: log backend response structure
+        console.log('Pending commands from backend:', result.data.pending_commands);
+        // Normalize control_id for deduplication and display
+        const pendingCommands = result.data.pending_commands.map(cmd => ({
+          ...cmd,
+          control_id: cmd.control_id || cmd.id, // support both keys
+          sentAt: cmd.created_at,
+          lastUpdated: new Date().toISOString()
+        }));
+        const existingIds = new Set(sentCommands.map(cmd => cmd.control_id));
+        const newCommands = pendingCommands.filter(cmd => !existingIds.has(cmd.control_id));
+        if (newCommands.length > 0) {
+          setSentCommands(prev => [...newCommands, ...prev]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load pending commands:', error);
     }
   };
 
@@ -286,6 +454,196 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     }
   };
 
+  // --- Custom Command Form Renderer ---
+  const renderCustomCommandForm = () => {
+    return (
+      <Card variant="outlined" sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Custom Command
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Send custom commands with parameters to your device
+          </Typography>
+
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Command"
+                placeholder="e.g., turn_on, set_brightness, lock"
+                value={customCommand}
+                onChange={(e) => setCustomCommand(e.target.value)}
+                helperText="Enter the command you want to send to the device"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" gutterBottom>
+                Parameters (optional)
+              </Typography>
+              {customParameters.map((param, index) => (
+                <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                  <TextField
+                    label="Key"
+                    size="small"
+                    placeholder="e.g., level, duration"
+                    value={param.key}
+                    onChange={(e) => updateParameter(index, 'key', e.target.value)}
+                    sx={{ flex: 1 }}
+                  />
+                  <TextField
+                    label="Value"
+                    size="small"
+                    placeholder="e.g., 50, on"
+                    value={param.value}
+                    onChange={(e) => updateParameter(index, 'value', e.target.value)}
+                    sx={{ flex: 1 }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => removeParameter(index)}
+                    disabled={customParameters.length === 1}
+                    color="error"
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
+              ))}
+              <Button
+                size="small"
+                startIcon={<Add />}
+                onClick={addParameter}
+                variant="outlined"
+                sx={{ mt: 1 }}
+              >
+                Add Parameter
+              </Button>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={customCommandLoading ? <CircularProgress size={16} /> : <Send />}
+                onClick={sendCustomCommand}
+                disabled={customCommandLoading || !customCommand.trim()}
+                size="large"
+              >
+                Send Custom Command
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // --- Command Status Renderer ---
+  const renderSentCommands = () => {
+    if (sentCommands.length === 0) return null;
+
+    return (
+      <Card variant="outlined" sx={{ mt: 3 }}>
+        <CardContent>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">
+              Sent Commands
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<Refresh />}
+              onClick={loadPendingCommands}
+            >
+              Refresh
+            </Button>
+          </Box>
+
+          <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+            {sentCommands.map((command, index) => {
+              const getStatusColor = (status) => {
+                switch (status) {
+                  case 'pending': return 'warning';
+                  case 'acknowledged': return 'info';
+                  case 'executing': return 'primary';
+                  case 'completed': return 'success';
+                  case 'failed': return 'error';
+                  default: return 'default';
+                }
+              };
+
+              const isPolling = pollingIntervals[command.control_id];
+
+              return (
+                <Paper
+                  key={command.control_id}
+                  elevation={1}
+                  sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="bold">
+                        {command.command}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ID: {command.control_id}
+                      </Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {isPolling && <CircularProgress size={16} />}
+                      <Chip
+                        label={command.status || 'pending'}
+                        color={getStatusColor(command.status)}
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+
+                  {command.parameters && Object.keys(command.parameters).length > 0 && (
+                    <Box mb={1}>
+                      <Typography variant="caption" color="text.secondary">
+                        Parameters:
+                      </Typography>
+                      <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
+                        {Object.entries(command.parameters).map(([key, value]) => (
+                          <Chip
+                            key={key}
+                            label={`${key}: ${value}`}
+                            variant="outlined"
+                            size="small"
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" color="text.secondary">
+                      Sent: {new Date(command.sentAt).toLocaleString()}
+                    </Typography>
+                    {command.execution_time && (
+                      <Typography variant="caption" color="text.secondary">
+                        Execution: {command.execution_time}ms
+                      </Typography>
+                    )}
+                  </Box>
+
+                  {command.error_message && (
+                    <Alert severity="error" sx={{ mt: 1, py: 0 }}>
+                      <Typography variant="caption">
+                        {command.error_message}
+                      </Typography>
+                    </Alert>
+                  )}
+                </Paper>
+              );
+            })}
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderDeviceStatus = () => {
     if (!deviceState) return null;
     return (
@@ -384,9 +742,34 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         ) : (
           <Box>
             {renderDeviceStatus()}
-            <Typography variant="h6" gutterBottom>Device Controls</Typography>
-            {renderControlInterface()}
-            {renderCommandHistory()}
+
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs
+                value={tabValue}
+                onChange={(e, newValue) => setTabValue(newValue)}
+                aria-label="device control tabs"
+              >
+                <Tab label="Standard Controls" />
+                <Tab label="Custom Commands" />
+              </Tabs>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              {tabValue === 0 && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>Device Controls</Typography>
+                  {renderControlInterface()}
+                  {renderCommandHistory()}
+                </Box>
+              )}
+
+              {tabValue === 1 && (
+                <Box>
+                  {renderCustomCommandForm()}
+                  {renderSentCommands()}
+                </Box>
+              )}
+            </Box>
           </Box>
         )}
       </DialogContent>

@@ -143,6 +143,171 @@ class DeviceController {
       res.status(500).json({ message: 'Failed to update configuration', error: error.message });
     }
   }
+
+  // ==================== DEVICE CONTROL METHODS ====================
+
+  async sendDeviceControl(req, res) {
+    try {
+      const { id } = req.params;
+      const { command, parameters } = req.body;
+
+      // Verify device belongs to user
+      const device = await Device.findOne({
+        where: { id, user_id: req.user.id },
+      });
+
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+
+      if (!command) {
+        return res.status(400).json({ message: 'Command is required' });
+      }
+
+      // Generate a control ID for tracking
+      const controlId = `ctrl_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+
+      // In a real system, you would:
+      // 1. Store the command in a commands table
+      // 2. Queue it for the device (via MQTT, WebSocket, etc.)
+      // 3. Track the status
+
+      // For demo, simulate the command being queued
+      const controlCommand = {
+        control_id: controlId,
+        device_id: parseInt(id),
+        user_id: req.user.id,
+        command,
+        parameters: parameters || {},
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Store in a simple in-memory store for demo (in production, use a database)
+      if (!global.deviceControls) {
+        global.deviceControls = {};
+      }
+      global.deviceControls[controlId] = controlCommand;
+
+      // Simulate async processing
+      setTimeout(() => {
+        if (global.deviceControls[controlId]) {
+          global.deviceControls[controlId].status = 'acknowledged';
+          global.deviceControls[controlId].updated_at = new Date().toISOString();
+
+          // Simulate execution after acknowledgment
+          setTimeout(() => {
+            if (global.deviceControls[controlId]) {
+              global.deviceControls[controlId].status = Math.random() > 0.1 ? 'completed' : 'failed';
+              global.deviceControls[controlId].updated_at = new Date().toISOString();
+              global.deviceControls[controlId].completed_at = new Date().toISOString();
+
+              if (global.deviceControls[controlId].status === 'failed') {
+                global.deviceControls[controlId].error_message = 'Simulated execution failure';
+              }
+            }
+          }, 2000 + Math.random() * 3000); // 2-5 seconds execution time
+        }
+      }, 500 + Math.random() * 1500); // 0.5-2 seconds acknowledgment time
+
+      res.status(200).json({
+        control_id: controlId,
+        device_id: parseInt(id),
+        command,
+        parameters: parameters || {},
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        message: `Command '${command}' queued for device ${device.name}`
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to send control command', error: error.message });
+    }
+  }
+
+  async getControlStatus(req, res) {
+    try {
+      const { id, controlId } = req.params;
+
+      // Verify device belongs to user
+      const device = await Device.findOne({
+        where: { id, user_id: req.user.id },
+      });
+
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+
+      // Get control command from store
+      const controlCommand = global.deviceControls?.[controlId];
+
+      if (!controlCommand) {
+        return res.status(404).json({ message: 'Control command not found' });
+      }
+
+      // Verify the control belongs to this device and user
+      if (controlCommand.device_id !== parseInt(id) || controlCommand.user_id !== req.user.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      res.status(200).json({
+        control_id: controlId,
+        device_id: parseInt(id),
+        command: controlCommand.command,
+        parameters: controlCommand.parameters,
+        status: controlCommand.status,
+        created_at: controlCommand.created_at,
+        updated_at: controlCommand.updated_at,
+        completed_at: controlCommand.completed_at,
+        error_message: controlCommand.error_message,
+        execution_time: controlCommand.completed_at
+          ? new Date(controlCommand.completed_at) - new Date(controlCommand.created_at)
+          : null
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get control status', error: error.message });
+    }
+  }
+
+  async getPendingControls(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Verify device belongs to user
+      const device = await Device.findOne({
+        where: { id, user_id: req.user.id },
+      });
+
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+
+      // Get pending controls for this device and user
+      const allControls = global.deviceControls || {};
+      const pendingCommands = Object.values(allControls)
+        .filter(cmd =>
+          cmd.device_id === parseInt(id) &&
+          cmd.user_id === req.user.id &&
+          ['pending', 'acknowledged', 'executing'].includes(cmd.status)
+        )
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      res.status(200).json({
+        device_id: parseInt(id),
+        pending_commands: pendingCommands.map(cmd => ({
+          control_id: cmd.control_id,
+          command: cmd.command,
+          parameters: cmd.parameters,
+          status: cmd.status,
+          created_at: cmd.created_at,
+          updated_at: cmd.updated_at
+        })),
+        total: pendingCommands.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get pending controls', error: error.message });
+    }
+  }
 }
 
 module.exports = new DeviceController();

@@ -1,6 +1,7 @@
 import {
   Analytics as AnalyticsIcon,
   BarChart as BarChartIcon,
+  ControlPoint as ControlPointIcon,
   Dashboard as DashboardIcon,
   DeviceHub as DeviceHubIcon,
   Person as PersonIcon,
@@ -42,6 +43,13 @@ const Sidebar = ({ open, onToggle }) => {
       path: '/devices',
       icon: <DeviceHubIcon />,
       description: 'Device management',
+      roles: ['user', 'admin']
+    },
+    {
+      label: 'Device Control',
+      path: '/device-control',
+      icon: <ControlPointIcon />,
+      description: 'Send commands to devices',
       roles: ['user', 'admin']
     },
     {

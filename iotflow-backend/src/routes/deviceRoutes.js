@@ -15,4 +15,9 @@ router.delete('/:id', verifyToken, DeviceController.deleteDevice);
 router.get('/:id/configuration', verifyToken, DeviceController.getDeviceConfiguration);
 router.put('/:id/configuration', verifyToken, DeviceController.updateDeviceConfiguration);
 
+// Device control endpoints
+router.post('/:id/control', verifyToken, DeviceController.sendDeviceControl);
+router.get('/:id/control/:controlId/status', verifyToken, DeviceController.getControlStatus);
+router.get('/:id/control/pending', verifyToken, DeviceController.getPendingControls);
+
 module.exports = router;

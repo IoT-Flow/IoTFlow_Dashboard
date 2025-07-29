@@ -15,7 +15,8 @@ class TelemetryController {
       }
 
       // Compose IoTDB path with the new structure
-      const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
+      // const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
+      const devicePath = `root.iotflow.users.user_${device.user_id}.devices.device_${device_id}`;
       const timestamp = Date.now();
 
       // Insert telemetry data into IoTDB
@@ -52,7 +53,8 @@ class TelemetryController {
         return res.status(404).json({ message: 'Device not found' });
       }
 
-      const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
+      // const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
+      const devicePath = `root.iotflow.users.user_${device.user_id}.devices.device_${device_id}`;
       const measurements = data_type ? [data_type] : ['*'];
       const startTs = start_date ? new Date(start_date).getTime() : undefined;
       const endTs = end_date ? new Date(end_date).getTime() : undefined;
@@ -86,7 +88,8 @@ class TelemetryController {
         return res.status(404).json({ message: 'Device not found' });
       }
 
-      const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
+      // const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
+      const devicePath = `root.iotflow.users.user_${device.user_id}.devices.device_${device_id}`;
       const startTs = start_date ? new Date(start_date).getTime() : undefined;
       const endTs = end_date ? new Date(end_date).getTime() : undefined;
 

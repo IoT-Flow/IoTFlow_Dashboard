@@ -851,8 +851,7 @@ class ApiService {
           params,
           status: 'executed',
           timestamp: new Date().toISOString(),
-          executionTime: Math.floor(Math.random() * 500) + 100, // 100-600ms
-          message: `Command '${command}' executed successfully on device ${deviceId}`
+          executionTime: Math.floor(Math.random() * 500) + 100 // 100-600ms
         }
       };
     }
@@ -1021,28 +1020,8 @@ class ApiService {
       const response = await this.api.get(`/devices/${deviceId}/commands/history`, { params });
       return response.data;
     } catch (error) {
-      // Demo command history
-      const commands = [];
-      for (let i = 0; i < 10; i++) {
-        commands.push({
-          id: `cmd_${Date.now() - i * 60000}_${Math.random().toString(36).substr(2, 8)}`,
-          command: ['power', 'setBrightness', 'setColor'][Math.floor(Math.random() * 3)],
-          params: { brightness: Math.floor(Math.random() * 100) },
-          status: ['executed', 'failed', 'pending'][Math.floor(Math.random() * 3)],
-          timestamp: new Date(Date.now() - i * 60000).toISOString(),
-          executionTime: Math.floor(Math.random() * 500) + 100,
-          user: 'Current User'
-        });
-      }
-
-      return {
-        success: true,
-        data: {
-          deviceId,
-          commands: commands.slice(0, params.limit || 10),
-          total: commands.length
-        }
-      };
+      // Only show real backend data; do not return demo/fake data
+      throw error;
     }
   }
 
@@ -1151,7 +1130,7 @@ class ApiService {
       });
       return response;
     } catch (error) {
-      return this.generateDemoUserOverview(timeRange);
+      return await this.generateDemoUserOverview(timeRange);
     }
   }
 
@@ -1322,7 +1301,7 @@ class ApiService {
     };
   }
 
-  generateDemoUserOverview(timeRange = '24h') {
+  async generateDemoUserOverview(timeRange = '24h') {
     const currentUser = this.getCurrentUserFromStorage();
     if (!currentUser) {
       this.handleUnauthorized();
@@ -1330,8 +1309,9 @@ class ApiService {
     }
 
     // Get user's devices
-    const devicesResult = this.getDevicesFromCache();
-    const devices = devicesResult?.data?.devices || [];
+    const devicesResult = await this.getDevices();
+    const devices = Array.isArray(devicesResult?.data) ? devicesResult.data :
+      Array.isArray(devicesResult?.data?.devices) ? devicesResult.data.devices : [];
 
     const activeDevices = devices.filter(d => d.status === 'active').length;
     const totalDevices = devices.length;
@@ -1379,46 +1359,99 @@ class ApiService {
     };
   }
 
-  // Helper methods
-  getDeviceFromCache(deviceId) {
-    const devicesResult = this.getDevicesFromCache();
-    return devicesResult?.data?.devices?.find(d => d.id === parseInt(deviceId));
-  }
+  // ==================== CUSTOM DEVICE CONTROL API ====================
 
-  getDevicesFromCache() {
+  /**
+   * Send a custom control command to a device
+   * @param {string} deviceId - The device ID
+   * @param {string} command - The command string (e.g., 'turn_on', 'set_brightness')
+   * @param {object} parameters - Key-value pairs of parameters
+   * @returns {Promise} Response with control_id and status
+   */
+  async sendCustomDeviceControl(deviceId, command, parameters = {}) {
     try {
-      const cached = localStorage.getItem('iotflow_devices_cache');
-      if (cached) {
-        const parsedCache = JSON.parse(cached);
-        // Check if cache is still valid (less than 1 minute old for better real-time updates)
-        const cacheAge = Date.now() - (parsedCache.timestamp || 0);
-        if (cacheAge < 60 * 1000) { // 1 minute
-          return parsedCache;
-        }
-      }
+      const response = await axios.post(`http://localhost:5000/api/v1/devices/${deviceId}/control`, {
+        command,
+        parameters
+      });
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error) {
-      console.error('Error reading devices cache:', error);
+      console.error('Device control error:', error.response?.data || error.message);
+
+      // Demo fallback for development
+      const controlId = `ctrl_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      return {
+        success: true,
+        data: {
+          control_id: controlId,
+          device_id: deviceId,
+          command,
+          parameters,
+          status: 'pending',
+          timestamp: new Date().toISOString(),
+          message: `Command '${command}' queued for device ${deviceId}`
+        }
+      };
     }
-
-    // Return empty structure if no valid cache
-    return {
-      data: { devices: [] },
-      timestamp: Date.now()
-    };
   }
 
-  parseInterval(interval) {
-    const intervalMap = {
-      '1m': 60 * 1000,
-      '5m': 5 * 60 * 1000,
-      '15m': 15 * 60 * 1000,
-      '1h': 60 * 60 * 1000,
-      '1d': 24 * 60 * 60 * 1000
-    };
-    return intervalMap[interval] || intervalMap['5m'];
+  /**
+   * Check the status of a control command
+   * @param {string} deviceId - The device ID
+   * @param {string} controlId - The control command ID
+   * @returns {Promise} Response with command status
+   */
+  async getControlCommandStatus(deviceId, controlId) {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/v1/devices/${deviceId}/control/${controlId}/status`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Control status error:', error.response?.data || error.message);
+
+      // Demo fallback with realistic status progression
+      const statuses = ['pending', 'acknowledged', 'executing', 'completed', 'failed'];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+
+      return {
+        success: true,
+        data: {
+          control_id: controlId,
+          device_id: deviceId,
+          status: randomStatus,
+          timestamp: new Date().toISOString(),
+          message: `Command status: ${randomStatus}`,
+          execution_time: randomStatus === 'completed' ? Math.floor(Math.random() * 1000) + 100 : null
+        }
+      };
+    }
   }
 
-  // ...existing code...
+  /**
+   * Get pending control commands for a device
+   * @param {string} deviceId - The device ID
+   * @returns {Promise} Response with pending commands list
+   */
+  async getPendingControlCommands(deviceId) {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/v1/devices/${deviceId}/control/pending`);
+      console.log(response.data);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      // Only show real backend data; do not return demo/fake data
+      throw error;
+    }
+  }
+
+  // ==================== EXISTING DEVICE CONTROL METHODS ====================
 }
 
 const apiService = new ApiService();
