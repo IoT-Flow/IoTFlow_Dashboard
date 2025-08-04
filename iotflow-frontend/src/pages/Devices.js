@@ -114,7 +114,6 @@ const Devices = () => {
               description: device.description || '',
               created_at: new Date(device.createdAt),
               is_online: device.status === 'active',
-              tenant_id: device.tenant_id,
               user_id: device.user_id
             };
           });
@@ -258,7 +257,6 @@ const Devices = () => {
             created_at: new Date(result.data.createdAt || Date.now()),
             telemetry_count: 0,
             is_online: result.data.status === 'active',
-            tenant_id: result.data.tenant_id,
             user_id: result.data.owner
           };
 

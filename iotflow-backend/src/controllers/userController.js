@@ -26,7 +26,7 @@ class UserController {
         email,
         password_hash,
       });
-      
+
       const { password_hash: _, ...userResponse } = newUser.toJSON();
 
       // Generate JWT token for the new user
@@ -143,7 +143,7 @@ class UserController {
 
   async createUser(req, res) {
     try {
-      const { username, email, password, role = 'user', tenant_id = 'default' } = req.body;
+      const { username, email, password, role = 'user' } = req.body;
 
       const password_hash = await bcrypt.hash(password, 10);
 
@@ -152,7 +152,6 @@ class UserController {
         email,
         password_hash,
         role,
-        tenant_id,
       });
       res.status(201).json(newUser);
     } catch (error) {
@@ -175,9 +174,9 @@ class UserController {
   async updateUser(req, res) {
     try {
       const { id } = req.params;
-      const { username, email, password, is_active, is_admin, role, tenant_id } = req.body;
+      const { username, email, password, is_active, is_admin, role } = req.body;
 
-      const updates = { username, email, is_active, is_admin, role, tenant_id, updated_at: new Date() };
+      const updates = { username, email, is_active, is_admin, role, updated_at: new Date() };
       if (password) {
         updates.password_hash = await bcrypt.hash(password, 10);
       }

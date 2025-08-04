@@ -1,5 +1,4 @@
 import {
-  Business,
   Dashboard,
   Devices,
   NetworkCheck,
@@ -36,9 +35,9 @@ import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Tooltip as RechartsT
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import apiService from '../services/apiService';
-import MultiTenantTelemetryWidget from './MultiTenantTelemetryWidget';
+import CustomChart from './CustomChart';
 
-const MultiTenantDashboard = () => {
+const Dashboard = () => {
   const { user } = useAuth();
   const {
     isConnected,
@@ -130,7 +129,7 @@ const MultiTenantDashboard = () => {
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <LinearProgress sx={{ mb: 2 }} />
         <Typography variant="h5" align="center">
-          Loading Multi-Tenant Dashboard...
+          Loading Dashboard...
         </Typography>
       </Container>
     );
@@ -142,7 +141,7 @@ const MultiTenantDashboard = () => {
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
           <Dashboard sx={{ mr: 2 }} />
-          IoTFlow Multi-Tenant Dashboard
+          IoTFlow Dashboard
         </Typography>
 
         {/* User Context Information */}
@@ -163,12 +162,6 @@ const MultiTenantDashboard = () => {
                   label={`User ID: ${user.id}`}
                   size="small"
                   color="primary"
-                />
-                <Chip
-                  icon={<Business />}
-                  label={`Tenant: ${user.tenant_id || 'Default'}`}
-                  size="small"
-                  color="secondary"
                 />
                 <Chip
                   icon={<Security />}
@@ -432,7 +425,7 @@ const MultiTenantDashboard = () => {
               <Grid container spacing={2}>
                 {(devices || []).slice(0, 6).map((device) => (
                   <Grid item xs={12} sm={6} md={4} key={device.id}>
-                    <MultiTenantTelemetryWidget deviceId={device.id} compact={true} />
+                    <CustomChart deviceId={device.id} compact={true} />
                   </Grid>
                 ))}
               </Grid>
@@ -449,4 +442,4 @@ const MultiTenantDashboard = () => {
   );
 };
 
-export default MultiTenantDashboard;
+export default Dashboard;

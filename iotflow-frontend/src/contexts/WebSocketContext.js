@@ -25,7 +25,7 @@ export const WebSocketProvider = ({ children }) => {
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttempts = useRef(0);
 
-  // Multi-tenant WebSocket connection management
+  // WebSocket connection management
   useEffect(() => {
     if (isAuthenticated && user) {
       connectWebSocket();
@@ -42,7 +42,7 @@ export const WebSocketProvider = ({ children }) => {
     if (!user || wsRef.current) return;
 
     try {
-      // Create multi-tenant WebSocket connection
+      // Create WebSocket connection
       wsRef.current = apiService.createTelemetryWebSocket(
         handleWebSocketMessage,
         handleWebSocketError
@@ -52,13 +52,12 @@ export const WebSocketProvider = ({ children }) => {
         wsRef.current.onopen = () => {
           setIsConnected(true);
           reconnectAttempts.current = 0;
-          console.log(`Multi-tenant WebSocket connected for user ${user.id}`);
+          console.log(`WebSocket connected for user ${user.id}`);
 
           // Send authentication and subscription message
           wsRef.current.send(JSON.stringify({
             type: 'auth',
             user_id: user.id,
-            tenant_id: user.tenant_id,
             api_key: user.api_key,
             timestamp: new Date().toISOString()
           }));
@@ -66,7 +65,7 @@ export const WebSocketProvider = ({ children }) => {
 
         wsRef.current.onclose = () => {
           setIsConnected(false);
-          console.log('Multi-tenant WebSocket disconnected');
+          console.log('WebSocket disconnected');
 
           // Attempt to reconnect with exponential backoff
           if (isAuthenticated && reconnectAttempts.current < 5) {
@@ -105,9 +104,9 @@ export const WebSocketProvider = ({ children }) => {
 
   const handleWebSocketMessage = (data) => {
     try {
-      // Ensure data belongs to current user (multi-tenant security)
-      if (data.user_id !== user.id || data.tenant_id !== user.tenant_id) {
-        console.warn('Received data for different user/tenant - ignoring');
+      // Ensure data belongs to current user
+      if (data.user_id !== user.id) {
+        console.warn('Received data for different user - ignoring');
         return;
       }
 
@@ -145,8 +144,7 @@ export const WebSocketProvider = ({ children }) => {
         ...telemetry,
         timestamp,
         device_id,
-        user_id: data.user_id,
-        tenant_id: data.tenant_id
+        user_id: data.user_id
       }
     }));
 
@@ -174,8 +172,7 @@ export const WebSocketProvider = ({ children }) => {
         status,
         last_seen,
         timestamp: new Date().toISOString(),
-        user_id: data.user_id,
-        tenant_id: data.tenant_id
+        user_id: data.user_id
       }
     }));
 
@@ -294,7 +291,6 @@ export const WebSocketProvider = ({ children }) => {
         type: 'subscribe',
         device_id: deviceId,
         user_id: user.id,
-        tenant_id: user.tenant_id,
         timestamp: new Date().toISOString()
       }));
     }
@@ -306,7 +302,6 @@ export const WebSocketProvider = ({ children }) => {
         type: 'unsubscribe',
         device_id: deviceId,
         user_id: user.id,
-        tenant_id: user.tenant_id,
         timestamp: new Date().toISOString()
       }));
     }
@@ -323,7 +318,6 @@ export const WebSocketProvider = ({ children }) => {
         command,
         params,
         user_id: user.id,
-        tenant_id: user.tenant_id,
         timestamp: new Date().toISOString()
       }));
 
@@ -338,7 +332,6 @@ export const WebSocketProvider = ({ children }) => {
         type: 'request_state',
         device_id: deviceId,
         user_id: user.id,
-        tenant_id: user.tenant_id,
         timestamp: new Date().toISOString()
       }));
     }

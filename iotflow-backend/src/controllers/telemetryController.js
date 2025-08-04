@@ -14,31 +14,49 @@ class TelemetryController {
         return res.status(404).json({ message: 'Device not found' });
       }
 
-      // Compose IoTDB path with the new structure
-      // const devicePath = `root.iotflow.devices.users.user_${device.user_id}.device_${device_id}`;
       const devicePath = `root.iotflow.users.user_${device.user_id}.devices.device_${device_id}`;
       const timestamp = Date.now();
 
-      // Insert telemetry data into IoTDB
-      await iotdbClient.insertRecord(devicePath, {
-        [data_type]: value,
-        unit,
-        metadata: JSON.stringify(metadata || {}),
-      }, timestamp);
+      // Prepare data for IoTDB insertion
+      const telemetryData = {
+        [data_type]: value
+      };
 
-      // Optionally update device status in your SQL DB if needed
+      // Add unit and metadata if provided
+      if (unit) {
+        telemetryData[`${data_type}_unit`] = unit;
+      }
+      if (metadata && Object.keys(metadata).length > 0) {
+        telemetryData[`${data_type}_metadata`] = JSON.stringify(metadata);
+      }
+
+      console.log(`📊 Storing telemetry in IoTDB for device ${device_id}, user ${device.user_id}`);
+      console.log(`📍 Device path: ${devicePath}`);
+      console.log(`📈 Data:`, telemetryData);
+
+      // Store in IoTDB
+      await iotdbClient.insertRecord(devicePath, telemetryData, timestamp);
+      
+      console.log(`✅ Telemetry stored successfully in IoTDB for device ${device_id}`);
 
       res.status(201).json({
+        success: true,
         device_id,
         data_type,
         value,
         unit,
         metadata,
-        timestamp,
-        iotdb_path: devicePath
+        timestamp: new Date(timestamp).toISOString(),
+        stored_in_iotdb: true,
+        device_path: devicePath
       });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to submit telemetry', error: error.message });
+      console.error('❌ Telemetry submission error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to submit telemetry', 
+        error: error.message 
+      });
     }
   }
 
@@ -117,6 +135,82 @@ class TelemetryController {
       res.status(503).json({
         status: 'unhealthy',
         message: 'IoTDB connection failed',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  async getTodayMessageCount(req, res) {
+    try {
+      const userId = req.user.id;
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      
+      // Convert to milliseconds for IoTDB timestamp
+      const startTimestamp = startOfDay.getTime();
+      const endTimestamp = endOfDay.getTime();
+
+      console.log(`📊 Getting today's message count from IoTDB for user ${userId}`);
+      console.log(`⏰ Time range: ${startTimestamp} to ${endTimestamp}`);
+
+      try {
+        // Use a direct COUNT query for all devices under this user
+        const userPath = `root.iotflow.users.user_${userId}.devices.**`;
+        const countSQL = `SELECT COUNT(temperature) FROM ${userPath} WHERE time >= ${startTimestamp}`;
+        
+        console.log('🔢 Counting messages with SQL:', countSQL);
+        const countResult = await iotdbClient.executeSQL(countSQL);
+        console.log('📈 Count result:', countResult);
+
+        let messageCount = 0;
+
+        if (countResult && countResult.values && countResult.values.length > 0) {
+          // Sum all the counts from different device paths
+          for (const countRow of countResult.values) {
+            const count = countRow[0] || 0;
+            messageCount += parseInt(count);
+          }
+        }
+
+        console.log(`🎯 Total messages found: ${messageCount} for user ${userId} today`);
+
+        res.status(200).json({
+          success: true,
+          data: {
+            user_id: userId,
+            date: today.toISOString().split('T')[0],
+            message_count: messageCount,
+            period: 'today',
+            source: 'iotdb',
+            timestamp: new Date().toISOString()
+          }
+        });
+
+      } catch (iotdbError) {
+        console.error('❌ IoTDB query failed:', iotdbError.message);
+        
+        res.status(500).json({
+          success: false,
+          message: 'Failed to get message count from IoTDB',
+          error: iotdbError.message,
+          data: {
+            user_id: userId,
+            date: today.toISOString().split('T')[0],
+            message_count: 0,
+            period: 'today',
+            source: 'iotdb_error',
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error getting today message count:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get today message count',
         error: error.message,
         timestamp: new Date().toISOString()
       });

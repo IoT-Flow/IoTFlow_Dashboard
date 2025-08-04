@@ -1,5 +1,8 @@
 const Device = require('../models/device');
 const DeviceConfiguration = require('../models/deviceConfiguration');
+const DeviceAuth = require('../models/deviceAuth');
+const TelemetryData = require('../models/telemetryData');
+const { sequelize } = require('../utils/db');
 
 class DeviceController {
   async createDevice(req, res) {
@@ -94,17 +97,49 @@ class DeviceController {
   async deleteDevice(req, res) {
     try {
       const { id } = req.params;
-      // Delete related device configuration first
-      await DeviceConfiguration.destroy({ where: { device_id: id } });
-      // TODO: Delete other related records (e.g., telemetry) if needed
-      const deleted = await Device.destroy({
-        where: { id, user_id: req.user.id },
-      });
-      if (!deleted) {
-        return res.status(404).json({ message: 'Device not found' });
+
+      console.log(`Deleting device ${id} and all related records...`);
+
+      // Temporarily disable foreign key constraints for this operation
+      await sequelize.query('PRAGMA foreign_keys = OFF');
+
+      try {
+        // Delete ALL related records first
+
+        // 1. Delete telemetry data
+        await TelemetryData.destroy({ where: { device_id: id } });
+
+        // 2. Delete device authentication records
+        await DeviceAuth.destroy({ where: { device_id: id } });
+
+        // 3. Delete device configuration
+        await DeviceConfiguration.destroy({ where: { device_id: id } });
+
+        // 4. Delete chart-device relationships (manual table)
+        await sequelize.query('DELETE FROM chart_devices WHERE device_id = ?', {
+          replacements: [id],
+          type: sequelize.QueryTypes.DELETE
+        });
+
+        // 5. Finally delete the device
+        const deleted = await Device.destroy({
+          where: { id, user_id: req.user.id },
+        });
+
+        if (!deleted) {
+          return res.status(404).json({ message: 'Device not found' });
+        }
+
+        console.log(`Device ${id} and all related records deleted successfully`);
+        res.json({ success: true, message: 'Device deleted successfully' });
+
+      } finally {
+        // Re-enable foreign key constraints
+        await sequelize.query('PRAGMA foreign_keys = ON');
       }
-      res.status(204).send();
+
     } catch (error) {
+      console.error('Device deletion error:', error);
       res.status(500).json({ message: 'Failed to delete device', error: error.message });
     }
   }

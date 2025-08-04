@@ -1,7 +1,7 @@
-import MultiTenantDashboard from '../components/MultiTenantDashboard';
+import Dashboard from '../components/Dashboard';
 
 const Overview = () => {
-  return <MultiTenantDashboard />;
+  return <Dashboard />;
 };
 
 export default Overview;

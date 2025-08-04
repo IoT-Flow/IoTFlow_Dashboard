@@ -2,7 +2,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // IoTFlow Dashboard API configuration
-// Dashboard → Node.js Backend API → SQLite (secure multi-tenant architecture)
+// Dashboard → Node.js Backend API → SQLite (secure architecture)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:3001/ws';
 
@@ -48,7 +48,7 @@ class ApiService {
           console.warn('No auth token found for authenticated request');
         }
 
-        // Add user context for multi-tenant data isolation
+        // Add user context for data isolation
         if (user && user.id) {
           config.headers['X-User-ID'] = user.id;
         }
@@ -119,7 +119,6 @@ class ApiService {
           username: 'admin',
           email: 'admin@iotflow.com',
           role: 'admin',
-          tenant_id: 1,
           permissions: ['admin', 'user_management', 'system_access'],
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString()
@@ -133,7 +132,6 @@ class ApiService {
           username: 'john',
           email: 'john@iotflow.com',
           role: 'user',
-          tenant_id: 2,
           permissions: ['device_access', 'telemetry_read'],
           createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
           lastLogin: new Date().toISOString()
@@ -147,7 +145,6 @@ class ApiService {
           username: 'alice',
           email: 'alice@iotflow.com',
           role: 'user',
-          tenant_id: 3,
           permissions: ['device_access', 'telemetry_read', 'analytics_read'],
           createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
           lastLogin: new Date().toISOString()
@@ -173,7 +170,7 @@ class ApiService {
     this.saveDemoUsers();
   }
 
-  // Utility methods for multi-tenant support
+  // Utility methods for user support
   getCurrentUserFromStorage() {
     try {
       const userData = localStorage.getItem('iotflow_user');
@@ -231,7 +228,7 @@ class ApiService {
     }
   }
 
-  // ==================== MULTI-TENANT AUTHENTICATION ====================
+  // ==================== AUTHENTICATION ====================
 
   async login(emailOrUsername, password) {
     try {
@@ -336,7 +333,6 @@ class ApiService {
         username: userData.username,
         email: userData.email,
         role: 'user',
-        tenant_id: newUserId, // Each new user gets their own tenant
         permissions: ['device_access', 'telemetry_read'],
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString()
@@ -418,7 +414,7 @@ class ApiService {
     }
   }
 
-  // ==================== MULTI-TENANT DEVICE MANAGEMENT ====================
+  // ==================== DEVICE MANAGEMENT ====================
 
   async getDevices(params = {}) {
     try {
@@ -470,7 +466,7 @@ class ApiService {
           return;
         }
 
-        // User-specific device data with enhanced multi-tenant isolation
+        // User-specific device data with enhanced user isolation
         const userDevicesMap = {
           1: [ // Admin user devices
             {
@@ -484,7 +480,6 @@ class ApiService {
               api_key: 'demo_admin_key_temp_001', // Re-add api_key
               lastSeen: new Date(Date.now() - 300000).toISOString(),
               owner: 1,
-              tenant_id: 1,
               createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
               description: 'Critical infrastructure temperature monitoring'
             },
@@ -499,7 +494,6 @@ class ApiService {
               api_key: 'demo_admin_key_press_002', // Re-add api_key
               lastSeen: new Date(Date.now() - 120000).toISOString(),
               owner: 1,
-              tenant_id: 1,
               createdAt: new Date(Date.now() - 86400000 * 45).toISOString(),
               description: 'Building HVAC system pressure monitoring and control'
             }
@@ -516,7 +510,6 @@ class ApiService {
               api_key: 'demo_john_key_temp_001', // Re-add api_key
               lastSeen: new Date(Date.now() - 600000).toISOString(),
               owner: 2,
-              tenant_id: 2,
               createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
               description: 'Smart home climate monitoring and comfort optimization'
             },
@@ -531,7 +524,6 @@ class ApiService {
               api_key: 'demo_john_key_led_002', // Re-add api_key
               lastSeen: new Date(Date.now() - 180000).toISOString(),
               owner: 2,
-              tenant_id: 2,
               createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
               description: 'RGB LED strip with voice control and automation'
             }
@@ -548,7 +540,6 @@ class ApiService {
               api_key: 'demo_alice_key_temp_001', // Re-add api_key
               lastSeen: new Date(Date.now() - 240000).toISOString(),
               owner: 3,
-              tenant_id: 3,
               createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
               description: 'Precision greenhouse climate control and monitoring'
             },
@@ -563,14 +554,13 @@ class ApiService {
               api_key: 'demo_alice_key_pump_002', // Re-add api_key
               lastSeen: new Date(Date.now() - 300000).toISOString(),
               owner: 3,
-              tenant_id: 3,
               createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
               description: 'Solar-powered smart irrigation with soil moisture integration'
             }
           ]
         };
 
-        // Strict tenant isolation - only return current user's devices
+        // Only return current user's devices
         const userDevices = userDevicesMap[currentUser.id] || [];
 
         return {
@@ -764,6 +754,11 @@ class ApiService {
   // Telemetry Data
   async getTelemetryData(deviceId, params = {}) {
     const response = await this.api.get(`/telemetry/device/${deviceId}`, { params });
+    return response.data;
+  }
+
+  async getTodayMessageCount() {
+    const response = await this.api.get('/telemetry/today/count');
     return response.data;
   }
 

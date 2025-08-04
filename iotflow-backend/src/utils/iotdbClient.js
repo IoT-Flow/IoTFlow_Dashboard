@@ -31,7 +31,7 @@ class IoTDBClient {
       const options = {
         hostname: IOTDB_HOST,
         port: IOTDB_REST_PORT,
-        path: '/rest/v1/query',  // IoTDB REST API v1
+        path: '/rest/v1/query',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,18 +53,24 @@ class IoTDBClient {
             console.log('Raw REST API response:', data);
             const result = JSON.parse(data);
 
-            // IoTDB REST API returns data directly without a code field
-            // Check if response has the expected structure
-            if (result.columnNames || result.expressions || result.values !== undefined) {
-              resolve(result);
-            } else if (result.message && result.message.includes('error')) {
-              throw new Error(`IoTDB REST API Error: ${result.message}`);
-            } else {
-              resolve(result);
+            // Check for errors in IoTDB response
+            if (result.code && result.code !== 200) {
+              reject(new Error(`IoTDB Error (${result.code}): ${result.message}`));
+              return;
             }
+
+            // For COUNT queries, extract the count value
+            if (sql.includes('COUNT(*)') && result.values && result.values.length > 0) {
+              const count = result.values[0][0] || 0;
+              resolve({ count: parseInt(count) });
+              return;
+            }
+
+            // Return the full result for other queries
+            resolve(result);
           } catch (e) {
             console.error('Error parsing REST API response:', e);
-            reject(e);
+            reject(new Error(`Failed to parse IoTDB response: ${e.message}`));
           }
         });
       });
@@ -74,6 +80,11 @@ class IoTDBClient {
         reject(new Error(`Failed to connect to IoTDB REST API: ${e.message}`));
       });
 
+      req.setTimeout(10000, () => {
+        req.destroy();
+        reject(new Error('IoTDB request timeout'));
+      });
+
       req.write(postData);
       req.end();
     });
@@ -81,21 +92,45 @@ class IoTDBClient {
 
   async insertRecord(devicePath, data, timestamp) {
     try {
+      // For IoTDB, we need to create the timeseries first if it doesn't exist
+      // Then insert the data using the correct syntax
+
       const measurements = Object.keys(data);
       const values = Object.values(data);
 
-      // Build proper IoTDB INSERT SQL statement
+      // Create timeseries if they don't exist (ignore errors if they already exist)
+      for (let i = 0; i < measurements.length; i++) {
+        const measurement = measurements[i];
+        const value = values[i];
+        const dataType = typeof value === 'number' ?
+          (Number.isInteger(value) ? 'INT64' : 'DOUBLE') : 'TEXT';
+
+        const createSQL = `CREATE TIMESERIES ${devicePath}.${measurement} WITH DATATYPE=${dataType}`;
+        try {
+          await this.executeSQL(createSQL);
+          console.log(`Created timeseries: ${devicePath}.${measurement}`);
+        } catch (createError) {
+          // Ignore if timeseries already exists
+          if (!createError.message.includes('already exists')) {
+            console.warn(`Failed to create timeseries ${devicePath}.${measurement}:`, createError.message);
+          }
+        }
+      }
+
+      // Build proper IoTDB INSERT statement
+      // IoTDB syntax: INSERT INTO root.sg1.d1(timestamp,s1,s2) values(1,1,1)
       const measurementsList = measurements.join(', ');
       const valuesList = values.map(value => {
         return typeof value === 'string' ? `'${value}'` : value;
       }).join(', ');
 
-      const sql = `INSERT INTO ${devicePath}(timestamp, ${measurementsList}) VALUES(${timestamp}, ${valuesList})`; console.log('Executing INSERT:', sql);
+      const sql = `INSERT INTO ${devicePath}(timestamp, ${measurementsList}) VALUES(${timestamp}, ${valuesList})`;
+      console.log('Executing INSERT:', sql);
       const result = await this.executeSQL(sql);
       console.log('Insert result:', result);
 
       // Check if insert was successful (no error in response)
-      return !result.message || !result.message.includes('error');
+      return !result.code || result.code === 200;
     } catch (error) {
       console.error('Failed to insert record:', error);
       throw error;
@@ -249,5 +284,10 @@ module.exports = {
   // Aggregate telemetry data
   async aggregate(devicePath, data_type, aggregation, startTs, endTs) {
     return await client.aggregate(devicePath, data_type, aggregation, startTs, endTs);
+  },
+
+  // Execute SQL directly (for compatibility)
+  async executeSQL(sql) {
+    return await client.executeSQL(sql);
   }
 };
