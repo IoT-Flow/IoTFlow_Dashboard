@@ -2,6 +2,7 @@ const TelemetryData = require('../models/telemetryData');
 const Device = require('../models/device');
 const { Op, Sequelize } = require('sequelize');
 const iotdbClient = require('../utils/iotdbClient.js'); // You need to implement this IoTDB client wrapper
+const notificationService = require('../services/notificationService');
 
 class TelemetryController {
   async submitTelemetry(req, res) {
@@ -36,8 +37,11 @@ class TelemetryController {
 
       // Store in IoTDB
       await iotdbClient.insertRecord(devicePath, telemetryData, timestamp);
-      
+
       console.log(`✅ Telemetry stored successfully in IoTDB for device ${device_id}`);
+
+      // Send real-time notifications for significant data or anomalies
+      await this.checkDataForNotifications(device, data_type, value, telemetryData);
 
       res.status(201).json({
         success: true,
@@ -52,10 +56,10 @@ class TelemetryController {
       });
     } catch (error) {
       console.error('❌ Telemetry submission error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
-        message: 'Failed to submit telemetry', 
-        error: error.message 
+        message: 'Failed to submit telemetry',
+        error: error.message
       });
     }
   }
@@ -147,7 +151,7 @@ class TelemetryController {
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-      
+
       // Convert to milliseconds for IoTDB timestamp
       const startTimestamp = startOfDay.getTime();
       const endTimestamp = endOfDay.getTime();
@@ -159,7 +163,7 @@ class TelemetryController {
         // Use a direct COUNT query for all devices under this user
         const userPath = `root.iotflow.users.user_${userId}.devices.**`;
         const countSQL = `SELECT COUNT(temperature) FROM ${userPath} WHERE time >= ${startTimestamp}`;
-        
+
         console.log('🔢 Counting messages with SQL:', countSQL);
         const countResult = await iotdbClient.executeSQL(countSQL);
         console.log('📈 Count result:', countResult);
@@ -190,7 +194,7 @@ class TelemetryController {
 
       } catch (iotdbError) {
         console.error('❌ IoTDB query failed:', iotdbError.message);
-        
+
         res.status(500).json({
           success: false,
           message: 'Failed to get message count from IoTDB',
@@ -214,6 +218,113 @@ class TelemetryController {
         error: error.message,
         timestamp: new Date().toISOString()
       });
+    }
+  }
+
+  async generateTestNotification(req, res) {
+    try {
+      const userId = req.user.id;
+      const { type, message, device_id } = req.body;
+
+      // This is a test endpoint to generate sample notifications
+      const notification = {
+        id: Date.now(),
+        type: type || 'info',
+        message: message || 'Test notification from backend',
+        device_id: device_id || 'test_device',
+        timestamp: new Date().toISOString(),
+        user_id: userId
+      };
+
+      console.log('🔔 Generated test notification:', notification);
+
+      res.status(200).json({
+        success: true,
+        message: 'Test notification generated',
+        notification,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('❌ Error generating test notification:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate test notification',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  // Check telemetry data for notification-worthy events
+  async checkDataForNotifications(device, data_type, value, telemetryData) {
+    try {
+      // Check for data anomalies
+      const anomalyThresholds = {
+        temperature: { min: -10, max: 50, warning: { min: 0, max: 40 } },
+        humidity: { min: 0, max: 100, warning: { min: 20, max: 80 } },
+        pressure: { min: 800, max: 1200, warning: { min: 950, max: 1050 } },
+        battery_level: { min: 0, max: 100, warning: { min: 20, max: 100 } }
+      };
+
+      const threshold = anomalyThresholds[data_type];
+      if (threshold && typeof value === 'number') {
+        // Critical anomaly
+        if (value <= threshold.min || value >= threshold.max) {
+          notificationService.notifyDataAnomaly(
+            device.user_id,
+            device,
+            data_type,
+            value,
+            `${threshold.min}-${threshold.max}`
+          );
+        }
+        // Warning level
+        else if (threshold.warning &&
+          (value <= threshold.warning.min || value >= threshold.warning.max)) {
+          await notificationService.createNotification(device.user_id, {
+            type: 'warning',
+            title: 'Data Warning',
+            message: `${data_type} reading (${value}) approaching limits on "${device.name}"`,
+            device_id: device.id,
+            source: 'data_monitoring',
+            metadata: { data_type, value, threshold: threshold.warning }
+          });
+        }
+      }
+
+      // Low battery alerts
+      if (data_type === 'battery_level' && value <= 15) {
+        await notificationService.createNotification(device.user_id, {
+          type: 'warning',
+          title: 'Low Battery Alert',
+          message: `Low battery alert: ${value}% remaining on "${device.name}"`,
+          device_id: device.id,
+          source: 'battery_monitoring',
+          metadata: { battery_level: value }
+        });
+      }
+
+      // Device connectivity notifications
+      if (device.status === 'offline') {
+        // Update device status to online when data is received
+        device.update({
+          status: 'active',
+          last_seen: new Date(),
+          updated_at: new Date()
+        });
+
+        notificationService.notifyDeviceConnected(device.user_id, device);
+      } else {
+        // Update last seen timestamp
+        device.update({
+          last_seen: new Date(),
+          updated_at: new Date()
+        });
+      }
+
+    } catch (error) {
+      console.error('Error checking data for notifications:', error);
     }
   }
 }

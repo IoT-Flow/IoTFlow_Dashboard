@@ -6,7 +6,6 @@ import TopBar from './components/Layout/TopBar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import Admin from './pages/Admin';
-import Analytics from './pages/Analytics';
 import DeviceControl from './pages/DeviceControl';
 import Devices from './pages/Devices';
 import Login from './pages/Login';
@@ -81,7 +80,6 @@ const AppContent = () => {
               <Route path="/devices" element={<Devices />} />
               <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/telemetry" element={<Telemetry />} />
-              <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />
               {user?.role === 'admin' && (
                 <Route path="/admin" element={<Admin />} />

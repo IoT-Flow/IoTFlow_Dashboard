@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
+const notificationService = require('../services/notificationService');
 
 class UserController {
   async register(req, res) {
@@ -35,6 +36,16 @@ class UserController {
         process.env.JWT_SECRET || 'your-secret-key',
         { expiresIn: '24h' }
       );
+
+      // Send welcome notification for new user registration
+      await notificationService.createNotification(newUser.id, {
+        type: 'success',
+        title: 'Welcome to IoTFlow!',
+        message: 'Your account has been created successfully. Welcome to the IoT platform!',
+        device_id: null,
+        source: 'account_management',
+        metadata: { action: 'registration', username: newUser.username }
+      });
 
       res.status(201).json({ user: userResponse, token });
     } catch (error) {
@@ -74,6 +85,12 @@ class UserController {
 
       const { password_hash: _, ...userResponse } = user.toJSON();
 
+      // Send notification for successful login
+      await notificationService.notifySuccessfulLogin(user.id, {
+        login_method: email ? 'email' : 'username',
+        timestamp: new Date().toISOString()
+      });
+
       res.status(200).json({
         user: userResponse,
         token,
@@ -92,6 +109,16 @@ class UserController {
         { api_key: newApiKey, updated_at: new Date() },
         { where: { id: userId } }
       );
+
+      // Send notification for API key refresh
+      await notificationService.createNotification(req.user.id, {
+        type: 'warning',
+        title: 'API Key Refreshed',
+        message: 'Your API key has been refreshed. Update any applications using the old key.',
+        device_id: null,
+        source: 'security',
+        metadata: { action: 'api_key_refresh' }
+      });
 
       res.status(200).json({ api_key: newApiKey });
     } catch (error) {
@@ -135,6 +162,16 @@ class UserController {
       const updatedUser = await User.findByPk(id);
       const { password_hash: _, ...userResponse } = updatedUser.toJSON();
 
+      // Send notification for profile update
+      await notificationService.createNotification(req.user.id, {
+        type: 'success',
+        title: 'Profile Updated',
+        message: 'Your profile has been updated successfully',
+        device_id: null,
+        source: 'profile_management',
+        metadata: { updated_fields: Object.keys(updates) }
+      });
+
       res.status(200).json(userResponse);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update profile', error: error.message });
@@ -153,6 +190,17 @@ class UserController {
         password_hash,
         role,
       });
+
+      // Send notification to admin who created the user
+      await notificationService.createNotification(req.user.id, {
+        type: 'success',
+        title: 'User Created',
+        message: `User "${username}" has been created successfully`,
+        device_id: null,
+        source: 'user_management',
+        metadata: { action: 'create_user', target_user: username, role }
+      });
+
       res.status(201).json(newUser);
     } catch (error) {
       res.status(500).json({ message: 'Failed to create user', error: error.message });
@@ -187,6 +235,17 @@ class UserController {
         return res.status(404).json({ message: 'User not found' });
       }
       const updatedUser = await User.findByPk(id);
+
+      // Send notification to admin who updated the user
+      await notificationService.createNotification(req.user.id, {
+        type: 'info',
+        title: 'User Updated',
+        message: `User "${updatedUser.username}" has been updated`,
+        device_id: null,
+        source: 'user_management',
+        metadata: { action: 'update_user', target_user: updatedUser.username, updated_fields: Object.keys(updates) }
+      });
+
       res.status(200).json(updatedUser);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update user', error: error.message });
@@ -195,10 +254,27 @@ class UserController {
 
   async deleteUser(req, res) {
     try {
+      // Get user details before deletion for notification
+      const userToDelete = await User.findByPk(req.params.id);
+      if (!userToDelete) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
       const deleted = await User.destroy({ where: { id: req.params.id } });
       if (!deleted) {
         return res.status(404).json({ message: 'User not found' });
       }
+
+      // Send notification to admin who deleted the user
+      await notificationService.createNotification(req.user.id, {
+        type: 'warning',
+        title: 'User Deleted',
+        message: `User "${userToDelete.username}" has been deleted`,
+        device_id: null,
+        source: 'user_management',
+        metadata: { action: 'delete_user', target_user: userToDelete.username }
+      });
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete user', error: error.message });

@@ -6,6 +6,7 @@ const deviceRoutes = require('./routes/deviceRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const telemetryRoutes = require('./routes/telemetryRoutes');
 const chartRoutes = require('./routes/chartRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { verifyApiKey } = require('./middlewares/authMiddleware');
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/charts', chartRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

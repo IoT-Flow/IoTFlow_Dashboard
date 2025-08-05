@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import apiService from '../services/apiService';
 import { useAuth } from './AuthContext';
 
 const WebSocketContext = createContext();
@@ -25,6 +24,65 @@ export const WebSocketProvider = ({ children }) => {
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttempts = useRef(0);
 
+  // Load notifications from backend when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Only load notifications initially, WebSocket auth_success will handle reloading
+      console.log('🔄 User authenticated, loading initial notifications...');
+      loadNotifications();
+    }
+  }, [isAuthenticated, user]);
+
+  // Load notifications from backend API
+  const loadNotifications = async () => {
+    try {
+      const token = localStorage.getItem('iotflow_token');
+      if (!token) {
+        console.warn('🔐 No auth token found, cannot load notifications');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3001/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // console.log('🔍 Raw backend response:', result);
+        // console.log('🔍 result.data:', result.data);
+        // console.log('🔍 result.notifications:', result.notifications);
+
+        const notifications = result.data?.notifications || result.notifications || [];
+        // console.log('🔍 Final notifications array:', notifications);
+        // console.log(`📥 Received ${notifications.length} notifications from backend:`, notifications);
+
+        // Convert backend notifications to match frontend format
+        const formattedNotifications = notifications.map(n => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          device_id: n.device_id,
+          timestamp: n.created_at,
+          user_id: n.user_id,
+          read: n.is_read,
+          metadata: n.metadata
+        }));
+
+        setDeviceNotifications(formattedNotifications);
+        // console.log(`✅ Loaded ${formattedNotifications.length} notifications from backend`);
+      } else {
+        const errorText = await response.text();
+        console.warn('⚠️ Failed to load notifications from backend:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('❌ Error loading notifications:', error);
+    }
+  };
+
   // WebSocket connection management
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -36,47 +94,62 @@ export const WebSocketProvider = ({ children }) => {
     return () => {
       disconnectWebSocket();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   const connectWebSocket = () => {
     if (!user || wsRef.current) return;
 
     try {
-      // Create WebSocket connection
-      wsRef.current = apiService.createTelemetryWebSocket(
-        handleWebSocketMessage,
-        handleWebSocketError
-      );
+      // Create WebSocket connection to the real backend
+      const wsUrl = `ws://localhost:3001/ws`;
+      wsRef.current = new WebSocket(wsUrl);
 
-      if (wsRef.current) {
-        wsRef.current.onopen = () => {
-          setIsConnected(true);
-          reconnectAttempts.current = 0;
-          console.log(`WebSocket connected for user ${user.id}`);
+      wsRef.current.onopen = () => {
+        setIsConnected(true);
+        reconnectAttempts.current = 0;
+        // console.log(`WebSocket connected for user ${user.id}`);
 
-          // Send authentication and subscription message
-          wsRef.current.send(JSON.stringify({
-            type: 'auth',
-            user_id: user.id,
-            api_key: user.api_key,
-            timestamp: new Date().toISOString()
-          }));
-        };
+        // Send authentication message with JWT token
+        const token = localStorage.getItem('iotflow_token');
+        wsRef.current.send(JSON.stringify({
+          type: 'auth',
+          token: token,
+          user_id: user.id,
+          timestamp: new Date().toISOString()
+        }));
 
-        wsRef.current.onclose = () => {
-          setIsConnected(false);
-          console.log('WebSocket disconnected');
+        // Notifications will be loaded after auth_success message
+      };
 
-          // Attempt to reconnect with exponential backoff
-          if (isAuthenticated && reconnectAttempts.current < 5) {
-            const delay = Math.pow(2, reconnectAttempts.current) * 1000;
-            reconnectTimeoutRef.current = setTimeout(() => {
-              reconnectAttempts.current++;
-              connectWebSocket();
-            }, delay);
-          }
-        };
-      }
+      wsRef.current.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          handleWebSocketMessage(message);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      wsRef.current.onclose = () => {
+        setIsConnected(false);
+        // console.log('WebSocket disconnected');
+
+        // Attempt to reconnect with exponential backoff
+        if (isAuthenticated && reconnectAttempts.current < 5) {
+          const delay = Math.pow(2, reconnectAttempts.current) * 1000;
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttempts.current++;
+            connectWebSocket();
+          }, delay);
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        handleWebSocketError(error);
+      };
+
     } catch (error) {
       console.error('WebSocket connection failed:', error);
       handleWebSocketError(error);
@@ -99,38 +172,95 @@ export const WebSocketProvider = ({ children }) => {
     setDeviceStatuses({});
     setRealtimeUpdates([]);
     setCommandResults({});
-    setDeviceNotifications([]);
+    // DON'T clear notifications on disconnect - they should persist
+    // setDeviceNotifications([]);
   };
 
-  const handleWebSocketMessage = (data) => {
+  const handleWebSocketMessage = (message) => {
     try {
-      // Ensure data belongs to current user
-      if (data.user_id !== user.id) {
-        console.warn('Received data for different user - ignoring');
-        return;
-      }
+      // console.log('Received WebSocket message:', message);
 
-      switch (data.type) {
+      switch (message.type) {
+        case 'auth_success':
+          // console.log('WebSocket authentication successful');
+          // Load existing notifications after successful authentication
+          loadNotifications();
+          break;
+        case 'notification':
+          handleNotification(message.data);
+          break;
         case 'telemetry':
-          handleTelemetryUpdate(data);
+          handleTelemetryUpdate(message.data);
           break;
         case 'device_status':
-          handleDeviceStatusUpdate(data);
+          handleDeviceStatusUpdate(message.data);
           break;
         case 'command_result':
-          handleCommandResult(data);
+          handleCommandResult(message.data);
           break;
         case 'system_alert':
-          handleSystemAlert(data);
+          handleSystemAlert(message.data);
           break;
         case 'connection_info':
-          handleConnectionInfo(data);
+          handleConnectionInfo(message.data);
+          break;
+        case 'error':
+          console.error('WebSocket error:', message.message);
+          toast.error(message.message || 'WebSocket error');
           break;
         default:
-          console.log('Unknown WebSocket message type:', data.type);
+          // console.log('Unknown WebSocket message type:', message.type);
       }
     } catch (error) {
       console.error('Error processing WebSocket message:', error);
+    }
+  };
+
+  const handleNotification = (notification) => {
+    // Ensure notification belongs to current user
+    if (notification.user_id !== user.id) {
+      console.warn('Received notification for different user - ignoring');
+      return;
+    }
+
+    // console.log('🔔 Received real-time notification:', notification);
+
+    // Format notification to match frontend format
+    const formattedNotification = {
+      id: notification.id,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      device_id: notification.device_id,
+      timestamp: notification.created_at,
+      user_id: notification.user_id,
+      read: notification.is_read || false,
+      metadata: notification.metadata
+    };
+
+    // Add to device notifications
+    setDeviceNotifications(prev => {
+      const newNotifications = [...prev, formattedNotification];
+      // Keep only last 50 notifications
+      return newNotifications.slice(-50);
+    });
+
+    // Show toast notification
+    const toastMessage = `${notification.message}`;
+    switch (notification.type) {
+      case 'success':
+        toast.success(toastMessage);
+        break;
+      case 'warning':
+        toast.error(toastMessage, { icon: '⚠️' });
+        break;
+      case 'error':
+        toast.error(toastMessage);
+        break;
+      case 'info':
+      default:
+        toast(toastMessage, { icon: 'ℹ️' });
+        break;
     }
   };
 
@@ -272,7 +402,7 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   const handleConnectionInfo = (data) => {
-    console.log('WebSocket connection info:', data);
+    // console.log('WebSocket connection info:', data);
     if (data.message) {
       toast.success(data.message);
     }
@@ -349,12 +479,112 @@ export const WebSocketProvider = ({ children }) => {
     return commandResults[commandId] || null;
   };
 
-  const clearNotification = (notificationId) => {
-    setDeviceNotifications(prev => prev.filter(n => n.id !== notificationId));
+  const clearNotification = async (notificationId) => {
+    try {
+      // Remove from local state immediately for better UX
+      setDeviceNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+      // Delete from backend
+      const response = await fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to delete notification from backend');
+        // Reload notifications to ensure consistency
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      // Reload notifications to ensure consistency
+      loadNotifications();
+    }
   };
 
-  const clearAllNotifications = () => {
-    setDeviceNotifications([]);
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      // Update local state immediately for better UX
+      setDeviceNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+
+      // Update backend
+      const response = await fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to mark notification as read in backend');
+        // Reload notifications to ensure consistency
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      // Reload notifications to ensure consistency
+      loadNotifications();
+    }
+  };
+
+  const markAllNotificationsAsRead = async () => {
+    try {
+      // Update local state immediately for better UX
+      setDeviceNotifications(prev =>
+        prev.map(n => ({ ...n, read: true }))
+      );
+
+      // Update backend
+      const response = await fetch(`http://localhost:3001/api/notifications/mark-all-read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to mark all notifications as read in backend');
+        // Reload notifications to ensure consistency
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      // Reload notifications to ensure consistency
+      loadNotifications();
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      // Clear local state immediately for better UX
+      setDeviceNotifications([]);
+
+      // Clear from backend
+      const response = await fetch(`http://localhost:3001/api/notifications`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to clear all notifications from backend');
+        // Reload notifications to ensure consistency
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+      // Reload notifications to ensure consistency
+      loadNotifications();
+    }
   };
 
   const clearRealtimeUpdates = () => {
@@ -387,6 +617,9 @@ export const WebSocketProvider = ({ children }) => {
     // Notification management
     clearNotification,
     clearAllNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    loadNotifications,
     clearRealtimeUpdates,
 
     // Connection management

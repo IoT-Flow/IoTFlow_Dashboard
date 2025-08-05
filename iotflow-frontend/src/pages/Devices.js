@@ -92,7 +92,6 @@ const Devices = () => {
       try {
         setLoading(true);
         const response = await apiService.getDevices();
-        console.log('Devices response:', response); // Debug log
 
         if (response && response.success) {
           // Backend response has devices in response.data (already an array)
@@ -121,11 +120,9 @@ const Devices = () => {
           toast.success(`Loaded ${transformedDevices.length} devices`);
         } else {
           // Handle fallback or error case
-          console.warn('No devices found or invalid response');
           setDevices([]);
         }
       } catch (error) {
-        console.error('Failed to load devices:', error);
         toast.error('Failed to load devices');
         setDevices([]);
       } finally {
@@ -238,8 +235,6 @@ const Devices = () => {
       } else {
         // Create new device through API
         const result = await apiService.createDevice(deviceForm);
-        console.log('Create device result:', result); // Debug log
-
         if (result && result.success) {
           // Transform backend response to match component format
           const newDevice = {
@@ -277,7 +272,6 @@ const Devices = () => {
         }
       }
     } catch (error) {
-      console.error('Error saving device:', error);
       toast.error('Failed to save device');
     } finally {
       setLoading(false);
@@ -300,7 +294,6 @@ const Devices = () => {
         throw new Error(result?.message || 'Failed to delete device');
       }
     } catch (error) {
-      console.error('Error deleting device:', error);
       toast.error('Failed to delete device');
     } finally {
       setLoading(false);
@@ -909,7 +902,6 @@ const Devices = () => {
             variant="outlined"
             onClick={() => {
               const connectionInfo = `Device: ${selectedDevice?.name || 'New Device'}\nAPI Key: ${newDeviceConnection?.api_key}\nGateway IP: ${newDeviceConnection?.gatewayIP}\nMQTT Endpoint: ${newDeviceConnection?.mqttEndpoint}\nMQTT Topic: ${newDeviceConnection?.mqttTopic}`;
-              console.log("test");
               navigator.clipboard.writeText(connectionInfo);
               toast.success('Connection details copied to clipboard');
             }}

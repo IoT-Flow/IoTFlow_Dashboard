@@ -3,6 +3,7 @@ const DeviceConfiguration = require('../models/deviceConfiguration');
 const DeviceAuth = require('../models/deviceAuth');
 const TelemetryData = require('../models/telemetryData');
 const { sequelize } = require('../utils/db');
+const notificationService = require('../services/notificationService');
 
 class DeviceController {
   async createDevice(req, res) {
@@ -23,6 +24,9 @@ class DeviceController {
         hardware_version,
         user_id: req.user.id,
       });
+
+      // Send real-time notification for device creation
+      await notificationService.notifyDeviceCreated(req.user.id, newDevice);
 
       res.status(201).json(newDevice);
     } catch (error) {
@@ -88,6 +92,9 @@ class DeviceController {
         updated_at: new Date(),
       });
 
+      // Send real-time notification for device update
+      await notificationService.notifyDeviceUpdated(req.user.id, updatedDevice);
+
       res.status(200).json(updatedDevice);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update device', error: error.message });
@@ -99,6 +106,15 @@ class DeviceController {
       const { id } = req.params;
 
       console.log(`Deleting device ${id} and all related records...`);
+
+      // First, get the device details for notification
+      const device = await Device.findOne({
+        where: { id, user_id: req.user.id }
+      });
+
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
 
       // Temporarily disable foreign key constraints for this operation
       await sequelize.query('PRAGMA foreign_keys = OFF');
@@ -129,6 +145,9 @@ class DeviceController {
         if (!deleted) {
           return res.status(404).json({ message: 'Device not found' });
         }
+
+        // Send real-time notification for device deletion
+        await notificationService.notifyDeviceDeleted(req.user.id, device.name, device.id);
 
         console.log(`Device ${id} and all related records deleted successfully`);
         res.json({ success: true, message: 'Device deleted successfully' });
@@ -164,6 +183,15 @@ class DeviceController {
       const { id } = req.params;
       const { configuration } = req.body;
 
+      // Get device name for notification
+      const device = await Device.findOne({
+        where: { id, user_id: req.user.id }
+      });
+
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+
       const [config, created] = await DeviceConfiguration.findOrCreate({
         where: { device_id: id },
         defaults: { configuration },
@@ -172,6 +200,16 @@ class DeviceController {
       if (!created) {
         await config.update({ configuration });
       }
+
+      // Send notification for configuration update
+      await notificationService.createNotification(req.user.id, {
+        type: 'info',
+        title: 'Device Configuration Updated',
+        message: `Configuration for device "${device.name}" has been updated`,
+        device_id: device.id,
+        source: 'device_configuration',
+        metadata: { action: 'config_update', device_type: device.device_type }
+      });
 
       res.status(200).json(config);
     } catch (error) {
@@ -224,6 +262,16 @@ class DeviceController {
         global.deviceControls = {};
       }
       global.deviceControls[controlId] = controlCommand;
+
+      // Send notification for device control command
+      await notificationService.createNotification(req.user.id, {
+        type: 'info',
+        title: 'Device Command Sent',
+        message: `Command "${command}" sent to device "${device.name}"`,
+        device_id: device.id,
+        source: 'device_control',
+        metadata: { command, parameters: parameters || {}, control_id: controlId }
+      });
 
       // Simulate async processing
       setTimeout(() => {

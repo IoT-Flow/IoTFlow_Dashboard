@@ -3,11 +3,6 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 class ChartService {
   async getAuthHeaders() {
     const token = localStorage.getItem('iotflow_token'); // FIXED: use the same key as login
-    console.log('ChartService: Getting auth headers, token exists:', !!token);
-    if (token) {
-      console.log('ChartService: Token length:', token.length);
-      console.log('ChartService: Token preview:', token.substring(0, 20) + '...');
-    }
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`

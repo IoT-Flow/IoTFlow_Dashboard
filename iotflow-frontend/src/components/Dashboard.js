@@ -2,6 +2,7 @@ import {
   Dashboard as DashboardIcon,
   Devices,
   NetworkCheck,
+  NotificationAdd,
   Notifications,
   Person,
   PowerSettingsNew,
@@ -43,8 +44,7 @@ const Dashboard = () => {
     isConnected,
     realtimeUpdates = [],
     deviceNotifications = [],
-    telemetryData = {},
-    clearAllNotifications
+    telemetryData = {}
   } = useWebSocket();
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -113,6 +113,35 @@ const Dashboard = () => {
       setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      const notificationTypes = ['info', 'warning', 'error', 'success'];
+      const randomType = notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
+      const randomDevice = devices.length > 0 ? devices[Math.floor(Math.random() * devices.length)].id : 'test_device';
+
+      const messages = {
+        info: `Device ${randomDevice} is operating normally`,
+        warning: `Device ${randomDevice} requires attention`,
+        error: `Device ${randomDevice} has encountered an error`,
+        success: `Device ${randomDevice} task completed successfully`
+      };
+
+      const result = await apiService.generateTestNotification(
+        randomType,
+        messages[randomType],
+        randomDevice
+      );
+
+      if (result.success) {
+        console.log('Test notification sent successfully');
+      } else {
+        console.error('Failed to send test notification:', result.error);
+      }
+    } catch (err) {
+      console.error('Error sending test notification:', err);
     }
   };
 
@@ -191,6 +220,11 @@ const Dashboard = () => {
               </Box>
             </Grid>
             <Grid item>
+              <Tooltip title="Send Test Notification">
+                <IconButton onClick={handleTestNotification} color="secondary">
+                  <NotificationAdd />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Refresh Dashboard">
                 <IconButton onClick={loadDashboardData} color="primary">
                   <Refresh />
@@ -352,9 +386,7 @@ const Dashboard = () => {
                   Recent Notifications
                 </Typography>
                 <Badge badgeContent={deviceNotifications.length} color="error">
-                  <IconButton onClick={clearAllNotifications} size="small">
-                    <Notifications />
-                  </IconButton>
+                  <Notifications />
                 </Badge>
               </Box>
               <Box sx={{ maxHeight: 250, overflow: 'auto' }}>

@@ -43,8 +43,7 @@ const Dashboard = () => {
     isConnected,
     realtimeUpdates = [],
     deviceNotifications = [],
-    telemetryData = {},
-    clearAllNotifications
+    telemetryData = {}
   } = useWebSocket();
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -82,7 +81,7 @@ const Dashboard = () => {
 
       // Load telemetry overview
       const overviewResult = await apiService.getUserTelemetryOverview('24h');
-      console.log(overviewResult);
+      // console.log(overviewResult);
       if (overviewResult.success) {
         setTelemetryOverview(overviewResult.data.overview);
       }
@@ -123,7 +122,7 @@ const Dashboard = () => {
   const recentUpdatesCount = Array.isArray(realtimeUpdates) ? realtimeUpdates.filter(update =>
     update && update.timestamp && Date.now() - new Date(update.timestamp).getTime() < 300000 // Last 5 minutes
   ).length : 0;
-  console.log(devices);
+  // console.log(devices);
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -339,9 +338,7 @@ const Dashboard = () => {
                   Recent Notifications
                 </Typography>
                 <Badge badgeContent={deviceNotifications.length} color="error">
-                  <IconButton onClick={clearAllNotifications} size="small">
-                    <Notifications />
-                  </IconButton>
+                  <Notifications />
                 </Badge>
               </Box>
               <Box sx={{ maxHeight: 250, overflow: 'auto' }}>

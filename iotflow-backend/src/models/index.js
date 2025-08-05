@@ -4,10 +4,17 @@ const DeviceAuth = require('./deviceAuth');
 const DeviceConfiguration = require('./deviceConfiguration');
 const TelemetryData = require('./telemetryData');
 const Chart = require('./chart');
+const Notification = require('./notification');
 
 // Define associations
 User.hasMany(Device, { foreignKey: 'user_id', as: 'devices' });
 Device.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+Device.hasMany(Notification, { foreignKey: 'device_id', as: 'notifications' });
+Notification.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
 
 Device.hasMany(DeviceAuth, { foreignKey: 'device_id', as: 'auth' });
 DeviceAuth.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
@@ -27,5 +34,6 @@ module.exports = {
   DeviceAuth,
   DeviceConfiguration,
   TelemetryData,
-  Chart
+  Chart,
+  Notification
 };

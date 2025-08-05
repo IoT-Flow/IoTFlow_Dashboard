@@ -70,7 +70,8 @@ const Telemetry = () => {
 
   // Devices from the backend
   const [devices, setDevices] = useState([]);
-  const [telemetryHistory, setTelemetryHistory] = useState({});
+  const [telemetryHistory, setTelemetryHistory] = useState({}); // For selected device
+  const [allDevicesTelemetry, setAllDevicesTelemetry] = useState({}); // For all devices (custom charts)
 
   // Telemetry measurement filter
   const [measurementFilter, setMeasurementFilter] = useState('all');
@@ -87,14 +88,12 @@ const Telemetry = () => {
         try {
           setLoading(true);
           const response = await apiService.getDevices();
-          console.log(response);
           setDevices(response.data);
           if (response.data.length > 0) {
             setSelectedDevice(response.data[0].id); // Select the first device by default
           }
         } catch (error) {
           toast.error('Failed to fetch devices.');
-          console.error('Error fetching devices:', error);
         } finally {
           setLoading(false);
         }
@@ -106,21 +105,39 @@ const Telemetry = () => {
   // Load custom charts from database
   useEffect(() => {
     const loadCharts = async () => {
-      console.log('Telemetry page: Loading charts for user:', user);
       if (user) {
         try {
           setLoading(true);
-          console.log('Telemetry page: Calling chartService.getCharts()');
           const charts = await chartService.getCharts();
-          console.log('Telemetry page: Charts received:', charts);
 
           const transformedCharts = charts.map(chart =>
             chartService.transformFromBackendFormat(chart)
           );
-          console.log('Telemetry page: Transformed charts:', transformedCharts);
+
           setCustomCharts(transformedCharts);
+
+          // Collect all unique device IDs from custom charts
+          const allChartDevices = new Set();
+          transformedCharts.forEach(chart => {
+            if (chart.devices && Array.isArray(chart.devices)) {
+              chart.devices.forEach(deviceId => allChartDevices.add(deviceId));
+            }
+          });
+
+          // Load telemetry data for all devices used in custom charts
+          if (allChartDevices.size > 0) {
+            const allDevicesData = {};
+            await Promise.all(
+              Array.from(allChartDevices).map(async (deviceId) => {
+                const deviceData = await fetchTelemetryForDevice(deviceId);
+                if (Object.keys(deviceData).length > 0) {
+                  allDevicesData[deviceId] = deviceData;
+                }
+              })
+            );
+            setAllDevicesTelemetry(allDevicesData);
+          }
         } catch (error) {
-          console.error('Error loading charts:', error);
           toast.error('Failed to load charts: ' + error.message);
         } finally {
           setLoading(false);
@@ -128,7 +145,7 @@ const Telemetry = () => {
       }
     };
     loadCharts();
-  }, [user]);
+  }, [user, token, timeRange]); // Added timeRange dependency
 
   // Custom chart management functions
   const handleAddChart = () => {
@@ -153,38 +170,32 @@ const Telemetry = () => {
       setChartMenuAnchor(null);
       toast.success('Chart deleted successfully');
     } catch (error) {
-      console.error('Error deleting chart:', error);
       toast.error('Failed to delete chart: ' + error.message);
     }
   };
 
   const handleSaveChart = async (chartConfig) => {
     try {
-      console.log('Telemetry page: Saving chart with config:', chartConfig);
-      console.log('Telemetry page: Editing chart?', !!editingChart);
-
+      let updatedCharts;
       if (editingChart) {
         // Update existing chart
-        console.log('Telemetry page: Updating chart:', editingChart.id);
         const updatedChart = await chartService.updateChart(editingChart.id, chartConfig);
         const transformedChart = chartService.transformFromBackendFormat(updatedChart);
-        setCustomCharts(prev =>
-          prev.map(chart => chart.id === editingChart.id ? transformedChart : chart)
-        );
+        updatedCharts = customCharts.map(chart => chart.id === editingChart.id ? transformedChart : chart);
+        setCustomCharts(updatedCharts);
         toast.success('Chart updated successfully');
       } else {
         // Create new chart
-        console.log('Telemetry page: Creating new chart');
         const newChart = await chartService.createChart(chartConfig);
-        console.log('Telemetry page: New chart created:', newChart);
         const transformedChart = chartService.transformFromBackendFormat(newChart);
-        console.log('Telemetry page: Transformed new chart:', transformedChart);
-        setCustomCharts(prev => [...prev, transformedChart]);
+        updatedCharts = [...customCharts, transformedChart];
+        setCustomCharts(updatedCharts);
         toast.success('Chart created successfully');
       }
+
+      // Refresh telemetry data for the updated charts
+      await refreshCustomChartsData(updatedCharts);
     } catch (error) {
-      console.error('Error saving chart:', error);
-      console.error('Error details:', error.message, error.stack);
       toast.error('Failed to save chart: ' + error.message);
     }
     setChartCustomizationOpen(false);
@@ -206,11 +217,14 @@ const Telemetry = () => {
     try {
       const duplicatedChart = await chartService.duplicateChart(chartId);
       const transformedChart = chartService.transformFromBackendFormat(duplicatedChart);
-      setCustomCharts(prev => [...prev, transformedChart]);
+      const updatedCharts = [...customCharts, transformedChart];
+      setCustomCharts(updatedCharts);
       setChartMenuAnchor(null);
       toast.success('Chart duplicated successfully');
+
+      // Refresh telemetry data for the updated charts
+      await refreshCustomChartsData(updatedCharts);
     } catch (error) {
-      console.error('Error duplicating chart:', error);
       toast.error('Failed to duplicate chart: ' + error.message);
     }
   };
@@ -219,7 +233,6 @@ const Telemetry = () => {
   useEffect(() => {
     const fetchTelemetry = async () => {
       if (!selectedDevice) return;
-      console.log(selectedDevice);
       setLoading(true);
       try {
         const now = new Date();
@@ -237,7 +250,6 @@ const Telemetry = () => {
 
         // Process the telemetry data from IoTDB format
         const telemetryData = telemetryResponse.data.telemetry || [];
-        console.log('Raw telemetry data:', telemetryData);
 
         const newTelemetryHistory = {};
         if (!newTelemetryHistory[selectedDevice]) {
@@ -272,7 +284,6 @@ const Telemetry = () => {
 
       } catch (error) {
         toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
-        console.error('Error fetching telemetry:', error);
       } finally {
         setLoading(false);
       }
@@ -282,7 +293,10 @@ const Telemetry = () => {
 
     // Auto-refresh logic
     if (autoRefresh) {
-      const interval = setInterval(fetchTelemetry, 30000); // Refresh every 30 seconds
+      const interval = setInterval(() => {
+        fetchTelemetry();
+        refreshCustomChartsData(); // Also refresh custom charts data
+      }, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     }
   }, [selectedDevice, timeRange, autoRefresh, token]);
@@ -468,6 +482,76 @@ const Telemetry = () => {
     responsive: true,
   };
 
+  // Helper function to fetch telemetry data for a specific device
+  const fetchTelemetryForDevice = async (deviceId, timeRangeParam = timeRange) => {
+    try {
+      const now = new Date();
+      const { startTime } = getTimeRangeDates(timeRangeParam);
+
+      const telemetryResponse = await api.get(`/telemetry/${deviceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          start_date: startTime.toISOString(),
+          end_date: now.toISOString(),
+          limit: 1000,
+        }
+      });
+
+      const telemetryData = telemetryResponse.data.telemetry || [];
+      const deviceTelemetryHistory = {};
+
+      // Group data by measurement type
+      telemetryData.forEach(record => {
+        Object.keys(record).forEach(key => {
+          if (key !== 'Time' && key !== 'timestamp') {
+            const measurement = key;
+            const value = record[key];
+
+            if (value !== null && value !== undefined) {
+              if (!deviceTelemetryHistory[measurement]) {
+                deviceTelemetryHistory[measurement] = [];
+              }
+
+              deviceTelemetryHistory[measurement].push({
+                timestamp: new Date(record.Time),
+                value: parseFloat(value),
+                device_id: deviceId,
+                measurement: measurement,
+              });
+            }
+          }
+        });
+      });
+
+      return deviceTelemetryHistory;
+    } catch (error) {
+      return {};
+    }
+  };
+
+  // Function to refresh telemetry data for custom charts
+  const refreshCustomChartsData = async (charts = customCharts) => {
+    const allChartDevices = new Set();
+    charts.forEach(chart => {
+      if (chart.devices && Array.isArray(chart.devices)) {
+        chart.devices.forEach(deviceId => allChartDevices.add(deviceId));
+      }
+    });
+
+    if (allChartDevices.size > 0) {
+      const allDevicesData = {};
+      await Promise.all(
+        Array.from(allChartDevices).map(async (deviceId) => {
+          const deviceData = await fetchTelemetryForDevice(deviceId);
+          if (Object.keys(deviceData).length > 0) {
+            allDevicesData[deviceId] = deviceData;
+          }
+        })
+      );
+      setAllDevicesTelemetry(allDevicesData);
+    }
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box className="fade-in">
@@ -508,7 +592,7 @@ const Telemetry = () => {
             <Button
               variant="outlined"
               startIcon={<Refresh />}
-              onClick={() => {
+              onClick={async () => {
                 // Manually trigger a refresh
                 const fetchTelemetry = async () => {
                   if (!selectedDevice) return;
@@ -530,7 +614,6 @@ const Telemetry = () => {
 
                     // Process the telemetry data from IoTDB format
                     const telemetryData = telemetryResponse.data.telemetry || [];
-                    console.log('Refreshed telemetry data:', telemetryData);
 
                     const newTelemetryHistory = {};
                     if (!newTelemetryHistory[selectedDevice]) {
@@ -565,12 +648,13 @@ const Telemetry = () => {
 
                   } catch (error) {
                     toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
-                    console.error('Error fetching telemetry:', error);
                   } finally {
                     setLoading(false);
                   }
                 };
-                fetchTelemetry();
+
+                await fetchTelemetry();
+                await refreshCustomChartsData(); // Also refresh custom charts
               }}
             >
               Refresh
@@ -729,16 +813,29 @@ const Telemetry = () => {
               {customCharts.length > 0 ? (
                 <Grid container spacing={3}>
                   {customCharts.map(chart => {
-                    const telemetryForMeasurements = chart.measurements?.map(m =>
-                      telemetryHistory[selectedDevice]?.[m] || []
-                    ) || [];
+                    // Get telemetry data for this chart from its configured devices
+                    const chartTelemetryData = [];
+
+                    if (chart.devices && Array.isArray(chart.devices) && chart.measurements) {
+                      chart.devices.forEach(deviceId => {
+                        if (allDevicesTelemetry[deviceId]) {
+                          chart.measurements.forEach(measurement => {
+                            if (allDevicesTelemetry[deviceId][measurement]) {
+                              chartTelemetryData.push(allDevicesTelemetry[deviceId][measurement]);
+                            }
+                          });
+                        }
+                      });
+                    }
+
+                    const hasData = chartTelemetryData.length > 0 && chartTelemetryData.some(data => data.length > 0);
 
                     return (
                       <Grid item xs={12} md={6} lg={4} key={chart.id}>
-                        {telemetryForMeasurements.length > 0 && telemetryForMeasurements.some(data => data.length > 0) ? (
+                        {hasData ? (
                           <CustomChart
                             chartConfig={chart}
-                            telemetryData={telemetryForMeasurements}
+                            telemetryData={chartTelemetryData}
                             onEdit={handleEditChart}
                             onDelete={handleDeleteChart}
                           />

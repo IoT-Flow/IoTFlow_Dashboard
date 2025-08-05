@@ -762,6 +762,15 @@ class ApiService {
     return response.data;
   }
 
+  async generateTestNotification(type = 'info', message = 'Test notification', device_id = 'test_device') {
+    const response = await this.api.post('/telemetry/test-notification', {
+      type,
+      message,
+      device_id
+    });
+    return response.data;
+  }
+
   async getAggregatedData(deviceId, aggregation, params = {}) {
     const response = await this.api.get(`/telemetry/${deviceId}/aggregate/${aggregation}`, { params });
     return response.data;
@@ -824,31 +833,20 @@ class ApiService {
   }
 
   // Device Control Commands
-  async sendDeviceCommand(deviceId, command, params = {}) {
+  async sendDeviceCommand(deviceId, command, parameters = {}) {
     try {
       const response = await this.api.post(`/devices/${deviceId}/control`, {
         command,
-        params,
+        parameters,
         timestamp: new Date().toISOString()
       });
-      return response.data;
-    } catch (error) {
-      // Demo implementation for device control
-      // Simulate command execution with realistic response
-      const commandId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-
       return {
         success: true,
-        data: {
-          commandId,
-          deviceId,
-          command,
-          params,
-          status: 'executed',
-          timestamp: new Date().toISOString(),
-          executionTime: Math.floor(Math.random() * 500) + 100 // 100-600ms
-        }
+        data: response.data
       };
+    } catch (error) {
+      console.error('Device control error:', error);
+      throw error;
     }
   }
 
@@ -1442,6 +1440,101 @@ class ApiService {
       };
     } catch (error) {
       // Only show real backend data; do not return demo/fake data
+      throw error;
+    }
+  }
+
+  // ================== NOTIFICATION MANAGEMENT ==================
+
+  async getNotifications(params = {}) {
+    try {
+      const response = await this.api.get('/notifications', { params });
+      return {
+        success: true,
+        data: response.data.data || [],
+        total: response.data.total || 0,
+        unreadCount: response.data.unreadCount || 0
+      };
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  }
+
+  async getUnreadNotificationCount() {
+    try {
+      const response = await this.api.get('/notifications/unread/count');
+      return {
+        success: true,
+        count: response.data.count || 0
+      };
+    } catch (error) {
+      console.error('Error fetching unread notification count:', error);
+      throw error;
+    }
+  }
+
+  async markNotificationAsRead(notificationId) {
+    try {
+      const response = await this.api.patch(`/notifications/${notificationId}/read`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  }
+
+  async markAllNotificationsAsRead() {
+    try {
+      const response = await this.api.patch('/notifications/mark-all-read');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw error;
+    }
+  }
+
+  async deleteNotification(notificationId) {
+    try {
+      const response = await this.api.delete(`/notifications/${notificationId}`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  }
+
+  async clearAllNotifications() {
+    try {
+      const response = await this.api.delete('/notifications');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+      throw error;
+    }
+  }
+
+  async getNotificationStats() {
+    try {
+      const response = await this.api.get('/notifications/stats');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error fetching notification stats:', error);
       throw error;
     }
   }

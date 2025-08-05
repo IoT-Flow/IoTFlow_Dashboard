@@ -79,7 +79,6 @@ const CustomChart = ({
       setChartOption(option);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Failed to load chart data:', err);
       setError('Failed to load chart data');
       toast.error('Failed to update chart data');
     } finally {
@@ -1332,7 +1331,6 @@ const CustomChart = ({
       link.click();
       toast.success('Chart exported successfully');
     } catch (err) {
-      console.error('Failed to export chart:', err);
       toast.error('Failed to export chart');
     }
 

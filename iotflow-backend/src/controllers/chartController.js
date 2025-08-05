@@ -1,4 +1,5 @@
 const Chart = require('../models/chart');
+const notificationService = require('../services/notificationService');
 
 class ChartController {
   async getCharts(req, res) {
@@ -67,6 +68,9 @@ class ChartController {
       const chart = await Chart.createChart(chartData);
       console.log('Chart created successfully:', chart.id);
 
+      // Send notification for chart creation
+      await notificationService.notifyChartCreated(req.user.id, chartData.name);
+
       res.status(201).json({
         success: true,
         data: chart
@@ -89,6 +93,10 @@ class ChartController {
           error: 'Chart not found'
         });
       }
+
+      // Send notification for chart update
+      await notificationService.notifyChartUpdated(req.user.id, chart.name);
+
       res.json({
         success: true,
         data: chart
@@ -104,6 +112,15 @@ class ChartController {
 
   async deleteChart(req, res) {
     try {
+      // First get the chart name for notification
+      const chartToDelete = await Chart.findByIdAndUser(req.params.id, req.user.id);
+      if (!chartToDelete) {
+        return res.status(404).json({
+          success: false,
+          error: 'Chart not found'
+        });
+      }
+
       const success = await Chart.deleteChart(req.params.id, req.user.id);
       if (!success) {
         return res.status(404).json({
@@ -111,6 +128,10 @@ class ChartController {
           error: 'Chart not found'
         });
       }
+
+      // Send notification for chart deletion
+      await notificationService.notifyChartDeleted(req.user.id, chartToDelete.name);
+
       res.json({
         success: true,
         message: 'Chart deleted successfully'
@@ -158,6 +179,17 @@ class ChartController {
       delete duplicateData.appearance_config;
 
       const chart = await Chart.createChart(duplicateData);
+
+      // Send notification for chart duplication
+      await notificationService.createNotification(req.user.id, {
+        type: 'success',
+        title: 'Chart Duplicated',
+        message: `Chart "${originalChart.name}" has been duplicated as "${duplicateData.name}"`,
+        device_id: null,
+        source: 'chart_management',
+        metadata: { action: 'duplicate', original_chart: originalChart.name, new_chart: duplicateData.name }
+      });
+
       res.status(201).json({
         success: true,
         data: chart

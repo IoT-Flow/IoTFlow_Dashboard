@@ -176,7 +176,7 @@ const DeviceControlDashboard = () => {
 
     try {
       setCommandLoading(true);
-      const result = await apiService.sendCustomDeviceControl(
+      const result = await apiService.sendDeviceCommand(
         selectedDevice.id,
         command.trim(),
         paramObj

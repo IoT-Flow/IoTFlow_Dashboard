@@ -10,6 +10,9 @@ router.get('/health', TelemetryController.healthCheck);
 // Today's message count for user dashboard
 router.get('/today/count', verifyToken, TelemetryController.getTodayMessageCount);
 
+// Test notification endpoint
+router.post('/test-notification', verifyToken, TelemetryController.generateTestNotification);
+
 // Aggregated data route (must be before generic device_id route)
 router.get('/device/:device_id/aggregated', TelemetryController.getAggregatedData);
 
