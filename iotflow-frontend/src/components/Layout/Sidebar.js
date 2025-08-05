@@ -60,13 +60,6 @@ const Sidebar = ({ open, onToggle }) => {
       roles: ['user', 'admin']
     },
     {
-      label: 'Analytics',
-      path: '/analytics',
-      icon: <BarChartIcon />,
-      description: 'Device data analysis',
-      roles: ['user', 'admin']
-    },
-    {
       label: 'Profile',
       path: '/profile',
       icon: <PersonIcon />,

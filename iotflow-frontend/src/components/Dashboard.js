@@ -8,7 +8,6 @@ import {
   PowerSettingsNew,
   Refresh,
   Security,
-  SignalWifi4Bar,
   TrendingUp
 } from '@mui/icons-material';
 import {
@@ -412,47 +411,6 @@ const Dashboard = () => {
                 ) : (
                   <Typography color="text.secondary" align="center">
                     No recent notifications
-                  </Typography>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Real-time Activity Feed */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Real-time Activity Feed
-                </Typography>
-                <Badge badgeContent={recentUpdatesCount} color="primary">
-                  <SignalWifi4Bar />
-                </Badge>
-              </Box>
-              <Box sx={{ maxHeight: 250, overflow: 'auto' }}>
-                {(realtimeUpdates || []).length > 0 ? (
-                  (realtimeUpdates || []).slice(0, 8).map((update) => (
-                    <Box key={update.id} sx={{
-                      p: 1,
-                      mb: 1,
-                      bgcolor: 'grey.50',
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'grey.200'
-                    }}>
-                      <Typography variant="body2">
-                        <strong>Device {update.device_id}:</strong> {update.type ? update.type.toUpperCase() : 'UNKNOWN EVENT'}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(update.timestamp).toLocaleTimeString()}
-                      </Typography>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No recent activity
                   </Typography>
                 )}
               </Box>

@@ -17,7 +17,6 @@ export const WebSocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [telemetryData, setTelemetryData] = useState({});
   const [deviceStatuses, setDeviceStatuses] = useState({});
-  const [realtimeUpdates, setRealtimeUpdates] = useState([]);
   const [commandResults, setCommandResults] = useState({});
   const [deviceNotifications, setDeviceNotifications] = useState([]);
   const wsRef = useRef(null);
@@ -170,7 +169,6 @@ export const WebSocketProvider = ({ children }) => {
     setIsConnected(false);
     setTelemetryData({});
     setDeviceStatuses({});
-    setRealtimeUpdates([]);
     setCommandResults({});
     // DON'T clear notifications on disconnect - they should persist
     // setDeviceNotifications([]);
@@ -209,7 +207,7 @@ export const WebSocketProvider = ({ children }) => {
           toast.error(message.message || 'WebSocket error');
           break;
         default:
-          // console.log('Unknown WebSocket message type:', message.type);
+        // console.log('Unknown WebSocket message type:', message.type);
       }
     } catch (error) {
       console.error('Error processing WebSocket message:', error);
@@ -277,20 +275,6 @@ export const WebSocketProvider = ({ children }) => {
         user_id: data.user_id
       }
     }));
-
-    // Add to realtime updates list (keep last 50)
-    setRealtimeUpdates(prev => {
-      const newUpdate = {
-        id: `${device_id}_${Date.now()}`,
-        device_id,
-        type: 'telemetry',
-        data: telemetry,
-        timestamp,
-        user_id: data.user_id
-      };
-
-      return [newUpdate, ...prev.slice(0, 49)];
-    });
   };
 
   const handleDeviceStatusUpdate = (data) => {
@@ -305,20 +289,6 @@ export const WebSocketProvider = ({ children }) => {
         user_id: data.user_id
       }
     }));
-
-    // Add to realtime updates
-    setRealtimeUpdates(prev => {
-      const newUpdate = {
-        id: `${device_id}_status_${Date.now()}`,
-        device_id,
-        type: 'status_change',
-        data: { status, last_seen },
-        timestamp: new Date().toISOString(),
-        user_id: data.user_id
-      };
-
-      return [newUpdate, ...prev.slice(0, 49)];
-    });
 
     // Show status change notification
     if (status === 'offline') {
@@ -370,20 +340,6 @@ export const WebSocketProvider = ({ children }) => {
       timestamp: new Date().toISOString(),
       user_id: data.user_id
     }]);
-
-    // Add to realtime updates
-    setRealtimeUpdates(prev => {
-      const newUpdate = {
-        id: `alert_${Date.now()}`,
-        device_id,
-        type: 'alert',
-        data: { alert_type, message, severity },
-        timestamp: new Date().toISOString(),
-        user_id: data.user_id
-      };
-
-      return [newUpdate, ...prev.slice(0, 49)];
-    });
 
     // Show alert notification based on severity
     switch (severity) {
@@ -587,10 +543,6 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const clearRealtimeUpdates = () => {
-    setRealtimeUpdates([]);
-  };
-
   const value = {
     // Connection state
     connected: isConnected, // Maintain compatibility with existing components
@@ -599,7 +551,6 @@ export const WebSocketProvider = ({ children }) => {
     // Data
     telemetryData,
     deviceStatuses,
-    realtimeUpdates,
     commandResults,
     deviceNotifications,
 
@@ -620,7 +571,6 @@ export const WebSocketProvider = ({ children }) => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     loadNotifications,
-    clearRealtimeUpdates,
 
     // Connection management
     reconnect: connectWebSocket,
