@@ -30,6 +30,7 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -346,7 +347,7 @@ const Dashboard = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <RechartsTooltip />
+                    <RechartsTooltip content={<CustomDashboardTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </Box>
@@ -367,7 +368,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="type" />
                     <YAxis />
-                    <RechartsTooltip />
+                    <RechartsTooltip content={<CustomDashboardTooltip />} />
                     <Bar dataKey="count" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -443,6 +444,41 @@ const Dashboard = () => {
       </Grid>
     </Container>
   );
+};
+
+// Custom tooltip component for dashboard charts with full date and time
+const CustomDashboardTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    // Format label to show full date and time if it's a timestamp
+    let formattedLabel = label;
+    try {
+      // Check if label looks like a timestamp or date with better validation
+      if (label != null && label !== '') {
+        const parsedDate = new Date(label);
+        if (!isNaN(parsedDate.getTime()) && (typeof label === 'number' || /^\d{4}-/.test(label))) {
+          formattedLabel = format(parsedDate, 'PPpp'); // e.g., "Dec 31, 2023 at 11:59:00 PM"
+        }
+      }
+    } catch (e) {
+      // Keep original label if parsing fails
+      console.warn('Dashboard tooltip date formatting failed:', e);
+      formattedLabel = label;
+    }
+
+    return (
+      <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
+        <p className="text-sm font-medium text-gray-900 mb-2">
+          {formattedLabel}
+        </p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {`${entry.name}: ${typeof entry.value === 'number' ? entry.value.toFixed(0) : entry.value}`}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 export default Dashboard;

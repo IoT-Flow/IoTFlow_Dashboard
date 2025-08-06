@@ -29,6 +29,7 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -298,7 +299,7 @@ const Dashboard = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <RechartsTooltip />
+                    <RechartsTooltip content={<CustomDashboardTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </Box>
@@ -319,7 +320,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="type" />
                     <YAxis />
-                    <RechartsTooltip />
+                    <RechartsTooltip content={<CustomDashboardTooltip />} />
                     <Bar dataKey="count" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -395,6 +396,55 @@ const Dashboard = () => {
       </Grid>
     </Container>
   );
+};
+
+// Custom tooltip component for dashboard charts with full date and time
+const CustomDashboardTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    // Format label to show full date and time if it's a timestamp
+    let formattedLabel = label;
+    try {
+      // Check if label is a timestamp (number or string that can be parsed as date)
+      if (label != null && label !== '') {
+        const date = new Date(label);
+        if (!isNaN(date.getTime()) && (typeof label === 'number' || /^\d{4}-/.test(label))) {
+          formattedLabel = format(date, 'PPpp'); // Full date and time format
+        }
+      }
+    } catch (error) {
+      // If formatting fails, keep original label
+      console.warn('MultiTenant dashboard tooltip date formatting failed:', error);
+      formattedLabel = label;
+    }
+
+    return (
+      <Box
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        {formattedLabel && (
+          <Typography variant="body2" sx={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            {formattedLabel}
+          </Typography>
+        )}
+        {payload.map((entry, index) => (
+          <Typography
+            key={index}
+            variant="body2"
+            sx={{ color: entry.color, margin: '2px 0' }}
+          >
+            {entry.name}: {entry.value}
+          </Typography>
+        ))}
+      </Box>
+    );
+  }
+  return null;
 };
 
 export default Dashboard;

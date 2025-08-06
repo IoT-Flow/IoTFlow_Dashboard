@@ -33,6 +33,7 @@ import {
   Typography,
   useTheme
 } from '@mui/material';
+import { format } from 'date-fns';
 import * as echarts from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import html2canvas from 'html2canvas';
@@ -103,13 +104,18 @@ const CustomChart = ({
   const generateEChartsOption = async () => {
     const telemetryArrays = Array.isArray(telemetryData[0]) ? telemetryData : [telemetryData];
 
-    // Generate time labels
+    // Generate time labels with safe date formatting
     const timeLabels = telemetryArrays[0]?.map(point => {
-      const date = new Date(point.timestamp);
-      return telemetryArrays[0].length > 0 &&
-        (telemetryArrays[0][telemetryArrays[0].length - 1].timestamp - telemetryArrays[0][0].timestamp < 24 * 60 * 60 * 1000)
-        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : date.toLocaleDateString();
+      try {
+        const date = new Date(point.timestamp);
+        if (!isNaN(date.getTime())) {
+          // Simple, safe date formatting
+          return date.toLocaleString();
+        }
+        return 'Invalid date';
+      } catch (error) {
+        return 'Invalid date';
+      }
     }) || [];
 
     const isDarkMode = theme.palette.mode === 'dark';
@@ -244,7 +250,10 @@ const CustomChart = ({
           color: isDarkMode ? '#ffffff' : '#333333'
         },
         formatter: function (params) {
-          let result = `<div style="margin-bottom: 5px; font-weight: bold;">${params[0].axisValue}</div>`;
+          // Simple approach: use the axis label directly without trying to reformat it
+          const axisLabel = params[0]?.axisValueLabel || params[0]?.name || 'No timestamp';
+
+          let result = `<div style="margin-bottom: 5px; font-weight: bold;">${axisLabel}</div>`;
           params.forEach(param => {
             result += `<div style="margin: 2px 0;">
               <span style="display: inline-block; width: 10px; height: 10px; background-color: ${param.color}; border-radius: 50%; margin-right: 5px;"></span>
@@ -462,7 +471,10 @@ const CustomChart = ({
       },
       tooltip: {
         trigger: 'item',
-        formatter: '{a} <br/>{b}: {c} ({d}%)',
+        formatter: function (param) {
+          // For pie charts, we don't have timestamps but we can show the data point info
+          return `${param.seriesName}<br/>${param.name}: <strong>${param.value}</strong> (${param.percent}%)`;
+        },
         backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDarkMode ? '#555555' : '#cccccc',
         textStyle: {
@@ -522,6 +534,30 @@ const CustomChart = ({
       },
       tooltip: {
         trigger: 'item',
+        formatter: function (param) {
+          // For scatter plots, show the data point value with series name
+          const dataIndex = param.dataIndex;
+          const originalData = telemetryArrays[param.seriesIndex];
+          if (originalData && originalData[dataIndex]) {
+            const timestamp = originalData[dataIndex].timestamp;
+            let fullDateTime = 'No timestamp';
+            try {
+              if (timestamp) {
+                const dateValue = new Date(timestamp);
+                if (!isNaN(dateValue.getTime())) {
+                  fullDateTime = format(dateValue, 'PPpp');
+                }
+              }
+            } catch (error) {
+              console.warn('Date formatting failed:', error);
+              fullDateTime = timestamp ? timestamp.toString() : 'No timestamp';
+            }
+            return `<div style="font-weight: bold;">${param.seriesName}</div>
+                    <div style="margin-top: 5px;">${fullDateTime}</div>
+                    <div style="margin-top: 2px;">Value: <strong>${param.value[1]}</strong></div>`;
+          }
+          return `${param.seriesName}<br/>Value: <strong>${param.value[1]}</strong>`;
+        },
         backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDarkMode ? '#555555' : '#cccccc',
         textStyle: {
@@ -582,7 +618,9 @@ const CustomChart = ({
   };
 
   const generateGaugeChartOption = (telemetryArrays, isDarkMode) => {
-    const currentValue = telemetryArrays[0]?.[telemetryArrays[0].length - 1]?.value || 0;
+    const dataArr = telemetryArrays[0] || [];
+    const currentValue = dataArr[dataArr.length - 1]?.value || 0;
+    const timestamp = dataArr[dataArr.length - 1]?.timestamp;
     const maxValue = chartConfig.yAxisMax || 100;
 
     return {
@@ -595,6 +633,25 @@ const CustomChart = ({
           color: isDarkMode ? '#ffffff' : '#333333',
           fontSize: isFullscreen ? 18 : 14,
           fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        formatter: function () {
+          let fullDateTime = 'No timestamp';
+          try {
+            if (timestamp) {
+              const dateValue = new Date(timestamp);
+              if (!isNaN(dateValue.getTime())) {
+                fullDateTime = format(dateValue, 'PPpp');
+              }
+            }
+          } catch (error) {
+            console.warn('Date formatting failed:', error);
+            fullDateTime = timestamp ? timestamp.toString() : 'No timestamp';
+          }
+          return `<div style="font-weight: bold;">${chartConfig.name || 'Gauge'}</div>
+                  <div style="margin-top: 5px;">${fullDateTime}</div>
+                  <div style="margin-top: 2px;">Value: <strong>${currentValue.toFixed(1)}</strong></div>`;
         }
       },
       series: [{
@@ -714,6 +771,30 @@ const CustomChart = ({
       },
       tooltip: {
         position: 'top',
+        formatter: function (param) {
+          const xIndex = param.data[0];
+          const yIndex = param.data[1];
+          const value = param.data[2];
+          const timestamp = timeLabels[xIndex];
+          let fullDateTime = 'No timestamp';
+          if (timestamp) {
+            // Try to parse the timestamp if it's already a time string or convert from timestamp
+            try {
+              const dateValue = isNaN(timestamp) ? new Date(timestamp) : new Date(timestamp);
+              if (!isNaN(dateValue.getTime())) {
+                fullDateTime = format(dateValue, 'PPpp');
+              } else {
+                fullDateTime = timestamp.toString();
+              }
+            } catch (e) {
+              console.warn('Date formatting failed:', e);
+              fullDateTime = timestamp.toString();
+            }
+          }
+          return `<div style="font-weight: bold;">Heatmap Data</div>
+                  <div style="margin-top: 5px;">${fullDateTime}</div>
+                  <div style="margin-top: 2px;">Value: <strong>${value}</strong></div>`;
+        },
         backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDarkMode ? '#555555' : '#cccccc',
         textStyle: {
@@ -779,6 +860,7 @@ const CustomChart = ({
   const generateThermometerChartOption = (telemetryArrays, isDarkMode) => {
     const dataArr = telemetryArrays[0] || [];
     const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const timestamp = dataArr.length > 0 ? dataArr[dataArr.length - 1].timestamp : null;
     const maxValue = chartConfig.yAxisMax || 100;
     const minValue = chartConfig.yAxisMin || 0;
 
@@ -794,7 +876,23 @@ const CustomChart = ({
         }
       },
       tooltip: {
-        formatter: `Temperature: ${currentValue.toFixed(1)}°C`
+        formatter: function () {
+          let fullDateTime = 'No timestamp';
+          try {
+            if (timestamp) {
+              const dateValue = new Date(timestamp);
+              if (!isNaN(dateValue.getTime())) {
+                fullDateTime = format(dateValue, 'PPpp');
+              }
+            }
+          } catch (error) {
+            console.warn('Date formatting failed:', error);
+            fullDateTime = timestamp ? timestamp.toString() : 'No timestamp';
+          }
+          return `<div style="font-weight: bold;">Temperature</div>
+                  <div style="margin-top: 5px;">${fullDateTime}</div>
+                  <div style="margin-top: 2px;">Temperature: <strong>${currentValue.toFixed(1)}°C</strong></div>`;
+        }
       },
       series: [{
         type: 'gauge',
@@ -861,6 +959,7 @@ const CustomChart = ({
   const generateTankLevelChartOption = (telemetryArrays, isDarkMode) => {
     const dataArr = telemetryArrays[0] || [];
     const currentValue = dataArr.length > 0 ? dataArr[dataArr.length - 1].value : 0;
+    const timestamp = dataArr.length > 0 ? dataArr[dataArr.length - 1].timestamp : null;
     const maxValue = chartConfig.yAxisMax || 100;
     const percentage = Math.min(Math.max((currentValue / maxValue) * 100, 0), 100);
 
@@ -876,7 +975,23 @@ const CustomChart = ({
         }
       },
       tooltip: {
-        formatter: `Level: ${currentValue.toFixed(1)} (${percentage.toFixed(1)}%)`
+        formatter: function () {
+          let fullDateTime = 'No timestamp';
+          try {
+            if (timestamp) {
+              const dateValue = new Date(timestamp);
+              if (!isNaN(dateValue.getTime())) {
+                fullDateTime = format(dateValue, 'PPpp');
+              }
+            }
+          } catch (error) {
+            console.warn('Date formatting failed:', error);
+            fullDateTime = timestamp ? timestamp.toString() : 'No timestamp';
+          }
+          return `<div style="font-weight: bold;">Tank Level</div>
+                  <div style="margin-top: 5px;">${fullDateTime}</div>
+                  <div style="margin-top: 2px;">Level: <strong>${currentValue.toFixed(1)} (${percentage.toFixed(1)}%)</strong></div>`;
+        }
       },
       graphic: [
         {
