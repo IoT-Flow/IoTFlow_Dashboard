@@ -757,10 +757,7 @@ const Telemetry = () => {
                       showGrid: true,
                       animations: true,
                       refreshInterval: autoRefresh ? 30 : null,
-                      devices: [selectedDevice],
-                      dataTypes: measurementFilter === 'all'
-                        ? Object.keys(telemetryHistory[selectedDevice])
-                        : [measurementFilter]
+                      devices: [selectedDevice]
                     }}
                     telemetryData={
                       measurementFilter === 'all'
@@ -771,6 +768,8 @@ const Telemetry = () => {
                     }
                     onEdit={() => { }}
                     onDelete={() => { }}
+                    devices={devices}
+                    isMainChart={true}
                   />
                 ) : (
                   <Box sx={{
@@ -838,6 +837,7 @@ const Telemetry = () => {
                             telemetryData={chartTelemetryData}
                             onEdit={handleEditChart}
                             onDelete={handleDeleteChart}
+                            devices={devices}
                           />
                         ) : (
                           <Card sx={{ position: 'relative', minHeight: 350 }}>

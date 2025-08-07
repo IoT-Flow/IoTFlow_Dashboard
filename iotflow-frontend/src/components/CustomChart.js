@@ -44,9 +44,11 @@ const CustomChart = ({
   chartConfig,
   onEdit,
   onDelete,
-  telemetryData = {},
+  telemetryData: externalTelemetryData = null, // External data for main chart
   isFullscreen = false,
-  onToggleFullscreen
+  onToggleFullscreen,
+  isMainChart = false, // Flag to distinguish main chart from custom charts
+  devices = [] // Add devices prop to show device names in error messages
 }) => {
   const theme = useTheme();
   const [loading, setLoading] = useState(false);
@@ -55,6 +57,7 @@ const CustomChart = ({
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [chartOption, setChartOption] = useState(null);
   const [error, setError] = useState(null);
+  const [telemetryData, setTelemetryData] = useState([]);
   const chartRef = useRef(null);
   const refreshIntervalRef = useRef(null);
 
@@ -65,9 +68,155 @@ const CustomChart = ({
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'
   ];
 
+  // Helper function to get time range dates
+  const getTimeRangeDates = (range) => {
+    const now = new Date();
+    let startTime;
+
+    switch (range) {
+      case '15m':
+        startTime = new Date(now.getTime() - 15 * 60 * 1000);
+        break;
+      case '1h':
+        startTime = new Date(now.getTime() - 60 * 60 * 1000);
+        break;
+      case '6h':
+        startTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        break;
+      case '24h':
+        startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case 'lifetime':
+        startTime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); // 1 year ago
+        break;
+      default:
+        startTime = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour
+    }
+
+    // Validate that startTime is before endTime
+    if (startTime >= now) {
+      console.error('[CustomChart] Invalid time range - startTime is not before endTime:', {
+        range,
+        startTime: startTime.toISOString(),
+        endTime: now.toISOString()
+      });
+      // Fallback to 1 hour range
+      startTime = new Date(now.getTime() - 60 * 60 * 1000);
+    }
+
+    console.debug('[CustomChart] Time range calculation:', {
+      range,
+      startTime: startTime.toISOString(),
+      endTime: now.toISOString(),
+      duration: now.getTime() - startTime.getTime(),
+      durationHours: (now.getTime() - startTime.getTime()) / (60 * 60 * 1000)
+    });
+
+    return { startTime, endTime: now };
+  };
+
+  // Fetch telemetry data for this chart's configured devices and measurements
+  const fetchChartData = async () => {
+    if (!chartConfig.devices || !chartConfig.devices.length || !chartConfig.measurements || !chartConfig.measurements.length) {
+      setError('Chart not properly configured with devices and measurements');
+      setTelemetryData([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { startTime, endTime } = getTimeRangeDates(chartConfig.timeRange || '1h');
+      const allTelemetryData = [];
+
+      console.debug('[CustomChart] Fetching data for chart:', {
+        chartId: chartConfig.id,
+        devices: chartConfig.devices,
+        measurements: chartConfig.measurements,
+        timeRange: chartConfig.timeRange,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      });
+
+      // Import API service
+      const apiService = (await import('../services/apiService')).default;
+      const api = (await import('../services/api')).default;
+
+      // Fetch data for each configured device
+      for (const deviceId of chartConfig.devices) {
+        try {
+          const response = await api.get(`/telemetry/${deviceId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            params: {
+              start_date: startTime.toISOString(),
+              end_date: endTime.toISOString(),
+              limit: 1000,
+            }
+          });
+
+          const telemetryRecords = response.data.telemetry || [];
+          console.debug(`[CustomChart] Received ${telemetryRecords.length} records for device ${deviceId}`);
+
+          // Group data by measurement and only include configured measurements
+          chartConfig.measurements.forEach(measurement => {
+            const measurementData = [];
+
+            telemetryRecords.forEach(record => {
+              if (record[measurement] !== null && record[measurement] !== undefined) {
+                measurementData.push({
+                  timestamp: new Date(record.Time || record.timestamp),
+                  value: parseFloat(record[measurement]),
+                  device_id: deviceId,
+                  measurement: measurement,
+                });
+              }
+            });
+
+            if (measurementData.length > 0) {
+              // Sort by timestamp
+              measurementData.sort((a, b) => a.timestamp - b.timestamp);
+              allTelemetryData.push(measurementData);
+              console.debug(`[CustomChart] Added ${measurementData.length} points for ${measurement} from device ${deviceId}`);
+            }
+          });
+
+        } catch (deviceError) {
+          console.warn(`Failed to fetch data for device ${deviceId}:`, deviceError);
+          // Continue with other devices
+        }
+      }
+
+      setTelemetryData(allTelemetryData);
+      console.debug(`[CustomChart] Final telemetry data: ${allTelemetryData.length} series`);
+
+      if (allTelemetryData.length === 0) {
+        const deviceNames = chartConfig.devices.map(deviceId => {
+          const device = devices?.find(d => d.id === deviceId);
+          return device ? device.name : `Device ${deviceId}`;
+        }).join(', ');
+        
+        setError(`No data found for devices [${deviceNames}] and measurements [${chartConfig.measurements.join(', ')}] in the selected time range (${chartConfig.timeRange}). Try selecting a longer time range or check if the devices have recent data.`);
+      }
+
+    } catch (err) {
+      console.error('Failed to fetch chart data:', err);
+      setError('Failed to load chart data: ' + err.message);
+      toast.error('Failed to load chart data: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadChartData = async () => {
     if (!Array.isArray(telemetryData) || telemetryData.length === 0) {
-      setError('No telemetry data available for this measurement');
+      // Don't set error state here - this is handled in fetchChartData
       setChartOption(null);
       return;
     }
@@ -80,7 +229,7 @@ const CustomChart = ({
       setChartOption(option);
       setLastUpdated(new Date());
     } catch (err) {
-      setError('Failed to load chart data');
+      setError('Failed to generate chart visualization');
       toast.error('Failed to update chart data');
     } finally {
       setLoading(false);
@@ -88,10 +237,26 @@ const CustomChart = ({
   };
 
   useEffect(() => {
-    loadChartData();
+    if (isMainChart && externalTelemetryData) {
+      // For main chart, use external telemetry data
+      setTelemetryData(externalTelemetryData);
+    } else if (!isMainChart) {
+      // For custom charts, fetch their own data
+      fetchChartData();
+    }
+  }, [isMainChart, externalTelemetryData, chartConfig.devices, chartConfig.measurements, chartConfig.timeRange]);
 
-    if (autoRefresh && chartConfig.refreshInterval) {
-      refreshIntervalRef.current = setInterval(loadChartData, chartConfig.refreshInterval * 1000);
+  useEffect(() => {
+    // Load chart visualization when telemetry data changes
+    loadChartData();
+  }, [telemetryData]);
+
+  useEffect(() => {
+    // Set up auto-refresh for custom charts only (main chart refreshes through parent)
+    if (!isMainChart && autoRefresh && chartConfig.refreshInterval) {
+      refreshIntervalRef.current = setInterval(() => {
+        fetchChartData();
+      }, chartConfig.refreshInterval * 1000);
     }
 
     return () => {
@@ -99,7 +264,7 @@ const CustomChart = ({
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [chartConfig, autoRefresh, telemetryData]);
+  }, [autoRefresh, chartConfig.refreshInterval, isMainChart]);
 
   const generateEChartsOption = async () => {
     const telemetryArrays = Array.isArray(telemetryData[0]) ? telemetryData : [telemetryData];
@@ -1530,12 +1695,96 @@ const CustomChart = ({
     return null;
   };
 
-  if (error) {
+  if (error && !isMainChart) {
     return (
       <Card sx={{ height: isFullscreen ? '100vh' : 400 }}>
-        <CardContent>
-          <Alert severity="error">{error}</Alert>
+        <CardContent sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box>
+              <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+                {chartConfig.name}
+              </Typography>
+              {chartConfig.description && (
+                <Typography variant="body2" color="text.secondary">
+                  {chartConfig.description}
+                </Typography>
+              )}
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <IconButton size="small" onClick={handleMenuOpen}>
+                <MoreVert />
+              </IconButton>
+            </Box>
+          </Box>
+          
+          <Box display="flex" flexWrap="wrap" gap={0.5} mb={2}>
+            <Chip
+              label={chartConfig.type}
+              size="small"
+              variant="outlined"
+              color="primary"
+            />
+            <Chip
+              label={chartConfig.timeRange}
+              size="small"
+              variant="outlined"
+            />
+            {chartConfig.devices?.length > 0 && (
+              <Chip
+                label={`${chartConfig.devices.length} device(s)`}
+                size="small"
+                variant="outlined"
+                color="secondary"
+              />
+            )}
+            {chartConfig.measurements?.length > 0 && (
+              <Chip
+                label={`${chartConfig.measurements.length} measurement(s)`}
+                size="small"
+                variant="outlined"
+                color="secondary"
+              />
+            )}
+          </Box>
+          
+          <Alert severity="warning" action={
+            <Button size="small" onClick={() => onEdit(chartConfig)}>
+              Edit Chart
+            </Button>
+          }>
+            {error}
+          </Alert>
         </CardContent>
+
+        {/* Menu */}
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={handleMenuClose}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              borderRadius: 2,
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 8px 32px rgba(0, 0, 0, 0.5)'
+                : '0 8px 32px rgba(0, 0, 0, 0.15)'
+            }
+          }}
+        >
+          <MenuItem onClick={() => { onEdit(chartConfig); handleMenuClose(); }}>
+            <Edit sx={{ mr: 1 }} /> Edit Chart
+          </MenuItem>
+          <MenuItem onClick={toggleAutoRefresh}>
+            {autoRefresh ? <Pause sx={{ mr: 1 }} /> : <PlayArrow sx={{ mr: 1 }} />}
+            {autoRefresh ? 'Pause' : 'Resume'} Auto-refresh
+          </MenuItem>
+          <MenuItem onClick={handleExportChart}>
+            <Download sx={{ mr: 1 }} /> Export as PNG
+          </MenuItem>
+          <MenuItem onClick={() => { onDelete(chartConfig.id); handleMenuClose(); }} sx={{ color: 'error.main' }}>
+            <Delete sx={{ mr: 1 }} /> Delete Chart
+          </MenuItem>
+        </Menu>
       </Card>
     );
   }
@@ -1598,9 +1847,9 @@ const CustomChart = ({
               variant="outlined"
             />
           )}
-          {chartConfig.dataTypes?.length > 0 && (
+          {chartConfig.measurements?.length > 0 && (
             <Chip
-              label={`${chartConfig.dataTypes.length} data type(s)`}
+              label={`${chartConfig.measurements.length} measurement(s)`}
               size="small"
               variant="outlined"
             />
@@ -1620,6 +1869,30 @@ const CustomChart = ({
           }}
         >
           {(() => {
+            if (loading) {
+              return (
+                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+                  <CircularProgress size={40} />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    Loading chart data...
+                  </Typography>
+                </Box>
+              );
+            }
+
+            if (error) {
+              return (
+                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%" p={2}>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    {error}
+                  </Alert>
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    This chart may need to be reconfigured. Use the menu above to edit or delete it.
+                  </Typography>
+                </Box>
+              );
+            }
+
             const specialWidget = renderSpecialWidget();
             if (specialWidget) {
               return specialWidget;
@@ -1642,9 +1915,8 @@ const CustomChart = ({
               />
             ) : (
               <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
-                <CircularProgress size={40} />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Loading chart data...
+                <Typography variant="body2" color="text.secondary" textAlign="center">
+                  No chart data available
                 </Typography>
               </Box>
             );
@@ -1656,7 +1928,7 @@ const CustomChart = ({
         <CardActions sx={{ px: 2, py: 1 }}>
           <Button
             size="small"
-            onClick={loadChartData}
+            onClick={isMainChart ? loadChartData : fetchChartData}
             startIcon={<Refresh />}
             disabled={loading}
             variant="outlined"

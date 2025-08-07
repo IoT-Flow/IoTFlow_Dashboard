@@ -38,6 +38,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -63,12 +64,14 @@ const ChartCustomizationDialog = ({
   open,
   onClose,
   devices = [],
-  measurements = [],
+  measurements = [], // This can now be empty - we'll fetch our own
   onSaveChart,
   editingChart = null
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [availableMeasurements, setAvailableMeasurements] = useState([]);
+  const [loadingMeasurements, setLoadingMeasurements] = useState(false);
   const [chartConfig, setChartConfig] = useState({
     id: null,
     name: '',
@@ -95,8 +98,54 @@ const ChartCustomizationDialog = ({
     groupBy: 'device'
   });
 
-  // // Replace static availableDataTypes with measurements from prop
-  // const [selectedMeasurement, setSelectedMeasurement] = useState('');
+  // Fetch available measurements for selected devices
+  const fetchMeasurementsForDevices = async (deviceIds) => {
+    if (!deviceIds || deviceIds.length === 0) {
+      setAvailableMeasurements([]);
+      return;
+    }
+
+    setLoadingMeasurements(true);
+    const allMeasurements = new Set();
+
+    try {
+      const api = (await import('../services/api')).default;
+
+      // Fetch recent data for each device to determine available measurements
+      for (const deviceId of deviceIds) {
+        try {
+          const response = await api.get(`/telemetry/${deviceId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            params: {
+              limit: 10, // Just get recent data to see what measurements are available
+            }
+          });
+
+          const telemetryRecords = response.data.telemetry || [];
+
+          // Extract measurement names from the records
+          telemetryRecords.forEach(record => {
+            Object.keys(record).forEach(key => {
+              if (key !== 'Time' && key !== 'timestamp') {
+                allMeasurements.add(key);
+              }
+            });
+          });
+
+        } catch (deviceError) {
+          console.warn(`Failed to fetch measurements for device ${deviceId}:`, deviceError);
+        }
+      }
+
+      setAvailableMeasurements(Array.from(allMeasurements));
+    } catch (error) {
+      console.error('Failed to fetch measurements:', error);
+      toast.error('Failed to fetch available measurements');
+      setAvailableMeasurements([]);
+    } finally {
+      setLoadingMeasurements(false);
+    }
+  };
 
   const chartTypes = [
     // Line & Area Charts - IMPLEMENTED
@@ -229,11 +278,21 @@ const ChartCustomizationDialog = ({
         aggregation: 'none',
         groupBy: 'device'
       };
-      setChartConfig({ ...defaultConfig, ...editingChart });
-      // setSelectedMeasurement(editingChart.measurement || measurements[0] || '');
+      
+      const mergedConfig = { ...defaultConfig, ...editingChart };
+      console.debug('[ChartCustomizationDialog] Setting config for editing:', mergedConfig);
+      console.debug('[ChartCustomizationDialog] Devices from editingChart:', editingChart.devices);
+      console.debug('[ChartCustomizationDialog] Available devices:', devices);
+      
+      setChartConfig(mergedConfig);
       const foundType = chartTypes.find(t => t.value === (editingChart.type || 'line'));
       setSelectedCategory(foundType ? foundType.category : 'Ready Now');
-      console.debug('[ChartCustomizationDialog] Editing chart:', editingChart);
+
+      // Fetch measurements for the devices in the chart being edited
+      if (editingChart.devices && editingChart.devices.length > 0) {
+        console.debug('[ChartCustomizationDialog] Fetching measurements for devices:', editingChart.devices);
+        fetchMeasurementsForDevices(editingChart.devices);
+      }
     } else {
       setChartConfig({
         id: null,
@@ -260,10 +319,10 @@ const ChartCustomizationDialog = ({
         aggregation: 'none',
         groupBy: 'device'
       });
-      // setSelectedMeasurement(measurements[0] || '');
       setSelectedCategory('Ready Now');
+      setAvailableMeasurements([]);
     }
-  }, [editingChart, open, measurements]);
+  }, [editingChart, open, devices]); // Add devices as dependency
 
   const handleConfigChange = (field, value) => {
     setChartConfig(prev => ({
@@ -274,13 +333,34 @@ const ChartCustomizationDialog = ({
 
   const handleDeviceToggle = (deviceId) => {
     const currentDevices = chartConfig.devices || [];
-    const isSelected = currentDevices.includes(deviceId);
+    // Ensure consistent data types for comparison
+    const deviceIdString = String(deviceId);
+    const currentDevicesStrings = currentDevices.map(id => String(id));
+    const isSelected = currentDevicesStrings.includes(deviceIdString);
 
+    console.debug('[ChartCustomizationDialog] Device toggle:', {
+      deviceId,
+      deviceIdString,
+      currentDevices,
+      currentDevicesStrings,
+      isSelected,
+      allDevices: devices.map(d => ({ id: d.id, name: d.name }))
+    });
+
+    let newDevices;
     if (isSelected) {
-      handleConfigChange('devices', currentDevices.filter(d => d !== deviceId));
+      // Remove device (keep original data types)
+      newDevices = currentDevices.filter(id => String(id) !== deviceIdString);
     } else {
-      handleConfigChange('devices', [...currentDevices, deviceId]);
+      // Add device (use original data type from device list)
+      newDevices = [...currentDevices, deviceId];
     }
+
+    console.debug('[ChartCustomizationDialog] New devices:', newDevices);
+    handleConfigChange('devices', newDevices);
+
+    // Fetch measurements for the selected devices
+    fetchMeasurementsForDevices(newDevices);
   };
 
   // const handleDataTypeToggle = (dataType) => {
@@ -650,36 +730,63 @@ const ChartCustomizationDialog = ({
               Select Devices
             </Typography>
             <Grid container spacing={1}>
-              {devices.map((device) => (
-                <Grid item key={device.id}>
-                  <Chip
-                    label={device.name}
-                    onClick={() => handleDeviceToggle(device.id)}
-                    color={chartConfig.devices?.includes(device.id) ? 'primary' : 'default'}
-                    variant={chartConfig.devices?.includes(device.id) ? 'filled' : 'outlined'}
-                    icon={<DeviceHub />}
-                  />
-                </Grid>
-              ))}
+              {devices.map((device) => {
+                // Ensure device ID comparison is consistent (handle both string and number types)
+                const deviceId = String(device.id);
+                const chartDevices = (chartConfig.devices || []).map(id => String(id));
+                const isSelected = chartDevices.includes(deviceId);
+                
+                console.debug('[ChartCustomizationDialog] Rendering device chip:', {
+                  deviceId: device.id,
+                  deviceIdString: deviceId,
+                  deviceName: device.name,
+                  isSelected,
+                  chartConfigDevices: chartConfig.devices,
+                  chartDevicesString: chartDevices
+                });
+                
+                return (
+                  <Grid item key={device.id}>
+                    <Chip
+                      label={device.name}
+                      onClick={() => handleDeviceToggle(device.id)}
+                      color={isSelected ? 'primary' : 'default'}
+                      variant={isSelected ? 'filled' : 'outlined'}
+                      icon={<DeviceHub />}
+                    />
+                  </Grid>
+                );
+              })}
             </Grid>
           </Grid>
 
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
               Select Measurements
+              {loadingMeasurements && <CircularProgress size={20} sx={{ ml: 1 }} />}
             </Typography>
-            <Grid container spacing={1}>
-              {measurements.map((m) => (
-                <Grid item key={m}>
-                  <Chip
-                    label={m}
-                    onClick={() => handleMeasurementToggle(m)}
-                    color={chartConfig.measurements?.includes(m) ? 'secondary' : 'default'}
-                    variant={chartConfig.measurements?.includes(m) ? 'filled' : 'outlined'}
-                  />
-                </Grid>
-              ))}
-            </Grid>
+            {chartConfig.devices.length === 0 ? (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                Please select devices first to see available measurements
+              </Alert>
+            ) : availableMeasurements.length === 0 && !loadingMeasurements ? (
+              <Alert severity="warning" sx={{ mt: 1 }}>
+                No measurements found for selected devices. Make sure the devices have recent telemetry data.
+              </Alert>
+            ) : (
+              <Grid container spacing={1}>
+                {availableMeasurements.map((m) => (
+                  <Grid item key={m}>
+                    <Chip
+                      label={m}
+                      onClick={() => handleMeasurementToggle(m)}
+                      color={chartConfig.measurements?.includes(m) ? 'secondary' : 'default'}
+                      variant={chartConfig.measurements?.includes(m) ? 'filled' : 'outlined'}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Grid>
 
           {/* <Grid item xs={12}>
