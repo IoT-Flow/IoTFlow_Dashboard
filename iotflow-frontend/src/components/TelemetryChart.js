@@ -1,10 +1,9 @@
-import React from 'react';
 import CustomChart from './CustomChart';
 
-const TelemetryChart = ({ 
-  chartConfig, 
-  telemetryData, 
-  onEdit, 
+const TelemetryChart = ({
+  chartConfig,
+  telemetryData,
+  onEdit,
   onDelete,
   devices = []
 }) => {

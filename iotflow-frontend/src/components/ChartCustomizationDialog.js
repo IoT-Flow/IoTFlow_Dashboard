@@ -278,12 +278,12 @@ const ChartCustomizationDialog = ({
         aggregation: 'none',
         groupBy: 'device'
       };
-      
+
       const mergedConfig = { ...defaultConfig, ...editingChart };
       console.debug('[ChartCustomizationDialog] Setting config for editing:', mergedConfig);
       console.debug('[ChartCustomizationDialog] Devices from editingChart:', editingChart.devices);
       console.debug('[ChartCustomizationDialog] Available devices:', devices);
-      
+
       setChartConfig(mergedConfig);
       const foundType = chartTypes.find(t => t.value === (editingChart.type || 'line'));
       setSelectedCategory(foundType ? foundType.category : 'Ready Now');
@@ -735,7 +735,7 @@ const ChartCustomizationDialog = ({
                 const deviceId = String(device.id);
                 const chartDevices = (chartConfig.devices || []).map(id => String(id));
                 const isSelected = chartDevices.includes(deviceId);
-                
+
                 console.debug('[ChartCustomizationDialog] Rendering device chip:', {
                   deviceId: device.id,
                   deviceIdString: deviceId,
@@ -744,7 +744,7 @@ const ChartCustomizationDialog = ({
                   chartConfigDevices: chartConfig.devices,
                   chartDevicesString: chartDevices
                 });
-                
+
                 return (
                   <Grid item key={device.id}>
                     <Chip

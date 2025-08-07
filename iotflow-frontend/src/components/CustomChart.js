@@ -201,7 +201,7 @@ const CustomChart = ({
           const device = devices?.find(d => d.id === deviceId);
           return device ? device.name : `Device ${deviceId}`;
         }).join(', ');
-        
+
         setError(`No data found for devices [${deviceNames}] and measurements [${chartConfig.measurements.join(', ')}] in the selected time range (${chartConfig.timeRange}). Try selecting a longer time range or check if the devices have recent data.`);
       }
 
@@ -1716,7 +1716,7 @@ const CustomChart = ({
               </IconButton>
             </Box>
           </Box>
-          
+
           <Box display="flex" flexWrap="wrap" gap={0.5} mb={2}>
             <Chip
               label={chartConfig.type}
@@ -1746,7 +1746,7 @@ const CustomChart = ({
               />
             )}
           </Box>
-          
+
           <Alert severity="warning" action={
             <Button size="small" onClick={() => onEdit(chartConfig)}>
               Edit Chart
