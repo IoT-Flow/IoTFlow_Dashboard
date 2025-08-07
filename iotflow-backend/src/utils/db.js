@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'test') {
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: dbPath,
-    logging: console.log,
+    logging: false,
   });
 }
 

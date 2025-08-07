@@ -79,14 +79,11 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      console.log('📝 REGISTER: Starting registration for:', userData.email);
       const response = await apiService.register(userData);
-      console.log('📝 REGISTER: ApiService response:', response);
 
       if (response.success) {
         const { token, user } = response.data;
 
-        console.log('📝 REGISTER: Setting localStorage and state');
         localStorage.setItem('iotflow_token', token);
         localStorage.setItem('iotflow_user', JSON.stringify(user));
 
@@ -94,15 +91,12 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setUser(user);
 
-        console.log('📝 REGISTER: Registration successful');
         toast.success(`Welcome to IoTFlow, ${user.username}!`);
         return { success: true };
       } else {
-        console.error('📝 REGISTER: Registration failed:', response);
         return { success: false, error: response.message || 'Registration failed' };
       }
     } catch (error) {
-      console.error('📝 REGISTER: Exception during registration:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'Registration failed. Please try again.'

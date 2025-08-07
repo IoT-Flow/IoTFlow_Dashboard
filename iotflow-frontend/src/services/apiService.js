@@ -252,11 +252,6 @@ class ApiService {
       // Clear any existing cache to force fresh device fetch
       localStorage.removeItem('iotflow_devices_cache');
 
-      console.log('Backend login successful:', {
-        userId: userData.id,
-        username: userData.username,
-      });
-
       return {
         success: true,
         data: {
@@ -266,35 +261,36 @@ class ApiService {
         }
       };
     } catch (error) {
-      console.log('Backend login failed, trying demo authentication:', error.message);
+      // Only use demo authentication if explicitly enabled
+      if (process.env.REACT_APP_DEMO_MODE === 'true') {
+        // Find matching user - ensure case-insensitive matching
+        const matchedUser = this.demoUsers.find(user =>
+          user.credentials.some(cred =>
+            cred.toLowerCase() === emailOrUsername.toLowerCase()
+          ) && user.password === password
+        );
 
-      // Find matching user - ensure case-insensitive matching
-      const matchedUser = this.demoUsers.find(user =>
-        user.credentials.some(cred =>
-          cred.toLowerCase() === emailOrUsername.toLowerCase()
-        ) && user.password === password
-      );
+        if (matchedUser) {
+          // Update last login
+          matchedUser.user.lastLogin = new Date().toISOString();
+          this.saveDemoUsers();
 
-      if (matchedUser) {
-        // Update last login
-        matchedUser.user.lastLogin = new Date().toISOString();
-        this.saveDemoUsers();
+          // Clear any existing cache to force fresh device fetch
+          localStorage.removeItem('iotflow_devices_cache');
 
-        // Clear any existing cache to force fresh device fetch
-        localStorage.removeItem('iotflow_devices_cache');
-
-        return {
-          success: true,
-          data: {
-            token: 'demo_token_' + matchedUser.user.id,
-            user: matchedUser.user,
-            message: 'Login successful (Demo Mode)'
-          }
-        };
+          return {
+            success: true,
+            data: {
+              token: 'demo_token_' + matchedUser.user.id,
+              user: matchedUser.user,
+              message: 'Login successful (Demo Mode)'
+            }
+          };
+        }
       }
 
       // If no match found, throw authentication error
-      throw new Error('Invalid credentials. Please check your email/username and password.');
+      throw new Error(error.response?.data?.message || 'Invalid credentials. Please check your email/username and password.');
     }
   }
 

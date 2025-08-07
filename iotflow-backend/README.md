@@ -1,33 +1,79 @@
-# IoTFlow Backend
+# 🚀 IoTFlow Backend API
 
-## Overview
-The IoTFlow Backend is a RESTful API designed for managing users and devices in an IoT environment. This application provides endpoints for user management, device management, and authentication.
+> **Production-Ready Backend API** - Enterprise-grade RESTful API for IoT device management, real-time telemetry, and user authentication.
 
-## Project Structure
+![Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
+![Production Ready](https://img.shields.io/badge/Production-Ready-green.svg)
+
+## 📋 Overview
+
+The IoTFlow Backend is a comprehensive RESTful API providing:
+
+- **User Authentication & Authorization** - JWT-based secure authentication
+- **Device Management** - Complete CRUD operations for IoT devices
+- **Real-time Telemetry** - WebSocket support for live data streaming
+- **Chart & Dashboard APIs** - Custom visualization support
+- **Notification System** - Real-time alerts and notifications
+- **Rate Limiting & Security** - Production-ready security measures
+
+## 🏗️ Architecture
+
 ```
-iotflow-backend
-├── src
-│   ├── controllers          # Contains the logic for handling requests
+┌─────────────────────────────────────────┐
+│               IoTFlow API               │
+├─────────────────────────────────────────┤
+│  Authentication │  Device Management    │
+│  User Management │  Telemetry Data      │
+│  Charts & Dashboards │ Notifications    │
+├─────────────────────────────────────────┤
+│          WebSocket Server              │
+├─────────────────────────────────────────┤
+│       SQLite/PostgreSQL Database       │
+└─────────────────────────────────────────┘
+```
+
+## 📁 Project Structure
+
+```
+iotflow-backend/
+├── src/
+│   ├── controllers/         # Request handlers and business logic
+│   │   ├── userController.js
 │   │   ├── deviceController.js
-│   │   └── userController.js
-│   ├── models               # Defines the data models for users and devices
+│   │   ├── telemetryController.js
+│   │   ├── chartController.js
+│   │   ├── dashboardController.js
+│   │   └── notificationController.js
+│   ├── models/             # Database models and schemas
+│   │   ├── user.js
 │   │   ├── device.js
-│   │   └── user.js
-│   ├── routes               # Defines the API routes
+│   │   ├── telemetryData.js
+│   │   ├── chart.js
+│   │   └── notification.js
+│   ├── routes/             # API route definitions
+│   │   ├── userRoutes.js
 │   │   ├── deviceRoutes.js
-│   │   └── userRoutes.js
-│   ├── middlewares          # Contains middleware functions for authentication
+│   │   ├── telemetryRoutes.js
+│   │   ├── chartRoutes.js
+│   │   ├── dashboardRoutes.js
+│   │   └── notificationRoutes.js
+│   ├── middlewares/        # Custom middleware functions
 │   │   └── authMiddleware.js
-│   ├── utils                # Utility functions for database operations
-│   │   └── db.js
-│   ├── app.js               # Initializes the Express application
-│   └── server.js            # Entry point for starting the server
-├── package.json             # NPM configuration file
-├── .env                     # Environment variables
-└── README.md                # Project documentation
+│   ├── services/           # Business logic services
+│   │   └── notificationService.js
+│   ├── utils/              # Utility functions and helpers
+│   │   ├── db.js
+│   │   └── iotdbClient.js
+│   ├── app.js              # Express application setup
+│   └── server.js           # Server entry point
+├── scripts/                # Database initialization scripts
+│   └── initDatabase.js
+├── Dockerfile              # Production Docker configuration
+├── .env.example            # Environment variables template
+├── package.json            # Dependencies and scripts
+└── README.md              # This documentation
 ```
-
-## Setup Instructions
 1. **Clone the repository**
    ```
    git clone <repository-url>

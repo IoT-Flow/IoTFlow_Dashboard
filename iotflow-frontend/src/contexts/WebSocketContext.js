@@ -26,8 +26,6 @@ export const WebSocketProvider = ({ children }) => {
   // Load notifications from backend when user is authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Only load notifications initially, WebSocket auth_success will handle reloading
-      console.log('🔄 User authenticated, loading initial notifications...');
       loadNotifications();
     }
   }, [isAuthenticated, user]);
@@ -37,7 +35,6 @@ export const WebSocketProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('iotflow_token');
       if (!token) {
-        console.warn('🔐 No auth token found, cannot load notifications');
         return;
       }
 
@@ -50,13 +47,7 @@ export const WebSocketProvider = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json();
-        // console.log('🔍 Raw backend response:', result);
-        // console.log('🔍 result.data:', result.data);
-        // console.log('🔍 result.notifications:', result.notifications);
-
         const notifications = result.data?.notifications || result.notifications || [];
-        // console.log('🔍 Final notifications array:', notifications);
-        // console.log(`📥 Received ${notifications.length} notifications from backend:`, notifications);
 
         // Convert backend notifications to match frontend format
         const formattedNotifications = notifications.map(n => ({

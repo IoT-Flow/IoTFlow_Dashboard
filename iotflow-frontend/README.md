@@ -1,32 +1,37 @@
-# IoTFlow Dashboard
+# 🌐 IoTFlow Dashboard Frontend
 
-A modern, responsive web dashboard for IoTFlow - an enterprise IoT connectivity platform that manages IoT devices, telemetry data, and real-time monitoring.
+> **Enterprise-Grade React Dashboard** - Modern, responsive, and production-ready frontend for comprehensive IoT device management and real-time monitoring.
 
-![IoTFlow Dashboard](https://img.shields.io/badge/IoTFlow-Dashboard-blue) ![React](https://img.shields.io/badge/React-18.2.0-blue) ![Material-UI](https://img.shields.io/badge/Material--UI-5.11-blue)
+![IoTFlow Dashboard](https://img.shields.io/badge/IoTFlow-Dashboard-blue) ![React](https://img.shields.io/badge/React-18.2.0-blue) ![Material-UI](https://img.shields.io/badge/Material--UI-5.11-blue) ![Production Ready](https://img.shields.io/badge/Production-Ready-green.svg)
 
-## 🚀 Features
+## ✨ Features
 
-### 🔐 Authentication & Security
-- **Admin Authentication**: Secure token-based authentication system
-- **API Key Management**: Device-specific API keys for secure device operations
-- **Role-based Access**: Admin vs Device-level permissions
-- **Rate Limiting**: Visual indicators for rate limit status and warnings
+### 🔐 **Authentication & Security**
+- **JWT Authentication** - Secure token-based authentication system
+- **Role-based Access Control** - Admin and user-level permissions
+- **Session Management** - Automatic token refresh and secure logout
+- **API Integration** - Seamless backend API communication
 
-### 📱 Device Management
-- **Device Registration**: Comprehensive form for device onboarding
-- **Device Dashboard**: Sortable, filterable table with status indicators
-- **Device Details**: Complete device information panels with API key management
-- **Bulk Operations**: Multi-select operations for bulk status updates
-- **Status Management**: Active, inactive, maintenance, and error states
-- **API Key Rotation**: Secure key regeneration interface
+### 📱 **Device Management**
+- **Device Registration** - Comprehensive device onboarding interface
+- **Real-time Status** - Live device status monitoring and health checks
+- **Device Control** - Send commands and receive responses
+- **Bulk Operations** - Multi-device management capabilities
+- **Device Grouping** - Organize devices by type, location, or custom criteria
 
-### 📊 Real-time Telemetry Monitoring
-- **Live Data Widgets**: Real-time temperature, humidity, pressure, battery levels
-- **Historical Charts**: Interactive time-series graphs with zoom and export
-- **Custom Dashboards**: Device-specific customizable widget layouts
-- **Data Export**: CSV and JSON export functionality
-- **Alert System**: Threshold-based alerts and notifications
-- **Data Aggregation**: Hourly, daily, weekly data summaries
+### 📊 **Real-time Analytics**
+- **Live Telemetry** - Real-time data visualization with WebSocket connectivity
+- **Interactive Charts** - 15+ chart types with ECharts integration
+- **Custom Dashboards** - Drag-and-drop dashboard builder
+- **Historical Analysis** - Time-series data with flexible date ranges
+- **Data Export** - CSV, JSON, and image export functionality
+- **Alert System** - Real-time notifications and threshold alerts
+
+### 🎨 **User Experience**
+- **Material Design** - Clean, modern UI with Material-UI components
+- **Responsive Layout** - Mobile-first design optimized for all devices
+- **Dark/Light Theme** - Theme switching capabilities
+- **Performance Optimized** - Lazy loading, code splitting, and caching
 
 ### 📡 MQTT Monitoring & Management
 - **Broker Status**: Real-time connection status and performance metrics

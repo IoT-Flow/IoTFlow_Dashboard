@@ -1,7 +1,40 @@
 {
+  "name": "iotflow-dashboard",
+  "version": "2.0.0",
+  "description": "Enterprise IoT Management Platform - Production Ready Dashboard",
+  "scripts": {
+    "install:all": "cd iotflow-backend && npm install && cd ../iotflow-frontend && npm install",
+    "build:all": "cd iotflow-backend && npm run build 2>/dev/null || echo 'Backend build skipped' && cd ../iotflow-frontend && npm run build",
+    "start:prod": "concurrently \"cd iotflow-backend && npm start\" \"cd iotflow-frontend && npm run serve\"",
+    "dev": "concurrently \"cd iotflow-backend && npm run dev\" \"cd iotflow-frontend && npm start\"",
+    "test": "cd iotflow-backend && npm test && cd ../iotflow-frontend && npm test",
+    "clean": "rm -rf iotflow-backend/node_modules iotflow-frontend/node_modules iotflow-frontend/build",
+    "deploy": "npm run install:all && npm run build:all && npm run start:prod"
+  },
+  "keywords": [
+    "iot",
+    "dashboard",
+    "telemetry",
+    "device-management",
+    "real-time",
+    "enterprise"
+  ],
+  "author": "IoTFlow Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/iotflow-dashboard.git"
+  },
   "dependencies": {
     "axios": "^1.11.0",
     "node-fetch": "^3.3.2",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
   }
 }

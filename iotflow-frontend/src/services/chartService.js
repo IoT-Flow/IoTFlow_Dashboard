@@ -10,12 +10,8 @@ class ChartService {
   }
 
   async handleResponse(response) {
-    console.log('Chart API Response Status:', response.status);
-    console.log('Chart API Response URL:', response.url);
-
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Network error' }));
-      console.error('Chart API Error:', error);
       throw new Error(error.error || error.message || 'Request failed');
     }
     return response.json();
@@ -23,17 +19,12 @@ class ChartService {
 
   async getCharts() {
     try {
-      console.log('Fetching charts from API...');
-
       const headers = await this.getAuthHeaders();
-      console.log('Using headers for getCharts:', headers);
-
       const response = await fetch(`${API_BASE_URL}/charts`, {
         method: 'GET',
         headers
       });
       const result = await this.handleResponse(response);
-      console.log('Charts fetched successfully:', result.data);
       return result.data;
     } catch (error) {
       console.error('Error fetching charts:', error);
@@ -57,14 +48,10 @@ class ChartService {
 
   async createChart(chartConfig) {
     try {
-      console.log('Creating chart with config:', chartConfig);
-
       // Transform frontend config to backend format
       const backendConfig = this.transformToBackendFormat(chartConfig);
-      console.log('Transformed backend config:', backendConfig);
 
       const headers = await this.getAuthHeaders();
-      console.log('Using headers:', headers);
 
       const response = await fetch(`${API_BASE_URL}/charts`, {
         method: 'POST',

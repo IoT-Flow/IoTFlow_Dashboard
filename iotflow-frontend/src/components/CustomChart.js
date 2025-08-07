@@ -250,7 +250,7 @@ const CustomChart = ({
           color: isDarkMode ? '#ffffff' : '#333333'
         },
         formatter: function (params) {
-          // Simple approach: use the axis label directly without trying to reformat it
+          // Simple approach: use the axis label directly without tryi                                                  ng to reformat it
           const axisLabel = params[0]?.axisValueLabel || params[0]?.name || 'No timestamp';
 
           let result = `<div style="margin-bottom: 5px; font-weight: bold;">${axisLabel}</div>`;
