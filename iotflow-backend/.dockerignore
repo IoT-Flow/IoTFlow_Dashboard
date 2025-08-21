@@ -1,0 +1,18 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Environment files
+
+
+# Logs and uploads
+logs
+uploads
+
+# Misc
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+README.md
+*.md
