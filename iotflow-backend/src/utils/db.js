@@ -12,18 +12,21 @@ if (process.env.NODE_ENV === 'test') {
   sequelize = new Sequelize('sqlite::memory:', {
     logging: false,
   });
-} else if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
-  // Use PostgreSQL for production
+} else if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres')) {
+  // Use PostgreSQL (VM or production)
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     protocol: 'postgres',
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
+      ssl: false, // Disable SSL for internal VM connection
     },
-    logging: false,
+    logging: console.log, // Enable logging for debugging
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   });
 } else {
   // Use SQLite file for development

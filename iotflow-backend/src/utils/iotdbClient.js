@@ -31,7 +31,7 @@ class IoTDBClient {
       const options = {
         hostname: IOTDB_HOST,
         port: IOTDB_REST_PORT,
-        path: '/rest/v1/query',
+        path: '/rest/v2/query',  // Updated for IoTDB 2.0.3
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
