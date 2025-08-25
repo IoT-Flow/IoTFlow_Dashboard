@@ -38,7 +38,7 @@ export const WebSocketProvider = ({ children }) => {
         return;
       }
 
-      const response = await fetch('http://localhost:3001/api/notifications', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -92,7 +92,7 @@ export const WebSocketProvider = ({ children }) => {
 
     try {
       // Create WebSocket connection to the real backend
-      const wsUrl = `ws://localhost:3001/ws`;
+      const wsUrl = process.env.REACT_APP_WS_URL;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
@@ -432,7 +432,7 @@ export const WebSocketProvider = ({ children }) => {
       setDeviceNotifications(prev => prev.filter(n => n.id !== notificationId));
 
       // Delete from backend
-      const response = await fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
@@ -460,7 +460,7 @@ export const WebSocketProvider = ({ children }) => {
       );
 
       // Update backend
-      const response = await fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
@@ -488,7 +488,7 @@ export const WebSocketProvider = ({ children }) => {
       );
 
       // Update backend
-      const response = await fetch(`http://localhost:3001/api/notifications/mark-all-read`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications/mark-all-read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
@@ -514,7 +514,7 @@ export const WebSocketProvider = ({ children }) => {
       setDeviceNotifications([]);
 
       // Clear from backend
-      const response = await fetch(`http://localhost:3001/api/notifications`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
