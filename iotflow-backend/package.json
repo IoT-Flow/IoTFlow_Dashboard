@@ -16,6 +16,7 @@
     "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\"",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix",
+    "ci": "echo '🚀 Running CI checks locally...' && npm run format:check && echo '✅ Formatting passed' && npm test && echo '✅ All CI checks passed! 🎉'",
     "build": "echo \"Backend build completed\"",
     "prod": "NODE_ENV=production node src/server.js"
   },
