@@ -281,6 +281,144 @@ class UserController {
       res.status(500).json({ message: 'Failed to delete user', error: error.message });
     }
   }
+
+  // Admin-only: Get all users
+  async getAllUsers(req, res) {
+    try {
+      // Check if user is admin
+      if (!req.user.is_admin) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      const users = await User.findAll({
+        attributes: { exclude: ['password_hash'] },
+        order: [['created_at', 'DESC']],
+      });
+
+      res.status(200).json({ users });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to retrieve users', error: error.message });
+    }
+  }
+
+  // Admin-only: Get user's devices
+  async getUserDevices(req, res) {
+    try {
+      // Check if user is admin
+      if (!req.user.is_admin) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      const { id } = req.params;
+      const { Device } = require('../models');
+
+      const user = await User.findByPk(id, {
+        include: [{ model: Device, as: 'devices' }],
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.status(200).json({
+        user_id: user.id,
+        username: user.username,
+        devices: user.devices,
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to retrieve user devices', error: error.message });
+    }
+  }
+
+  // Admin-only: Update user role
+  async updateUserRole(req, res) {
+    try {
+      // Check if user is admin
+      if (!req.user.is_admin) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      const { id } = req.params;
+      const { is_admin } = req.body;
+
+      // Prevent admin from modifying their own role
+      if (parseInt(id) === req.user.id) {
+        return res.status(400).json({ message: 'Cannot modify your own admin privileges' });
+      }
+
+      const user = await User.findByPk(id);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      await user.update({ is_admin });
+
+      const { password_hash: _, ...userResponse } = user.toJSON();
+
+      // Send notification
+      await notificationService.createNotification(user.id, {
+        type: 'info',
+        title: 'Role Updated',
+        message: `Your role has been updated to ${is_admin ? 'Admin' : 'User'}`,
+        device_id: null,
+        source: 'user_management',
+        metadata: { action: 'role_update', is_admin },
+      });
+
+      res.status(200).json({
+        message: 'User role updated successfully',
+        user: userResponse,
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update user role', error: error.message });
+    }
+  }
+
+  // Admin-only: Update user status (active/inactive)
+  async updateUserStatus(req, res) {
+    try {
+      // Check if user is admin
+      if (!req.user.is_admin) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      const { id } = req.params;
+      const { is_active } = req.body;
+
+      // Prevent admin from modifying their own status
+      if (parseInt(id) === req.user.id) {
+        return res.status(400).json({ message: 'Cannot modify your own account status' });
+      }
+
+      const user = await User.findByPk(id);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      await user.update({ is_active });
+
+      const { password_hash: _, ...userResponse } = user.toJSON();
+
+      // Send notification
+      await notificationService.createNotification(user.id, {
+        type: is_active ? 'success' : 'warning',
+        title: `Account ${is_active ? 'Activated' : 'Deactivated'}`,
+        message: `Your account has been ${is_active ? 'activated' : 'deactivated'} by an administrator`,
+        device_id: null,
+        source: 'user_management',
+        metadata: { action: 'status_update', is_active },
+      });
+
+      res.status(200).json({
+        message: 'User status updated successfully',
+        user: userResponse,
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update user status', error: error.message });
+    }
+  }
 }
 
 module.exports = new UserController();
