@@ -11,13 +11,13 @@ class ChartController {
 
       res.json({
         success: true,
-        data: charts
+        data: charts,
       });
     } catch (error) {
       console.error('Error fetching charts:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch charts'
+        error: 'Failed to fetch charts',
       });
     }
   }
@@ -28,18 +28,18 @@ class ChartController {
       if (!chart) {
         return res.status(404).json({
           success: false,
-          error: 'Chart not found'
+          error: 'Chart not found',
         });
       }
       res.json({
         success: true,
-        data: chart
+        data: chart,
       });
     } catch (error) {
       console.error('Error fetching chart:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch chart'
+        error: 'Failed to fetch chart',
       });
     }
   }
@@ -52,7 +52,7 @@ class ChartController {
 
       const chartData = {
         ...req.body,
-        userId: req.user.id
+        userId: req.user.id,
       };
 
       // Validate required fields
@@ -60,7 +60,7 @@ class ChartController {
         console.log('Validation failed: missing name or type');
         return res.status(400).json({
           success: false,
-          error: 'Name and type are required'
+          error: 'Name and type are required',
         });
       }
 
@@ -73,13 +73,13 @@ class ChartController {
 
       res.status(201).json({
         success: true,
-        data: chart
+        data: chart,
       });
     } catch (error) {
       console.error('Error creating chart:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to create chart'
+        error: 'Failed to create chart',
       });
     }
   }
@@ -90,7 +90,7 @@ class ChartController {
       if (!chart) {
         return res.status(404).json({
           success: false,
-          error: 'Chart not found'
+          error: 'Chart not found',
         });
       }
 
@@ -99,13 +99,13 @@ class ChartController {
 
       res.json({
         success: true,
-        data: chart
+        data: chart,
       });
     } catch (error) {
       console.error('Error updating chart:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to update chart'
+        error: 'Failed to update chart',
       });
     }
   }
@@ -117,7 +117,7 @@ class ChartController {
       if (!chartToDelete) {
         return res.status(404).json({
           success: false,
-          error: 'Chart not found'
+          error: 'Chart not found',
         });
       }
 
@@ -125,7 +125,7 @@ class ChartController {
       if (!success) {
         return res.status(404).json({
           success: false,
-          error: 'Chart not found'
+          error: 'Chart not found',
         });
       }
 
@@ -134,13 +134,13 @@ class ChartController {
 
       res.json({
         success: true,
-        message: 'Chart deleted successfully'
+        message: 'Chart deleted successfully',
       });
     } catch (error) {
       console.error('Error deleting chart:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to delete chart'
+        error: 'Failed to delete chart',
       });
     }
   }
@@ -151,7 +151,7 @@ class ChartController {
       if (!originalChart) {
         return res.status(404).json({
           success: false,
-          error: 'Chart not found'
+          error: 'Chart not found',
         });
       }
 
@@ -171,7 +171,7 @@ class ChartController {
         customColors: originalChart.appearance_config?.customColors,
         backgroundColor: originalChart.appearance_config?.backgroundColor,
         borderColor: originalChart.appearance_config?.borderColor,
-        pointStyle: originalChart.appearance_config?.pointStyle
+        pointStyle: originalChart.appearance_config?.pointStyle,
       };
       delete duplicateData.id;
       delete duplicateData.created_at;
@@ -187,18 +187,22 @@ class ChartController {
         message: `Chart "${originalChart.name}" has been duplicated as "${duplicateData.name}"`,
         device_id: null,
         source: 'chart_management',
-        metadata: { action: 'duplicate', original_chart: originalChart.name, new_chart: duplicateData.name }
+        metadata: {
+          action: 'duplicate',
+          original_chart: originalChart.name,
+          new_chart: duplicateData.name,
+        },
       });
 
       res.status(201).json({
         success: true,
-        data: chart
+        data: chart,
       });
     } catch (error) {
       console.error('Error duplicating chart:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to duplicate chart'
+        error: 'Failed to duplicate chart',
       });
     }
   }

@@ -31,21 +31,21 @@ class IoTDBClient {
       const options = {
         hostname: IOTDB_HOST,
         port: IOTDB_REST_PORT,
-        path: '/rest/v2/query',  // Updated for IoTDB 2.0.3
+        path: '/rest/v2/query', // Updated for IoTDB 2.0.3
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(postData),
-          'Authorization': `Basic ${this.auth}`
-        }
+          Authorization: `Basic ${this.auth}`,
+        },
       };
 
       console.log('Executing SQL via REST API:', sql);
       console.log('REST API URL:', `${this.baseUrl}${options.path}`);
 
-      const req = http.request(options, (res) => {
+      const req = http.request(options, res => {
         let data = '';
-        res.on('data', (chunk) => {
+        res.on('data', chunk => {
           data += chunk;
         });
         res.on('end', () => {
@@ -75,7 +75,7 @@ class IoTDBClient {
         });
       });
 
-      req.on('error', (e) => {
+      req.on('error', e => {
         console.error('REST API request error:', e);
         reject(new Error(`Failed to connect to IoTDB REST API: ${e.message}`));
       });
@@ -102,8 +102,8 @@ class IoTDBClient {
       for (let i = 0; i < measurements.length; i++) {
         const measurement = measurements[i];
         const value = values[i];
-        const dataType = typeof value === 'number' ?
-          (Number.isInteger(value) ? 'INT64' : 'DOUBLE') : 'TEXT';
+        const dataType =
+          typeof value === 'number' ? (Number.isInteger(value) ? 'INT64' : 'DOUBLE') : 'TEXT';
 
         const createSQL = `CREATE TIMESERIES ${devicePath}.${measurement} WITH DATATYPE=${dataType}`;
         try {
@@ -112,7 +112,10 @@ class IoTDBClient {
         } catch (createError) {
           // Ignore if timeseries already exists
           if (!createError.message.includes('already exists')) {
-            console.warn(`Failed to create timeseries ${devicePath}.${measurement}:`, createError.message);
+            console.warn(
+              `Failed to create timeseries ${devicePath}.${measurement}:`,
+              createError.message
+            );
           }
         }
       }
@@ -120,9 +123,11 @@ class IoTDBClient {
       // Build proper IoTDB INSERT statement
       // IoTDB syntax: INSERT INTO root.sg1.d1(timestamp,s1,s2) values(1,1,1)
       const measurementsList = measurements.join(', ');
-      const valuesList = values.map(value => {
-        return typeof value === 'string' ? `'${value}'` : value;
-      }).join(', ');
+      const valuesList = values
+        .map(value => {
+          return typeof value === 'string' ? `'${value}'` : value;
+        })
+        .join(', ');
 
       const sql = `INSERT INTO ${devicePath}(timestamp, ${measurementsList}) VALUES(${timestamp}, ${valuesList})`;
       console.log('Executing INSERT:', sql);
@@ -170,7 +175,7 @@ class IoTDBClient {
         timestamps.forEach((timestamp, timeIndex) => {
           const record = {
             Time: timestamp,
-            timestamp: new Date(timestamp).toISOString()
+            timestamp: new Date(timestamp).toISOString(),
           };
 
           // Process each measurement for this timestamp
@@ -289,5 +294,5 @@ module.exports = {
   // Execute SQL directly (for compatibility)
   async executeSQL(sql) {
     return await client.executeSQL(sql);
-  }
+  },
 };

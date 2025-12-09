@@ -7,15 +7,20 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const telemetryRoutes = require('./routes/telemetryRoutes');
 const chartRoutes = require('./routes/chartRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const deviceGroupRoutes = require('./routes/deviceGroupRoutes');
 const { verifyApiKey } = require('./middlewares/authMiddleware');
 
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -40,6 +45,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', userRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/devices', deviceRoutes);
+app.use('/api/groups', deviceGroupRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/charts', chartRoutes);

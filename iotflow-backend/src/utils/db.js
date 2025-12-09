@@ -25,8 +25,8 @@ if (process.env.NODE_ENV === 'test') {
       max: 5,
       min: 0,
       acquire: 30000,
-      idle: 10000
-    }
+      idle: 10000,
+    },
   });
 } else {
   // Use SQLite file for development

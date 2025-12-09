@@ -26,14 +26,14 @@ const startServer = async () => {
     // Create WebSocket server
     const wss = new WebSocket.Server({
       server,
-      path: '/ws'
+      path: '/ws',
     });
 
     // WebSocket connection handling
     wss.on('connection', (ws, req) => {
       console.log('New WebSocket connection established');
 
-      ws.on('message', async (message) => {
+      ws.on('message', async message => {
         try {
           const data = JSON.parse(message.toString());
 
@@ -46,19 +46,23 @@ const startServer = async () => {
             notificationService.registerConnection(userId, ws);
 
             ws.userId = userId;
-            ws.send(JSON.stringify({
-              type: 'auth_success',
-              message: 'WebSocket authenticated successfully'
-            }));
+            ws.send(
+              JSON.stringify({
+                type: 'auth_success',
+                message: 'WebSocket authenticated successfully',
+              })
+            );
 
             console.log(`WebSocket authenticated for user ${userId}`);
           }
         } catch (error) {
           console.error('WebSocket message error:', error);
-          ws.send(JSON.stringify({
-            type: 'error',
-            message: 'Authentication failed'
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              message: 'Authentication failed',
+            })
+          );
         }
       });
 
@@ -69,7 +73,7 @@ const startServer = async () => {
         }
       });
 
-      ws.on('error', (error) => {
+      ws.on('error', error => {
         console.error('WebSocket error:', error);
       });
     });

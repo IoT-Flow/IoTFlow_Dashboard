@@ -1,5 +1,6 @@
 const express = require('express');
 const DeviceController = require('../controllers/deviceController');
+const DeviceGroupController = require('../controllers/deviceGroupController');
 const { verifyToken } = require('../middlewares/authMiddleware'); // Changed to verifyToken for user-based auth
 
 const router = express.Router();
@@ -8,6 +9,7 @@ const router = express.Router();
 router.post('/', verifyToken, DeviceController.createDevice);
 router.get('/', verifyToken, DeviceController.getAllDevices);
 router.get('/:id', verifyToken, DeviceController.getDevice);
+router.get('/:id/groups', verifyToken, DeviceGroupController.getDeviceGroups);
 router.put('/:id', verifyToken, DeviceController.updateDevice);
 router.delete('/:id', verifyToken, DeviceController.deleteDevice);
 

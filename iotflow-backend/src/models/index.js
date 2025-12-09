@@ -5,10 +5,30 @@ const DeviceConfiguration = require('./deviceConfiguration');
 const TelemetryData = require('./telemetryData');
 const Chart = require('./chart');
 const Notification = require('./notification');
+const Group = require('./group');
+const DeviceGroupAssociation = require('./deviceGroupAssociation');
 
 // Define associations
 User.hasMany(Device, { foreignKey: 'user_id', as: 'devices' });
 Device.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+User.hasMany(Group, { foreignKey: 'user_id', as: 'groups' });
+Group.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// Many-to-Many: Device <-> Group through DeviceGroupAssociation
+Device.belongsToMany(Group, {
+  through: DeviceGroupAssociation,
+  foreignKey: 'device_id',
+  otherKey: 'group_id',
+  as: 'groups',
+});
+
+Group.belongsToMany(Device, {
+  through: DeviceGroupAssociation,
+  foreignKey: 'group_id',
+  otherKey: 'device_id',
+  as: 'devices',
+});
 
 User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -35,5 +55,7 @@ module.exports = {
   DeviceConfiguration,
   TelemetryData,
   Chart,
-  Notification
+  Notification,
+  Group,
+  DeviceGroupAssociation,
 };

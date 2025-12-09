@@ -20,7 +20,7 @@ class TelemetryController {
 
       // Prepare data for IoTDB insertion
       const telemetryData = {
-        [data_type]: value
+        [data_type]: value,
       };
 
       // Add unit and metadata if provided
@@ -52,14 +52,14 @@ class TelemetryController {
         metadata,
         timestamp: new Date(timestamp).toISOString(),
         stored_in_iotdb: true,
-        device_path: devicePath
+        device_path: devicePath,
       });
     } catch (error) {
       console.error('❌ Telemetry submission error:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to submit telemetry',
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -82,13 +82,20 @@ class TelemetryController {
       const endTs = end_date ? new Date(end_date).getTime() : undefined;
 
       // Query IoTDB for telemetry data
-      const rows = await iotdbClient.queryRecords(devicePath, measurements, startTs, endTs, limit, page);
+      const rows = await iotdbClient.queryRecords(
+        devicePath,
+        measurements,
+        startTs,
+        endTs,
+        limit,
+        page
+      );
 
       res.status(200).json({
         telemetry: rows,
         total: rows.length,
         currentPage: parseInt(page),
-        totalPages: 1 // IoTDB may not support pagination natively
+        totalPages: 1, // IoTDB may not support pagination natively
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to get telemetry data', error: error.message });
@@ -116,7 +123,13 @@ class TelemetryController {
       const endTs = end_date ? new Date(end_date).getTime() : undefined;
 
       // Query IoTDB for aggregated telemetry data
-      const result = await iotdbClient.aggregate(devicePath, data_type, aggregation, startTs, endTs);
+      const result = await iotdbClient.aggregate(
+        devicePath,
+        data_type,
+        aggregation,
+        startTs,
+        endTs
+      );
 
       res.status(200).json(result);
     } catch (error) {
@@ -132,7 +145,7 @@ class TelemetryController {
       res.status(200).json({
         status: 'healthy',
         message: 'IoTDB connection successful',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error('IoTDB health check failed:', error.message);
@@ -140,7 +153,7 @@ class TelemetryController {
         status: 'unhealthy',
         message: 'IoTDB connection failed',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -188,10 +201,9 @@ class TelemetryController {
             message_count: messageCount,
             period: 'today',
             source: 'iotdb',
-            timestamp: new Date().toISOString()
-          }
+            timestamp: new Date().toISOString(),
+          },
         });
-
       } catch (iotdbError) {
         console.error('❌ IoTDB query failed:', iotdbError.message);
 
@@ -205,18 +217,17 @@ class TelemetryController {
             message_count: 0,
             period: 'today',
             source: 'iotdb_error',
-            timestamp: new Date().toISOString()
-          }
+            timestamp: new Date().toISOString(),
+          },
         });
       }
-
     } catch (error) {
       console.error('❌ Error getting today message count:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get today message count',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -233,7 +244,7 @@ class TelemetryController {
         message: message || 'Test notification from backend',
         device_id: device_id || 'test_device',
         timestamp: new Date().toISOString(),
-        user_id: userId
+        user_id: userId,
       };
 
       console.log('🔔 Generated test notification:', notification);
@@ -242,16 +253,15 @@ class TelemetryController {
         success: true,
         message: 'Test notification generated',
         notification,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
       console.error('❌ Error generating test notification:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to generate test notification',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -264,7 +274,7 @@ class TelemetryController {
         temperature: { min: -10, max: 50, warning: { min: 0, max: 40 } },
         humidity: { min: 0, max: 100, warning: { min: 20, max: 80 } },
         pressure: { min: 800, max: 1200, warning: { min: 950, max: 1050 } },
-        battery_level: { min: 0, max: 100, warning: { min: 20, max: 100 } }
+        battery_level: { min: 0, max: 100, warning: { min: 20, max: 100 } },
       };
 
       const threshold = anomalyThresholds[data_type];
@@ -280,15 +290,17 @@ class TelemetryController {
           );
         }
         // Warning level
-        else if (threshold.warning &&
-          (value <= threshold.warning.min || value >= threshold.warning.max)) {
+        else if (
+          threshold.warning &&
+          (value <= threshold.warning.min || value >= threshold.warning.max)
+        ) {
           await notificationService.createNotification(device.user_id, {
             type: 'warning',
             title: 'Data Warning',
             message: `${data_type} reading (${value}) approaching limits on "${device.name}"`,
             device_id: device.id,
             source: 'data_monitoring',
-            metadata: { data_type, value, threshold: threshold.warning }
+            metadata: { data_type, value, threshold: threshold.warning },
           });
         }
       }
@@ -301,7 +313,7 @@ class TelemetryController {
           message: `Low battery alert: ${value}% remaining on "${device.name}"`,
           device_id: device.id,
           source: 'battery_monitoring',
-          metadata: { battery_level: value }
+          metadata: { battery_level: value },
         });
       }
 
@@ -311,7 +323,7 @@ class TelemetryController {
         device.update({
           status: 'active',
           last_seen: new Date(),
-          updated_at: new Date()
+          updated_at: new Date(),
         });
 
         notificationService.notifyDeviceConnected(device.user_id, device);
@@ -319,10 +331,9 @@ class TelemetryController {
         // Update last seen timestamp
         device.update({
           last_seen: new Date(),
-          updated_at: new Date()
+          updated_at: new Date(),
         });
       }
-
     } catch (error) {
       console.error('Error checking data for notifications:', error);
     }

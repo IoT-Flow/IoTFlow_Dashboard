@@ -1,9 +1,9 @@
 const { Model, DataTypes } = require('sequelize');
 const { sequelize } = require('../utils/db');
 
-class DeviceAuth extends Model {}
+class DeviceGroupAssociation extends Model {}
 
-DeviceAuth.init(
+DeviceGroupAssociation.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,35 +18,31 @@ DeviceAuth.init(
         key: 'id',
       },
     },
-    api_key_hash: {
-      type: DataTypes.STRING(128),
+    group_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    expires_at: {
-      type: DataTypes.DATE,
+      references: {
+        model: 'groups',
+        key: 'id',
+      },
     },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
-    last_used: {
-      type: DataTypes.DATE,
-    },
-    usage_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
   },
   {
     sequelize,
-    modelName: 'DeviceAuth',
-    tableName: 'device_auth',
+    modelName: 'DeviceGroupAssociation',
+    tableName: 'device_groups',
     timestamps: false,
+    indexes: [
+      {
+        unique: true,
+        fields: ['device_id', 'group_id'],
+      },
+    ],
   }
 );
 
-module.exports = DeviceAuth;
+module.exports = DeviceGroupAssociation;

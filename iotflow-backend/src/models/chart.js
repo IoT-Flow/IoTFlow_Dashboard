@@ -4,7 +4,8 @@ const { sequelize } = require('../utils/db');
 class Chart extends Model {
   static async findByUser(userId) {
     try {
-      const charts = await sequelize.query(`
+      const charts = await sequelize.query(
+        `
         SELECT c.*, 
                GROUP_CONCAT(DISTINCT cd.device_id) as device_ids,
                GROUP_CONCAT(DISTINCT cm.measurement_name) as measurement_names
@@ -14,18 +15,21 @@ class Chart extends Model {
         WHERE c.user_id = ? AND c.is_active = true
         GROUP BY c.id
         ORDER BY c.updated_at DESC
-      `, {
-        replacements: [userId],
-        type: sequelize.QueryTypes.SELECT
-      });
+      `,
+        {
+          replacements: [userId],
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
 
       return charts.map(chart => ({
         ...chart,
         devices: chart.device_ids ? chart.device_ids.split(',') : [],
         measurements: chart.measurement_names ? chart.measurement_names.split(',') : [],
-        appearance_config: typeof chart.appearance_config === 'string'
-          ? JSON.parse(chart.appearance_config)
-          : chart.appearance_config
+        appearance_config:
+          typeof chart.appearance_config === 'string'
+            ? JSON.parse(chart.appearance_config)
+            : chart.appearance_config,
       }));
     } catch (error) {
       console.error('Error fetching charts:', error);
@@ -35,7 +39,8 @@ class Chart extends Model {
 
   static async findByIdAndUser(id, userId) {
     try {
-      const charts = await sequelize.query(`
+      const charts = await sequelize.query(
+        `
         SELECT c.*, 
                GROUP_CONCAT(DISTINCT cd.device_id) as device_ids,
                GROUP_CONCAT(DISTINCT cm.measurement_name) as measurement_names
@@ -44,10 +49,12 @@ class Chart extends Model {
         LEFT JOIN chart_measurements cm ON c.id = cm.chart_id
         WHERE c.id = ? AND c.user_id = ? AND c.is_active = true
         GROUP BY c.id
-      `, {
-        replacements: [id, userId],
-        type: sequelize.QueryTypes.SELECT
-      });
+      `,
+        {
+          replacements: [id, userId],
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
 
       if (charts.length === 0) return null;
 
@@ -56,9 +63,10 @@ class Chart extends Model {
         ...chart,
         devices: chart.device_ids ? chart.device_ids.split(',') : [],
         measurements: chart.measurement_names ? chart.measurement_names.split(',') : [],
-        appearance_config: typeof chart.appearance_config === 'string'
-          ? JSON.parse(chart.appearance_config)
-          : chart.appearance_config
+        appearance_config:
+          typeof chart.appearance_config === 'string'
+            ? JSON.parse(chart.appearance_config)
+            : chart.appearance_config,
       };
     } catch (error) {
       console.error('Error fetching chart:', error);
@@ -84,53 +92,62 @@ class Chart extends Model {
         customColors: chartData.customColors || [],
         backgroundColor: chartData.backgroundColor,
         borderColor: chartData.borderColor,
-        pointStyle: chartData.pointStyle
+        pointStyle: chartData.pointStyle,
       });
 
       // Insert main chart record
-      await sequelize.query(`
+      await sequelize.query(
+        `
         INSERT INTO charts (
           id, name, title, description, type, user_id,
           time_range, refresh_interval, aggregation, group_by,
           appearance_config, created_at, updated_at, is_active
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), true)
-      `, {
-        replacements: [
-          chartId,
-          chartData.name,
-          chartData.title,
-          chartData.description,
-          chartData.type,
-          chartData.userId,
-          chartData.timeRange,
-          chartData.refreshInterval,
-          chartData.aggregation,
-          chartData.groupBy,
-          appearanceConfig
-        ],
-        transaction
-      });
+      `,
+        {
+          replacements: [
+            chartId,
+            chartData.name,
+            chartData.title,
+            chartData.description,
+            chartData.type,
+            chartData.userId,
+            chartData.timeRange,
+            chartData.refreshInterval,
+            chartData.aggregation,
+            chartData.groupBy,
+            appearanceConfig,
+          ],
+          transaction,
+        }
+      );
 
       // Insert device associations
       if (chartData.devices && chartData.devices.length > 0) {
-        const deviceInserts = chartData.devices.map(deviceId =>
-          `('${chartId}', '${deviceId}', datetime('now'))`
-        ).join(', ');
+        const deviceInserts = chartData.devices
+          .map(deviceId => `('${chartId}', '${deviceId}', datetime('now'))`)
+          .join(', ');
 
-        await sequelize.query(`
+        await sequelize.query(
+          `
           INSERT INTO chart_devices (chart_id, device_id, created_at) VALUES ${deviceInserts}
-        `, { transaction });
+        `,
+          { transaction }
+        );
       }
 
       // Insert measurement associations
       if (chartData.measurements && chartData.measurements.length > 0) {
-        const measurementInserts = chartData.measurements.map(measurement =>
-          `('${chartId}', '${measurement}', '${measurement}', datetime('now'))`
-        ).join(', ');
+        const measurementInserts = chartData.measurements
+          .map(measurement => `('${chartId}', '${measurement}', '${measurement}', datetime('now'))`)
+          .join(', ');
 
-        await sequelize.query(`
+        await sequelize.query(
+          `
           INSERT INTO chart_measurements (chart_id, measurement_name, display_name, created_at) VALUES ${measurementInserts}
-        `, { transaction });
+        `,
+          { transaction }
+        );
       }
 
       await transaction.commit();
@@ -158,64 +175,73 @@ class Chart extends Model {
         customColors: chartData.customColors || [],
         backgroundColor: chartData.backgroundColor,
         borderColor: chartData.borderColor,
-        pointStyle: chartData.pointStyle
+        pointStyle: chartData.pointStyle,
       });
 
       // Update main chart record
-      await sequelize.query(`
+      await sequelize.query(
+        `
         UPDATE charts SET 
           name = ?, title = ?, description = ?, type = ?,
           time_range = ?, refresh_interval = ?, aggregation = ?, group_by = ?,
           appearance_config = ?, updated_at = datetime('now')
         WHERE id = ? AND user_id = ?
-      `, {
-        replacements: [
-          chartData.name,
-          chartData.title,
-          chartData.description,
-          chartData.type,
-          chartData.timeRange,
-          chartData.refreshInterval,
-          chartData.aggregation,
-          chartData.groupBy,
-          appearanceConfig,
-          id,
-          userId
-        ],
-        transaction
-      });
+      `,
+        {
+          replacements: [
+            chartData.name,
+            chartData.title,
+            chartData.description,
+            chartData.type,
+            chartData.timeRange,
+            chartData.refreshInterval,
+            chartData.aggregation,
+            chartData.groupBy,
+            appearanceConfig,
+            id,
+            userId,
+          ],
+          transaction,
+        }
+      );
 
       // Delete existing associations
       await sequelize.query('DELETE FROM chart_devices WHERE chart_id = ?', {
         replacements: [id],
-        transaction
+        transaction,
       });
 
       await sequelize.query('DELETE FROM chart_measurements WHERE chart_id = ?', {
         replacements: [id],
-        transaction
+        transaction,
       });
 
       // Insert new device associations
       if (chartData.devices && chartData.devices.length > 0) {
-        const deviceInserts = chartData.devices.map(deviceId =>
-          `('${id}', '${deviceId}', datetime('now'))`
-        ).join(', ');
+        const deviceInserts = chartData.devices
+          .map(deviceId => `('${id}', '${deviceId}', datetime('now'))`)
+          .join(', ');
 
-        await sequelize.query(`
+        await sequelize.query(
+          `
           INSERT INTO chart_devices (chart_id, device_id, created_at) VALUES ${deviceInserts}
-        `, { transaction });
+        `,
+          { transaction }
+        );
       }
 
       // Insert new measurement associations
       if (chartData.measurements && chartData.measurements.length > 0) {
-        const measurementInserts = chartData.measurements.map(measurement =>
-          `('${id}', '${measurement}', '${measurement}', datetime('now'))`
-        ).join(', ');
+        const measurementInserts = chartData.measurements
+          .map(measurement => `('${id}', '${measurement}', '${measurement}', datetime('now'))`)
+          .join(', ');
 
-        await sequelize.query(`
+        await sequelize.query(
+          `
           INSERT INTO chart_measurements (chart_id, measurement_name, display_name, created_at) VALUES ${measurementInserts}
-        `, { transaction });
+        `,
+          { transaction }
+        );
       }
 
       await transaction.commit();
@@ -229,12 +255,15 @@ class Chart extends Model {
 
   static async deleteChart(id, userId) {
     try {
-      await sequelize.query(`
+      await sequelize.query(
+        `
         UPDATE charts SET is_active = false, updated_at = datetime('now')
         WHERE id = ? AND user_id = ?
-      `, {
-        replacements: [id, userId]
-      });
+      `,
+        {
+          replacements: [id, userId],
+        }
+      );
       return true;
     } catch (error) {
       console.error('Error deleting chart:', error);
@@ -243,69 +272,72 @@ class Chart extends Model {
   }
 }
 
-Chart.init({
-  id: {
-    type: DataTypes.STRING(255),
-    primaryKey: true,
-  },
-  name: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
-  },
-  title: {
-    type: DataTypes.STRING(255),
-  },
-  description: {
-    type: DataTypes.TEXT,
-  },
-  type: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
-  },
-  user_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id',
+Chart.init(
+  {
+    id: {
+      type: DataTypes.STRING(255),
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    title: {
+      type: DataTypes.STRING(255),
+    },
+    description: {
+      type: DataTypes.TEXT,
+    },
+    type: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    time_range: {
+      type: DataTypes.STRING(20),
+      defaultValue: '1h',
+    },
+    refresh_interval: {
+      type: DataTypes.INTEGER,
+      defaultValue: 30,
+    },
+    aggregation: {
+      type: DataTypes.STRING(20),
+      defaultValue: 'none',
+    },
+    group_by: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'device',
+    },
+    appearance_config: {
+      type: DataTypes.JSON,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
-  time_range: {
-    type: DataTypes.STRING(20),
-    defaultValue: '1h',
-  },
-  refresh_interval: {
-    type: DataTypes.INTEGER,
-    defaultValue: 30,
-  },
-  aggregation: {
-    type: DataTypes.STRING(20),
-    defaultValue: 'none',
-  },
-  group_by: {
-    type: DataTypes.STRING(50),
-    defaultValue: 'device',
-  },
-  appearance_config: {
-    type: DataTypes.JSON,
-  },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  updated_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  is_active: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-}, {
-  sequelize,
-  modelName: 'Chart',
-  tableName: 'charts',
-  timestamps: false,
-});
+  {
+    sequelize,
+    modelName: 'Chart',
+    tableName: 'charts',
+    timestamps: false,
+  }
+);
 
 module.exports = Chart;

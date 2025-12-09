@@ -1,37 +1,37 @@
 const { Model, DataTypes } = require('sequelize');
 const { sequelize } = require('../utils/db');
 
-class DeviceConfiguration extends Model {}
+class Group extends Model {}
 
-DeviceConfiguration.init(
+Group.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    device_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'devices',
-        key: 'id',
-      },
-    },
-    config_key: {
+    name: {
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    config_value: {
+    description: {
       type: DataTypes.TEXT,
     },
-    data_type: {
-      type: DataTypes.STRING(20),
-      defaultValue: 'string',
+    color: {
+      type: DataTypes.STRING(7), // Hex color code #RRGGBB
+      defaultValue: '#3B82F6',
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
+    icon: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'folder',
+    },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
     },
     created_at: {
       type: DataTypes.DATE,
@@ -44,10 +44,10 @@ DeviceConfiguration.init(
   },
   {
     sequelize,
-    modelName: 'DeviceConfiguration',
-    tableName: 'device_configurations',
+    modelName: 'Group',
+    tableName: 'groups',
     timestamps: false,
   }
 );
 
-module.exports = DeviceConfiguration;
+module.exports = Group;

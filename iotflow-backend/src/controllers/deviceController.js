@@ -8,7 +8,8 @@ const notificationService = require('../services/notificationService');
 class DeviceController {
   async createDevice(req, res) {
     try {
-      const { name, description, device_type, location, firmware_version, hardware_version } = req.body;
+      const { name, description, device_type, location, firmware_version, hardware_version } =
+        req.body;
 
       if (!name || !device_type) {
         return res.status(400).json({ message: 'Name and device_type are required' });
@@ -53,15 +54,56 @@ class DeviceController {
 
   async getAllDevices(req, res) {
     try {
-      const { status, device_type } = req.query;
+      const { status, device_type, group_id } = req.query;
+      const { Group, DeviceGroupAssociation } = require('../models');
+
       const whereClause = { user_id: req.user.id };
       if (status) whereClause.status = status;
       if (device_type) whereClause.device_type = device_type;
-      // Fetch all devices for the user, no limit or pagination
-      const devices = await Device.findAll({
-        where: whereClause,
-        order: [['created_at', 'DESC']],
-      });
+
+      let devices;
+
+      // Filter by group_id (many-to-many)
+      if (group_id !== undefined) {
+        if (group_id === 'null' || group_id === null) {
+          // Get devices that don't belong to any group
+          const devicesInGroups = await DeviceGroupAssociation.findAll({
+            attributes: ['device_id'],
+            where: { device_id: { [require('sequelize').Op.ne]: null } },
+          });
+          const deviceIdsInGroups = devicesInGroups.map(d => d.device_id);
+
+          whereClause.id = {
+            [require('sequelize').Op.notIn]: deviceIdsInGroups.length > 0 ? deviceIdsInGroups : [0],
+          };
+
+          devices = await Device.findAll({
+            where: whereClause,
+            order: [['created_at', 'DESC']],
+          });
+        } else {
+          // Get devices in specific group
+          const group = await Group.findByPk(parseInt(group_id), {
+            include: [
+              {
+                model: Device,
+                as: 'devices',
+                where: whereClause,
+                through: { attributes: [] },
+              },
+            ],
+          });
+
+          devices = group ? group.devices : [];
+        }
+      } else {
+        // No group filter, get all devices
+        devices = await Device.findAll({
+          where: whereClause,
+          order: [['created_at', 'DESC']],
+        });
+      }
+
       res.status(200).json({ devices });
     } catch (error) {
       res.status(500).json({ message: 'Failed to retrieve devices', error: error.message });
@@ -71,7 +113,15 @@ class DeviceController {
   async updateDevice(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, device_type, status, location, firmware_version, hardware_version } = req.body;
+      const {
+        name,
+        description,
+        device_type,
+        status,
+        location,
+        firmware_version,
+        hardware_version,
+      } = req.body;
 
       const device = await Device.findOne({
         where: { id, user_id: req.user.id },
@@ -109,7 +159,7 @@ class DeviceController {
 
       // First, get the device details for notification
       const device = await Device.findOne({
-        where: { id, user_id: req.user.id }
+        where: { id, user_id: req.user.id },
       });
 
       if (!device) {
@@ -134,7 +184,7 @@ class DeviceController {
         // 4. Delete chart-device relationships (manual table)
         await sequelize.query('DELETE FROM chart_devices WHERE device_id = ?', {
           replacements: [id],
-          type: sequelize.QueryTypes.DELETE
+          type: sequelize.QueryTypes.DELETE,
         });
 
         // 5. Finally delete the device
@@ -151,12 +201,10 @@ class DeviceController {
 
         console.log(`Device ${id} and all related records deleted successfully`);
         res.json({ success: true, message: 'Device deleted successfully' });
-
       } finally {
         // Re-enable foreign key constraints
         await sequelize.query('PRAGMA foreign_keys = ON');
       }
-
     } catch (error) {
       console.error('Device deletion error:', error);
       res.status(500).json({ message: 'Failed to delete device', error: error.message });
@@ -185,7 +233,7 @@ class DeviceController {
 
       // Get device name for notification
       const device = await Device.findOne({
-        where: { id, user_id: req.user.id }
+        where: { id, user_id: req.user.id },
       });
 
       if (!device) {
@@ -208,7 +256,7 @@ class DeviceController {
         message: `Configuration for device "${device.name}" has been updated`,
         device_id: device.id,
         source: 'device_configuration',
-        metadata: { action: 'config_update', device_type: device.device_type }
+        metadata: { action: 'config_update', device_type: device.device_type },
       });
 
       res.status(200).json(config);
@@ -254,7 +302,7 @@ class DeviceController {
         parameters: parameters || {},
         status: 'pending',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       // Store in a simple in-memory store for demo (in production, use a database)
@@ -270,29 +318,36 @@ class DeviceController {
         message: `Command "${command}" sent to device "${device.name}"`,
         device_id: device.id,
         source: 'device_control',
-        metadata: { command, parameters: parameters || {}, control_id: controlId }
+        metadata: { command, parameters: parameters || {}, control_id: controlId },
       });
 
       // Simulate async processing
-      setTimeout(() => {
-        if (global.deviceControls[controlId]) {
-          global.deviceControls[controlId].status = 'acknowledged';
-          global.deviceControls[controlId].updated_at = new Date().toISOString();
+      setTimeout(
+        () => {
+          if (global.deviceControls[controlId]) {
+            global.deviceControls[controlId].status = 'acknowledged';
+            global.deviceControls[controlId].updated_at = new Date().toISOString();
 
-          // Simulate execution after acknowledgment
-          setTimeout(() => {
-            if (global.deviceControls[controlId]) {
-              global.deviceControls[controlId].status = Math.random() > 0.1 ? 'completed' : 'failed';
-              global.deviceControls[controlId].updated_at = new Date().toISOString();
-              global.deviceControls[controlId].completed_at = new Date().toISOString();
+            // Simulate execution after acknowledgment
+            setTimeout(
+              () => {
+                if (global.deviceControls[controlId]) {
+                  global.deviceControls[controlId].status =
+                    Math.random() > 0.1 ? 'completed' : 'failed';
+                  global.deviceControls[controlId].updated_at = new Date().toISOString();
+                  global.deviceControls[controlId].completed_at = new Date().toISOString();
 
-              if (global.deviceControls[controlId].status === 'failed') {
-                global.deviceControls[controlId].error_message = 'Simulated execution failure';
-              }
-            }
-          }, 2000 + Math.random() * 3000); // 2-5 seconds execution time
-        }
-      }, 500 + Math.random() * 1500); // 0.5-2 seconds acknowledgment time
+                  if (global.deviceControls[controlId].status === 'failed') {
+                    global.deviceControls[controlId].error_message = 'Simulated execution failure';
+                  }
+                }
+              },
+              2000 + Math.random() * 3000
+            ); // 2-5 seconds execution time
+          }
+        },
+        500 + Math.random() * 1500
+      ); // 0.5-2 seconds acknowledgment time
 
       res.status(200).json({
         control_id: controlId,
@@ -301,7 +356,7 @@ class DeviceController {
         parameters: parameters || {},
         status: 'pending',
         timestamp: new Date().toISOString(),
-        message: `Command '${command}' queued for device ${device.name}`
+        message: `Command '${command}' queued for device ${device.name}`,
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to send control command', error: error.message });
@@ -345,7 +400,7 @@ class DeviceController {
         error_message: controlCommand.error_message,
         execution_time: controlCommand.completed_at
           ? new Date(controlCommand.completed_at) - new Date(controlCommand.created_at)
-          : null
+          : null,
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to get control status', error: error.message });
@@ -368,10 +423,11 @@ class DeviceController {
       // Get pending controls for this device and user
       const allControls = global.deviceControls || {};
       const pendingCommands = Object.values(allControls)
-        .filter(cmd =>
-          cmd.device_id === parseInt(id) &&
-          cmd.user_id === req.user.id &&
-          ['pending', 'acknowledged', 'executing'].includes(cmd.status)
+        .filter(
+          cmd =>
+            cmd.device_id === parseInt(id) &&
+            cmd.user_id === req.user.id &&
+            ['pending', 'acknowledged', 'executing'].includes(cmd.status)
         )
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -383,9 +439,9 @@ class DeviceController {
           parameters: cmd.parameters,
           status: cmd.status,
           created_at: cmd.created_at,
-          updated_at: cmd.updated_at
+          updated_at: cmd.updated_at,
         })),
-        total: pendingCommands.length
+        total: pendingCommands.length,
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to get pending controls', error: error.message });

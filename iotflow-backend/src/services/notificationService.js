@@ -33,7 +33,7 @@ class NotificationService extends EventEmitter {
         message: notificationData.message,
         device_id: notificationData.device_id || null,
         source: notificationData.source || 'system',
-        metadata: notificationData.metadata || null
+        metadata: notificationData.metadata || null,
       });
 
       console.log(`💾 Saved notification to database for user ${userId}: ${notification.title}`);
@@ -51,22 +51,25 @@ class NotificationService extends EventEmitter {
   // Send notification to specific user via WebSocket
   sendWebSocketNotification(userId, notification) {
     const ws = this.wsConnections.get(userId);
-    if (ws && ws.readyState === 1) { // WebSocket.OPEN
+    if (ws && ws.readyState === 1) {
+      // WebSocket.OPEN
       try {
-        ws.send(JSON.stringify({
-          type: 'notification',
-          data: {
-            id: notification.id,
-            type: notification.type,
-            title: notification.title,
-            message: notification.message,
-            device_id: notification.device_id,
-            source: notification.source,
-            is_read: notification.is_read,
-            created_at: notification.created_at,
-            user_id: userId
-          }
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'notification',
+            data: {
+              id: notification.id,
+              type: notification.type,
+              title: notification.title,
+              message: notification.message,
+              device_id: notification.device_id,
+              source: notification.source,
+              is_read: notification.is_read,
+              created_at: notification.created_at,
+              user_id: userId,
+            },
+          })
+        );
         console.log(`🔔 Sent WebSocket notification to user ${userId}: ${notification.title}`);
         return true;
       } catch (error) {
@@ -75,7 +78,9 @@ class NotificationService extends EventEmitter {
         return false;
       }
     }
-    console.log(`📡 User ${userId} not connected via WebSocket, notification saved to database only`);
+    console.log(
+      `📡 User ${userId} not connected via WebSocket, notification saved to database only`
+    );
     return false;
   }
 
@@ -87,7 +92,7 @@ class NotificationService extends EventEmitter {
       message: `Device "${device.name}" has been created successfully`,
       device_id: device.id,
       source: 'device_management',
-      metadata: { action: 'create', device_type: device.device_type }
+      metadata: { action: 'create', device_type: device.device_type },
     });
   }
 
@@ -98,7 +103,7 @@ class NotificationService extends EventEmitter {
       message: `Device "${deviceName}" has been deleted`,
       device_id: deviceId,
       source: 'device_management',
-      metadata: { action: 'delete', device_name: deviceName }
+      metadata: { action: 'delete', device_name: deviceName },
     });
   }
 
@@ -109,7 +114,7 @@ class NotificationService extends EventEmitter {
       message: `Device "${device.name}" configuration has been updated`,
       device_id: device.id,
       source: 'device_management',
-      metadata: { action: 'update', device_type: device.device_type }
+      metadata: { action: 'update', device_type: device.device_type },
     });
   }
 
@@ -120,7 +125,7 @@ class NotificationService extends EventEmitter {
       message: `Device "${device.name}" is now online`,
       device_id: device.id,
       source: 'device_status',
-      metadata: { action: 'connect', device_type: device.device_type }
+      metadata: { action: 'connect', device_type: device.device_type },
     });
   }
 
@@ -131,7 +136,7 @@ class NotificationService extends EventEmitter {
       message: `Device "${device.name}" has gone offline`,
       device_id: device.id,
       source: 'device_status',
-      metadata: { action: 'disconnect', device_type: device.device_type }
+      metadata: { action: 'disconnect', device_type: device.device_type },
     });
   }
 
@@ -145,7 +150,7 @@ class NotificationService extends EventEmitter {
         message: `New ${dataType} reading: ${value} from "${device.name}"`,
         device_id: device.id,
         source: 'telemetry',
-        metadata: { data_type: dataType, value: value }
+        metadata: { data_type: dataType, value: value },
       });
     }
     return null;
@@ -158,7 +163,7 @@ class NotificationService extends EventEmitter {
       message: `${dataType} reading (${value}) exceeds threshold (${threshold}) on "${device.name}"`,
       device_id: device.id,
       source: 'anomaly_detection',
-      metadata: { data_type: dataType, value: value, threshold: threshold }
+      metadata: { data_type: dataType, value: value, threshold: threshold },
     });
   }
 
@@ -169,7 +174,7 @@ class NotificationService extends EventEmitter {
       message: `Data processing error for "${device.name}": ${error}`,
       device_id: device.id,
       source: 'data_processing',
-      metadata: { error: error }
+      metadata: { error: error },
     });
   }
 
@@ -181,7 +186,7 @@ class NotificationService extends EventEmitter {
       message: `Chart "${chartName}" has been created successfully`,
       device_id: null,
       source: 'chart_management',
-      metadata: { action: 'create', chart_name: chartName }
+      metadata: { action: 'create', chart_name: chartName },
     });
   }
 
@@ -192,7 +197,7 @@ class NotificationService extends EventEmitter {
       message: `Chart "${chartName}" has been deleted`,
       device_id: null,
       source: 'chart_management',
-      metadata: { action: 'delete', chart_name: chartName }
+      metadata: { action: 'delete', chart_name: chartName },
     });
   }
 
@@ -203,7 +208,7 @@ class NotificationService extends EventEmitter {
       message: `Chart "${chartName}" has been updated`,
       device_id: null,
       source: 'chart_management',
-      metadata: { action: 'update', chart_name: chartName }
+      metadata: { action: 'update', chart_name: chartName },
     });
   }
 
@@ -214,7 +219,7 @@ class NotificationService extends EventEmitter {
       title,
       message,
       device_id: null,
-      source: 'system'
+      source: 'system',
     });
   }
 
@@ -226,7 +231,7 @@ class NotificationService extends EventEmitter {
       message: 'You have successfully logged into your account',
       device_id: null,
       source: 'authentication',
-      metadata: { action: 'login', ...metadata }
+      metadata: { action: 'login', ...metadata },
     });
   }
 
@@ -237,7 +242,7 @@ class NotificationService extends EventEmitter {
       message: 'A failed login attempt was detected on your account',
       device_id: null,
       source: 'security',
-      metadata: { action: 'failed_login', ...metadata }
+      metadata: { action: 'failed_login', ...metadata },
     });
   }
 
@@ -249,7 +254,7 @@ class NotificationService extends EventEmitter {
       message: `${exportType} export has been initiated`,
       device_id: deviceIds.length === 1 ? deviceIds[0] : null,
       source: 'data_export',
-      metadata: { action: 'export_start', export_type: exportType, device_count: deviceIds.length }
+      metadata: { action: 'export_start', export_type: exportType, device_count: deviceIds.length },
     });
   }
 
@@ -260,7 +265,12 @@ class NotificationService extends EventEmitter {
       message: `${exportType} export is ready for download`,
       device_id: deviceIds.length === 1 ? deviceIds[0] : null,
       source: 'data_export',
-      metadata: { action: 'export_complete', export_type: exportType, filename, device_count: deviceIds.length }
+      metadata: {
+        action: 'export_complete',
+        export_type: exportType,
+        filename,
+        device_count: deviceIds.length,
+      },
     });
   }
 
@@ -271,7 +281,12 @@ class NotificationService extends EventEmitter {
       message: `${exportType} export failed: ${error}`,
       device_id: deviceIds.length === 1 ? deviceIds[0] : null,
       source: 'data_export',
-      metadata: { action: 'export_failed', export_type: exportType, error, device_count: deviceIds.length }
+      metadata: {
+        action: 'export_failed',
+        export_type: exportType,
+        error,
+        device_count: deviceIds.length,
+      },
     });
   }
 
@@ -285,7 +300,7 @@ class NotificationService extends EventEmitter {
         : `Command "${command}" failed on "${device.name}"${message ? ': ' + message : ''}`,
       device_id: device.id,
       source: 'device_control',
-      metadata: { action: 'command_result', command, success, response_message: message }
+      metadata: { action: 'command_result', command, success, response_message: message },
     });
   }
 
@@ -300,7 +315,13 @@ class NotificationService extends EventEmitter {
         : `${operation} completed: ${successCount} successful, ${failCount} failed out of ${itemCount} items`,
       device_id: null,
       source: 'bulk_operations',
-      metadata: { action: 'bulk_operation', operation, total: itemCount, success: successCount, failed: failCount }
+      metadata: {
+        action: 'bulk_operation',
+        operation,
+        total: itemCount,
+        success: successCount,
+        failed: failCount,
+      },
     });
   }
 
@@ -312,7 +333,11 @@ class NotificationService extends EventEmitter {
       message: `${maintenanceType} maintenance is scheduled for ${scheduledDate}`,
       device_id: null,
       source: 'system_maintenance',
-      metadata: { action: 'maintenance_scheduled', type: maintenanceType, scheduled_date: scheduledDate }
+      metadata: {
+        action: 'maintenance_scheduled',
+        type: maintenanceType,
+        scheduled_date: scheduledDate,
+      },
     });
   }
 
@@ -323,7 +348,7 @@ class NotificationService extends EventEmitter {
       message: `${maintenanceType} maintenance has started. Some features may be temporarily unavailable`,
       device_id: null,
       source: 'system_maintenance',
-      metadata: { action: 'maintenance_started', type: maintenanceType }
+      metadata: { action: 'maintenance_started', type: maintenanceType },
     });
   }
 
@@ -334,7 +359,7 @@ class NotificationService extends EventEmitter {
       message: `${maintenanceType} maintenance has been completed. All services are now available`,
       device_id: null,
       source: 'system_maintenance',
-      metadata: { action: 'maintenance_completed', type: maintenanceType }
+      metadata: { action: 'maintenance_completed', type: maintenanceType },
     });
   }
 
@@ -343,9 +368,9 @@ class NotificationService extends EventEmitter {
     // Define what constitutes a "significant" reading worth notifying about
     const significantThresholds = {
       temperature: { min: -10, max: 50 }, // Extreme temperatures
-      humidity: { min: 10, max: 90 },     // Very dry or very humid
-      pressure: { min: 950, max: 1050 },  // Unusual pressure
-      battery_level: { min: 0, max: 20 }  // Low battery
+      humidity: { min: 10, max: 90 }, // Very dry or very humid
+      pressure: { min: 950, max: 1050 }, // Unusual pressure
+      battery_level: { min: 0, max: 20 }, // Low battery
     };
 
     const threshold = significantThresholds[dataType];
@@ -360,8 +385,8 @@ class NotificationService extends EventEmitter {
       return await Notification.count({
         where: {
           user_id: userId,
-          is_read: false
-        }
+          is_read: false,
+        },
       });
     } catch (error) {
       console.error(`Error getting unread count for user ${userId}:`, error);
@@ -381,7 +406,7 @@ class NotificationService extends EventEmitter {
           title,
           message,
           device_id: null,
-          source: 'broadcast'
+          source: 'broadcast',
         });
         sentCount++;
       } catch (error) {

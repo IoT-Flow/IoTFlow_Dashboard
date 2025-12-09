@@ -44,7 +44,7 @@ class UserController {
         message: 'Your account has been created successfully. Welcome to the IoT platform!',
         device_id: null,
         source: 'account_management',
-        metadata: { action: 'registration', username: newUser.username }
+        metadata: { action: 'registration', username: newUser.username },
       });
 
       res.status(201).json({ user: userResponse, token });
@@ -88,7 +88,7 @@ class UserController {
       // Send notification for successful login
       await notificationService.notifySuccessfulLogin(user.id, {
         login_method: email ? 'email' : 'username',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       res.status(200).json({
@@ -105,10 +105,7 @@ class UserController {
       const userId = req.user.id;
       const newApiKey = crypto.randomBytes(32).toString('hex');
 
-      await User.update(
-        { api_key: newApiKey, updated_at: new Date() },
-        { where: { id: userId } }
-      );
+      await User.update({ api_key: newApiKey, updated_at: new Date() }, { where: { id: userId } });
 
       // Send notification for API key refresh
       await notificationService.createNotification(req.user.id, {
@@ -117,7 +114,7 @@ class UserController {
         message: 'Your API key has been refreshed. Update any applications using the old key.',
         device_id: null,
         source: 'security',
-        metadata: { action: 'api_key_refresh' }
+        metadata: { action: 'api_key_refresh' },
       });
 
       res.status(200).json({ api_key: newApiKey });
@@ -169,7 +166,7 @@ class UserController {
         message: 'Your profile has been updated successfully',
         device_id: null,
         source: 'profile_management',
-        metadata: { updated_fields: Object.keys(updates) }
+        metadata: { updated_fields: Object.keys(updates) },
       });
 
       res.status(200).json(userResponse);
@@ -198,7 +195,7 @@ class UserController {
         message: `User "${username}" has been created successfully`,
         device_id: null,
         source: 'user_management',
-        metadata: { action: 'create_user', target_user: username, role }
+        metadata: { action: 'create_user', target_user: username, role },
       });
 
       res.status(201).json(newUser);
@@ -243,7 +240,11 @@ class UserController {
         message: `User "${updatedUser.username}" has been updated`,
         device_id: null,
         source: 'user_management',
-        metadata: { action: 'update_user', target_user: updatedUser.username, updated_fields: Object.keys(updates) }
+        metadata: {
+          action: 'update_user',
+          target_user: updatedUser.username,
+          updated_fields: Object.keys(updates),
+        },
       });
 
       res.status(200).json(updatedUser);
@@ -272,7 +273,7 @@ class UserController {
         message: `User "${userToDelete.username}" has been deleted`,
         device_id: null,
         source: 'user_management',
-        metadata: { action: 'delete_user', target_user: userToDelete.username }
+        metadata: { action: 'delete_user', target_user: userToDelete.username },
       });
 
       res.status(204).send();
