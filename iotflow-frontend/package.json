@@ -40,7 +40,8 @@
     "format": "prettier --write \"src/**/*.{js,jsx,json,css}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,json,css}\"",
     "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "lint:fix": "eslint src/ --fix",
+    "ci": "echo '🚀 Running CI checks locally...' && npm run format:check && echo '✅ Formatting passed' && npm run build && echo '✅ Build passed' && echo '✅ All CI checks passed! 🎉'"
   },
   "eslintConfig": {
     "extends": [
