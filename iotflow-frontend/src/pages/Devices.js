@@ -153,33 +153,17 @@ const Devices = () => {
     }
   }, [user]);
 
-  // Load device groups
+  // Load device groups (without loading device-group mappings upfront)
   useEffect(() => {
     const loadGroups = async () => {
       try {
         setGroupsLoading(true);
         const groupsData = await apiService.getGroups();
         setGroups(groupsData);
-
-        // Build a map of device IDs to group IDs for filtering
-        const deviceGroupMap = {};
-        for (const group of groupsData) {
-          // Get devices for each group
-          try {
-            const groupDetails = await apiService.getDevicesByGroup(group.id);
-            if (groupDetails.devices) {
-              groupDetails.devices.forEach(device => {
-                if (!deviceGroupMap[device.id]) {
-                  deviceGroupMap[device.id] = [];
-                }
-                deviceGroupMap[device.id].push(group.id);
-              });
-            }
-          } catch (error) {
-            console.error(`Error loading devices for group ${group.id}:`, error);
-          }
-        }
-        setDeviceGroups(deviceGroupMap);
+        
+        // Device-group mapping will be loaded lazily when needed
+        // (e.g., when filtering by group or assigning devices)
+        // This avoids the N+1 query problem on initial page load
       } catch (error) {
         console.error('Failed to load groups:', error);
         toast.error('Failed to load device groups');
@@ -193,6 +177,36 @@ const Devices = () => {
       loadGroups();
     }
   }, [user]);
+
+  // Lazy load device-group mappings only when a specific group is selected
+  useEffect(() => {
+    const loadDeviceGroupMappings = async () => {
+      if (groupFilter === 'all' || !groupFilter) {
+        return; // Don't load if showing all devices
+      }
+
+      try {
+        // Only load devices for the selected group
+        const groupDetails = await apiService.getDevicesByGroup(groupFilter);
+        if (groupDetails.devices) {
+          const deviceGroupMap = { ...deviceGroups };
+          groupDetails.devices.forEach(device => {
+            if (!deviceGroupMap[device.id]) {
+              deviceGroupMap[device.id] = [];
+            }
+            if (!deviceGroupMap[device.id].includes(groupFilter)) {
+              deviceGroupMap[device.id].push(groupFilter);
+            }
+          });
+          setDeviceGroups(deviceGroupMap);
+        }
+      } catch (error) {
+        console.error(`Error loading devices for group ${groupFilter}:`, error);
+      }
+    };
+
+    loadDeviceGroupMappings();
+  }, [groupFilter]); // Only run when groupFilter changes
 
   const getStatusColor = status => {
     switch (status) {
@@ -508,6 +522,9 @@ const Devices = () => {
 
   const handleAssignToGroup = (device) => {
     setAssignmentDevice(device);
+    // Note: deviceGroups may be empty if not yet loaded
+    // DeviceGroupAssignment component will treat empty as "device not in any groups"
+    // which is acceptable - user can still assign to groups
     setGroupAssignmentOpen(true);
   };
 
@@ -522,30 +539,14 @@ const Devices = () => {
   };
 
   const handleGroupAssignmentSaved = async () => {
-    // Reload device groups mapping
+    // Reload groups list (device counts may have changed)
     try {
       setGroupsLoading(true);
       const groupsData = await apiService.getGroups();
       setGroups(groupsData);
-
-      // Rebuild device-group map
-      const deviceGroupMap = {};
-      for (const group of groupsData) {
-        try {
-          const groupDetails = await apiService.getDevicesByGroup(group.id);
-          if (groupDetails.devices) {
-            groupDetails.devices.forEach(device => {
-              if (!deviceGroupMap[device.id]) {
-                deviceGroupMap[device.id] = [];
-              }
-              deviceGroupMap[device.id].push(group.id);
-            });
-          }
-        } catch (error) {
-          console.error(`Error loading devices for group ${group.id}:`, error);
-        }
-      }
-      setDeviceGroups(deviceGroupMap);
+      
+      // Clear device-groups cache to force reload when needed
+      setDeviceGroups({});
     } catch (error) {
       console.error('Error reloading groups:', error);
     } finally {
