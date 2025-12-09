@@ -1,8 +1,4 @@
-import {
-  Edit,
-  Save,
-  Security
-} from '@mui/icons-material';
+import { Edit, Save, Security } from '@mui/icons-material';
 import {
   Alert,
   Avatar,
@@ -53,45 +49,45 @@ const Profile = () => {
       id: 1,
       action: 'Login',
       timestamp: new Date(Date.now() - 300000),
-      details: 'Successful login from web browser'
+      details: 'Successful login from web browser',
     },
     {
       id: 2,
       action: 'Device Added',
       timestamp: new Date(Date.now() - 86400000),
-      details: 'Added new temperature sensor "Living Room Temp"'
+      details: 'Added new temperature sensor "Living Room Temp"',
     },
     {
       id: 3,
       action: 'Profile Updated',
       timestamp: new Date(Date.now() - 86400000 * 2),
-      details: 'Updated profile information'
+      details: 'Updated profile information',
     },
     {
       id: 4,
       action: 'Data Export',
       timestamp: new Date(Date.now() - 86400000 * 3),
-      details: 'Exported telemetry data (CSV format)'
+      details: 'Exported telemetry data (CSV format)',
     },
     {
       id: 5,
       action: 'Login',
       timestamp: new Date(Date.now() - 86400000 * 5),
-      details: 'Successful login from mobile app'
+      details: 'Successful login from mobile app',
     },
   ]);
 
-  const handleProfileChange = (field) => (e) => {
+  const handleProfileChange = field => e => {
     setProfileData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: e.target.value,
     }));
   };
 
-  const handlePasswordChange = (field) => (e) => {
+  const handlePasswordChange = field => e => {
     setPasswordData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: e.target.value,
     }));
   };
 
@@ -103,7 +99,7 @@ const Profile = () => {
 
       const updatedUser = {
         ...user,
-        ...profileData
+        ...profileData,
       };
 
       updateUser(updatedUser);
@@ -170,7 +166,7 @@ const Profile = () => {
                   margin: '0 auto',
                   bgcolor: 'primary.main',
                   fontSize: '2rem',
-                  mb: 2
+                  mb: 2,
                 }}
               >
                 {user?.username?.charAt(0)?.toUpperCase()}
@@ -212,10 +208,7 @@ const Profile = () => {
         <Grid item xs={12} md={8}>
           <Card>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs
-                value={activeTab}
-                onChange={(e, newValue) => setActiveTab(newValue)}
-              >
+              <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
                 <Tab label="Personal Information" />
                 <Tab label="Security" />
                 <Tab label="Activity Log" />
@@ -225,12 +218,19 @@ const Profile = () => {
             {/* Personal Information Tab */}
             {activeTab === 0 && (
               <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3,
+                  }}
+                >
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     Personal Information
                   </Typography>
                   <Button
-                    variant={isEditing ? "outlined" : "contained"}
+                    variant={isEditing ? 'outlined' : 'contained'}
                     startIcon={isEditing ? <Save /> : <Edit />}
                     onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
                     disabled={loading}
@@ -280,10 +280,7 @@ const Profile = () => {
 
                 <List>
                   <ListItem>
-                    <ListItemText
-                      primary="Password"
-                      secondary="Last changed 30 days ago"
-                    />
+                    <ListItemText primary="Password" secondary="Last changed 30 days ago" />
                     <ListItemSecondaryAction>
                       <Button
                         variant="outlined"
@@ -296,10 +293,7 @@ const Profile = () => {
                   </ListItem>
                   <Divider />
                   <ListItem>
-                    <ListItemText
-                      primary="Two-Factor Authentication"
-                      secondary="Not enabled"
-                    />
+                    <ListItemText primary="Two-Factor Authentication" secondary="Not enabled" />
                     <ListItemSecondaryAction>
                       <Button variant="outlined" disabled>
                         Enable 2FA
@@ -394,11 +388,7 @@ const Profile = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setChangePasswordOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleChangePassword}
-            variant="contained"
-            disabled={loading}
-          >
+          <Button onClick={handleChangePassword} variant="contained" disabled={loading}>
             {loading ? 'Changing...' : 'Change Password'}
           </Button>
         </DialogActions>

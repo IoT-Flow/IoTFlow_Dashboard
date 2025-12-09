@@ -15,9 +15,15 @@ const SYSTEM_CONFIG = {
   supported_aggregations: ['avg', 'min', 'max', 'count'],
   supported_intervals: ['1m', '5m', '15m', '1h', '1d'],
   supported_sensor_types: [
-    'temperature', 'humidity', 'pressure', 'battery_level',
-    'signal_strength', 'signal_quality', 'air_quality', 'light_level'
-  ]
+    'temperature',
+    'humidity',
+    'pressure',
+    'battery_level',
+    'signal_strength',
+    'signal_quality',
+    'air_quality',
+    'light_level',
+  ],
 };
 
 class ApiService {
@@ -32,12 +38,16 @@ class ApiService {
 
     // Request interceptor for API key authentication
     this.api.interceptors.request.use(
-      (config) => {
+      config => {
         const user = this.getCurrentUserFromStorage();
         const token = localStorage.getItem('iotflow_token');
 
         // For auth endpoints, don't add headers
-        if (config.url.includes('/auth/') || config.url.includes('/login') || config.url.includes('/register')) {
+        if (
+          config.url.includes('/auth/') ||
+          config.url.includes('/login') ||
+          config.url.includes('/register')
+        ) {
           return config;
         }
 
@@ -55,15 +65,15 @@ class ApiService {
 
         return config;
       },
-      (error) => {
+      error => {
         return Promise.reject(error);
       }
     );
 
     // Response interceptor with enhanced error handling
     this.api.interceptors.response.use(
-      (response) => response,
-      (error) => {
+      response => response,
+      error => {
         if (error.response?.status === 401) {
           this.handleUnauthorized();
         } else if (error.response?.status === 403) {
@@ -87,14 +97,14 @@ class ApiService {
       auth: '/auth',
       user_overview: '/telemetry/user/overview',
       device_register: '/devices/register',
-      websocket: `${WS_BASE_URL}/telemetry`
+      websocket: `${WS_BASE_URL}/telemetry`,
     };
 
     console.log('IoTFlow Dashboard Configuration:', {
       api: API_BASE_URL,
       architecture: 'Dashboard → Flask Backend → IoTDB',
       rate_limit: `${SYSTEM_CONFIG.rate_limit} req/min`,
-      polling_interval: `${SYSTEM_CONFIG.polling_interval}ms`
+      polling_interval: `${SYSTEM_CONFIG.polling_interval}ms`,
     });
   }
 
@@ -121,8 +131,8 @@ class ApiService {
           role: 'admin',
           permissions: ['admin', 'user_management', 'system_access'],
           createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        }
+          lastLogin: new Date().toISOString(),
+        },
       },
       {
         credentials: ['john@iotflow.com', 'john'],
@@ -134,8 +144,8 @@ class ApiService {
           role: 'user',
           permissions: ['device_access', 'telemetry_read'],
           createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
-          lastLogin: new Date().toISOString()
-        }
+          lastLogin: new Date().toISOString(),
+        },
       },
       {
         credentials: ['alice@iotflow.com', 'alice'],
@@ -147,9 +157,9 @@ class ApiService {
           role: 'user',
           permissions: ['device_access', 'telemetry_read', 'analytics_read'],
           createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-          lastLogin: new Date().toISOString()
-        }
-      }
+          lastLogin: new Date().toISOString(),
+        },
+      },
     ];
   }
 
@@ -165,7 +175,7 @@ class ApiService {
     this.demoUsers.push({
       credentials,
       password,
-      user
+      user,
     });
     this.saveDemoUsers();
   }
@@ -210,8 +220,8 @@ class ApiService {
         ...options,
         headers: {
           'X-User-ID': user.id,
-          ...options.headers
-        }
+          ...options.headers,
+        },
       });
       return response.data;
     } catch (error) {
@@ -234,7 +244,7 @@ class ApiService {
     try {
       const response = await this.api.post('/auth/login', {
         email: emailOrUsername,
-        password
+        password,
       });
 
       // Store authentication data from Node.js backend
@@ -257,17 +267,17 @@ class ApiService {
         data: {
           token: token,
           user: userData,
-          message: 'Login successful'
-        }
+          message: 'Login successful',
+        },
       };
     } catch (error) {
       // Only use demo authentication if explicitly enabled
       if (process.env.REACT_APP_DEMO_MODE === 'true') {
         // Find matching user - ensure case-insensitive matching
-        const matchedUser = this.demoUsers.find(user =>
-          user.credentials.some(cred =>
-            cred.toLowerCase() === emailOrUsername.toLowerCase()
-          ) && user.password === password
+        const matchedUser = this.demoUsers.find(
+          user =>
+            user.credentials.some(cred => cred.toLowerCase() === emailOrUsername.toLowerCase()) &&
+            user.password === password
         );
 
         if (matchedUser) {
@@ -283,14 +293,17 @@ class ApiService {
             data: {
               token: 'demo_token_' + matchedUser.user.id,
               user: matchedUser.user,
-              message: 'Login successful (Demo Mode)'
-            }
+              message: 'Login successful (Demo Mode)',
+            },
           };
         }
       }
 
       // If no match found, throw authentication error
-      throw new Error(error.response?.data?.message || 'Invalid credentials. Please check your email/username and password.');
+      throw new Error(
+        error.response?.data?.message ||
+          'Invalid credentials. Please check your email/username and password.'
+      );
     }
   }
 
@@ -299,7 +312,7 @@ class ApiService {
       const response = await this.api.post('/auth/register', {
         username: userData.username,
         email: userData.email,
-        password: userData.password
+        password: userData.password,
       });
 
       // Backend returns { user, token }
@@ -315,8 +328,8 @@ class ApiService {
         data: {
           token,
           user,
-          message: 'Registration successful'
-        }
+          message: 'Registration successful',
+        },
       };
     } catch (error) {
       console.log('Backend registration failed, using demo mode...', error.message);
@@ -331,17 +344,13 @@ class ApiService {
         role: 'user',
         permissions: ['device_access', 'telemetry_read'],
         createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
+        lastLogin: new Date().toISOString(),
       };
 
       console.log('Created new demo user:', newUser);
 
       // Add the new user to demo users so they can log in later
-      this.addDemoUser(
-        [userData.email, userData.username],
-        userData.password,
-        newUser
-      );
+      this.addDemoUser([userData.email, userData.username], userData.password, newUser);
 
       console.log('Added user to demo users list');
 
@@ -350,8 +359,8 @@ class ApiService {
         data: {
           token: 'demo_token_' + newUserId,
           user: newUser,
-          message: 'Registration successful (Demo Mode)'
-        }
+          message: 'Registration successful (Demo Mode)',
+        },
       };
     }
   }
@@ -401,7 +410,7 @@ class ApiService {
     try {
       const response = await this.api.put('/auth/change-password', {
         currentPassword,
-        newPassword
+        newPassword,
       });
       return response.data;
     } catch (error) {
@@ -437,7 +446,7 @@ class ApiService {
           updatedAt: device.updated_at || device.updatedAt,
           owner: device.user_id || device.owner,
           firmware_version: device.firmware_version,
-          hardware_version: device.hardware_version
+          hardware_version: device.hardware_version,
         }));
       }
 
@@ -446,7 +455,7 @@ class ApiService {
         data: devices,
         total: response.data.total || devices.length,
         page: response.data.page || 1,
-        totalPages: response.data.totalPages || 1
+        totalPages: response.data.totalPages || 1,
       };
     } catch (error) {
       console.error('Backend devices error:', error.response?.data || error.message);
@@ -464,7 +473,8 @@ class ApiService {
 
         // User-specific device data with enhanced user isolation
         const userDevicesMap = {
-          1: [ // Admin user devices
+          1: [
+            // Admin user devices
             {
               id: 1,
               deviceId: 'ADMIN_TEMP_001',
@@ -477,7 +487,7 @@ class ApiService {
               lastSeen: new Date(Date.now() - 300000).toISOString(),
               owner: 1,
               createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
-              description: 'Critical infrastructure temperature monitoring'
+              description: 'Critical infrastructure temperature monitoring',
             },
             {
               id: 2,
@@ -491,10 +501,11 @@ class ApiService {
               lastSeen: new Date(Date.now() - 120000).toISOString(),
               owner: 1,
               createdAt: new Date(Date.now() - 86400000 * 45).toISOString(),
-              description: 'Building HVAC system pressure monitoring and control'
-            }
+              description: 'Building HVAC system pressure monitoring and control',
+            },
           ],
-          2: [ // John's personal devices
+          2: [
+            // John's personal devices
             {
               id: 3,
               deviceId: 'JOHN_TEMP_001',
@@ -507,7 +518,7 @@ class ApiService {
               lastSeen: new Date(Date.now() - 600000).toISOString(),
               owner: 2,
               createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
-              description: 'Smart home climate monitoring and comfort optimization'
+              description: 'Smart home climate monitoring and comfort optimization',
             },
             {
               id: 4,
@@ -521,10 +532,11 @@ class ApiService {
               lastSeen: new Date(Date.now() - 180000).toISOString(),
               owner: 2,
               createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
-              description: 'RGB LED strip with voice control and automation'
-            }
+              description: 'RGB LED strip with voice control and automation',
+            },
           ],
-          3: [ // Alice's garden automation devices
+          3: [
+            // Alice's garden automation devices
             {
               id: 7,
               deviceId: 'ALICE_TEMP_001',
@@ -537,7 +549,7 @@ class ApiService {
               lastSeen: new Date(Date.now() - 240000).toISOString(),
               owner: 3,
               createdAt: new Date(Date.now() - 86400000 * 8).toISOString(),
-              description: 'Precision greenhouse climate control and monitoring'
+              description: 'Precision greenhouse climate control and monitoring',
             },
             {
               id: 8,
@@ -551,9 +563,9 @@ class ApiService {
               lastSeen: new Date(Date.now() - 300000).toISOString(),
               owner: 3,
               createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-              description: 'Solar-powered smart irrigation with soil moisture integration'
-            }
-          ]
+              description: 'Solar-powered smart irrigation with soil moisture integration',
+            },
+          ],
         };
 
         // Only return current user's devices
@@ -564,7 +576,7 @@ class ApiService {
           data: userDevices,
           total: userDevices.length,
           page: params.page || 1,
-          limit: params.limit || 50
+          limit: params.limit || 50,
         };
       } else {
         // Re-throw client errors (400, 401, 403, etc.) to be handled by the UI
@@ -593,7 +605,7 @@ class ApiService {
         updatedAt: device.updated_at || device.updatedAt,
         owner: device.user_id || device.owner,
         firmware_version: device.firmware_version,
-        hardware_version: device.hardware_version
+        hardware_version: device.hardware_version,
       };
 
       return transformedDevice;
@@ -612,7 +624,7 @@ class ApiService {
         location: deviceData.location,
         status: deviceData.status || 'offline',
         firmware_version: deviceData.firmware_version,
-        hardware_version: deviceData.hardware_version
+        hardware_version: deviceData.hardware_version,
       });
 
       console.log('Backend device creation successful:', response.data);
@@ -633,12 +645,12 @@ class ApiService {
         updatedAt: device.updated_at,
         owner: device.user_id,
         firmware_version: device.firmware_version,
-        hardware_version: device.hardware_version
+        hardware_version: device.hardware_version,
       };
 
       return {
         success: true,
-        data: transformedDevice
+        data: transformedDevice,
       };
     } catch (error) {
       console.error('Backend device creation error:', error.response?.data || error.message);
@@ -670,12 +682,12 @@ class ApiService {
           updatedAt: new Date().toISOString(),
           lastSeen: null,
           firmware_version: deviceData.firmware_version,
-          hardware_version: deviceData.hardware_version
+          hardware_version: deviceData.hardware_version,
         };
 
         return {
           success: true,
-          data: newDevice
+          data: newDevice,
         };
       } else {
         // Re-throw client errors (400, 401, 403, etc.) to be handled by the UI
@@ -693,7 +705,7 @@ class ApiService {
         location: deviceData.location,
         status: deviceData.status,
         firmware_version: deviceData.firmware_version,
-        hardware_version: deviceData.hardware_version
+        hardware_version: deviceData.hardware_version,
       });
 
       console.log('Backend device update successful:', response.data);
@@ -714,12 +726,12 @@ class ApiService {
         updatedAt: device.updated_at || device.updatedAt,
         owner: device.user_id || device.owner,
         firmware_version: device.firmware_version,
-        hardware_version: device.hardware_version
+        hardware_version: device.hardware_version,
       };
 
       return {
         success: true,
-        data: transformedDevice
+        data: transformedDevice,
       };
     } catch (error) {
       console.log('Backend device update failed:', error.message);
@@ -734,7 +746,7 @@ class ApiService {
 
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.log('Backend device deletion failed:', error.message);
@@ -758,24 +770,30 @@ class ApiService {
     return response.data;
   }
 
-  async generateTestNotification(type = 'info', message = 'Test notification', device_id = 'test_device') {
+  async generateTestNotification(
+    type = 'info',
+    message = 'Test notification',
+    device_id = 'test_device'
+  ) {
     const response = await this.api.post('/telemetry/test-notification', {
       type,
       message,
-      device_id
+      device_id,
     });
     return response.data;
   }
 
   async getAggregatedData(deviceId, aggregation, params = {}) {
-    const response = await this.api.get(`/telemetry/${deviceId}/aggregate/${aggregation}`, { params });
+    const response = await this.api.get(`/telemetry/${deviceId}/aggregate/${aggregation}`, {
+      params,
+    });
     return response.data;
   }
 
   async exportTelemetryData(deviceId, format, params = {}) {
     const response = await this.api.get(`/telemetry/${deviceId}/export/${format}`, {
       params,
-      responseType: 'blob'
+      responseType: 'blob',
     });
     return response.data;
   }
@@ -834,11 +852,11 @@ class ApiService {
       const response = await this.api.post(`/devices/${deviceId}/control`, {
         command,
         parameters,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Device control error:', error);
@@ -858,63 +876,67 @@ class ApiService {
       const deviceType = device?.type || 'Other';
 
       const deviceStates = {
-        'LED': {
+        LED: {
           power: Math.random() > 0.5,
           brightness: Math.floor(Math.random() * 100),
-          color: { r: Math.floor(Math.random() * 255), g: Math.floor(Math.random() * 255), b: Math.floor(Math.random() * 255) },
-          mode: ['solid', 'blink', 'fade'][Math.floor(Math.random() * 3)]
+          color: {
+            r: Math.floor(Math.random() * 255),
+            g: Math.floor(Math.random() * 255),
+            b: Math.floor(Math.random() * 255),
+          },
+          mode: ['solid', 'blink', 'fade'][Math.floor(Math.random() * 3)],
         },
-        'Engine': {
+        Engine: {
           power: Math.random() > 0.7,
           speed: Math.floor(Math.random() * 3000) + 500,
           temperature: Math.floor(Math.random() * 50) + 40,
           load: Math.floor(Math.random() * 100),
-          runtime: Math.floor(Math.random() * 10000)
+          runtime: Math.floor(Math.random() * 10000),
         },
         'Door Lock': {
           locked: Math.random() > 0.3,
           batteryLevel: Math.floor(Math.random() * 40) + 60,
           lastAccess: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          accessCode: '****'
+          accessCode: '****',
         },
-        'Pump': {
+        Pump: {
           power: Math.random() > 0.6,
           flowRate: Math.floor(Math.random() * 50) + 10,
           pressure: Math.floor(Math.random() * 30) + 20,
-          runtime: Math.floor(Math.random() * 1000)
+          runtime: Math.floor(Math.random() * 1000),
         },
-        'Fan': {
+        Fan: {
           power: Math.random() > 0.5,
           speed: Math.floor(Math.random() * 5) + 1,
           oscillating: Math.random() > 0.5,
-          timer: Math.floor(Math.random() * 120)
+          timer: Math.floor(Math.random() * 120),
         },
-        'Valve': {
+        Valve: {
           open: Math.random() > 0.4,
           position: Math.floor(Math.random() * 100),
           pressure: Math.floor(Math.random() * 100) + 50,
-          flowRate: Math.floor(Math.random() * 80) + 20
+          flowRate: Math.floor(Math.random() * 80) + 20,
         },
-        'Thermostat': {
+        Thermostat: {
           temperature: Math.floor(Math.random() * 10) + 20,
           targetTemperature: Math.floor(Math.random() * 10) + 22,
           mode: ['heat', 'cool', 'auto', 'off'][Math.floor(Math.random() * 4)],
-          fanSpeed: ['low', 'medium', 'high', 'auto'][Math.floor(Math.random() * 4)]
+          fanSpeed: ['low', 'medium', 'high', 'auto'][Math.floor(Math.random() * 4)],
         },
-        'Switch': {
+        Switch: {
           power: Math.random() > 0.5,
-          state: Math.random() > 0.5 ? 'on' : 'off'
+          state: Math.random() > 0.5 ? 'on' : 'off',
         },
-        'Dimmer': {
+        Dimmer: {
           power: Math.random() > 0.5,
-          level: Math.floor(Math.random() * 100)
+          level: Math.floor(Math.random() * 100),
         },
-        'Motor': {
+        Motor: {
           power: Math.random() > 0.6,
           speed: Math.floor(Math.random() * 100),
           direction: Math.random() > 0.5 ? 'forward' : 'reverse',
-          load: Math.floor(Math.random() * 100)
-        }
+          load: Math.floor(Math.random() * 100),
+        },
       };
 
       return {
@@ -923,8 +945,8 @@ class ApiService {
           deviceId,
           status: device?.status || 'active',
           lastUpdate: new Date().toISOString(),
-          state: deviceStates[deviceType] || {}
-        }
+          state: deviceStates[deviceType] || {},
+        },
       };
     }
   }
@@ -941,65 +963,157 @@ class ApiService {
       const deviceType = device?.type || 'Other';
 
       const commandsByType = {
-        'LED': [
+        LED: [
           { name: 'power', label: 'Power On/Off', type: 'toggle', params: ['state'] },
-          { name: 'setBrightness', label: 'Set Brightness', type: 'slider', params: ['brightness'], min: 0, max: 100 },
+          {
+            name: 'setBrightness',
+            label: 'Set Brightness',
+            type: 'slider',
+            params: ['brightness'],
+            min: 0,
+            max: 100,
+          },
           { name: 'setColor', label: 'Set Color', type: 'color', params: ['r', 'g', 'b'] },
-          { name: 'setMode', label: 'Set Mode', type: 'select', params: ['mode'], options: ['solid', 'blink', 'fade'] }
+          {
+            name: 'setMode',
+            label: 'Set Mode',
+            type: 'select',
+            params: ['mode'],
+            options: ['solid', 'blink', 'fade'],
+          },
         ],
-        'Engine': [
+        Engine: [
           { name: 'start', label: 'Start Engine', type: 'button', params: [] },
           { name: 'stop', label: 'Stop Engine', type: 'button', params: [] },
-          { name: 'setSpeed', label: 'Set Speed (RPM)', type: 'slider', params: ['speed'], min: 500, max: 3500 }
+          {
+            name: 'setSpeed',
+            label: 'Set Speed (RPM)',
+            type: 'slider',
+            params: ['speed'],
+            min: 500,
+            max: 3500,
+          },
         ],
         'Door Lock': [
           { name: 'lock', label: 'Lock Door', type: 'button', params: [] },
           { name: 'unlock', label: 'Unlock Door', type: 'button', params: [] },
-          { name: 'setAccessCode', label: 'Set Access Code', type: 'password', params: ['code'] }
+          { name: 'setAccessCode', label: 'Set Access Code', type: 'password', params: ['code'] },
         ],
-        'Pump': [
+        Pump: [
           { name: 'start', label: 'Start Pump', type: 'button', params: [] },
           { name: 'stop', label: 'Stop Pump', type: 'button', params: [] },
-          { name: 'setFlowRate', label: 'Set Flow Rate', type: 'slider', params: ['flowRate'], min: 10, max: 60 }
+          {
+            name: 'setFlowRate',
+            label: 'Set Flow Rate',
+            type: 'slider',
+            params: ['flowRate'],
+            min: 10,
+            max: 60,
+          },
         ],
-        'Fan': [
+        Fan: [
           { name: 'power', label: 'Power On/Off', type: 'toggle', params: ['state'] },
-          { name: 'setSpeed', label: 'Set Speed', type: 'slider', params: ['speed'], min: 1, max: 5 },
-          { name: 'toggleOscillation', label: 'Toggle Oscillation', type: 'toggle', params: ['oscillating'] },
-          { name: 'setTimer', label: 'Set Timer (minutes)', type: 'slider', params: ['timer'], min: 0, max: 120 }
+          {
+            name: 'setSpeed',
+            label: 'Set Speed',
+            type: 'slider',
+            params: ['speed'],
+            min: 1,
+            max: 5,
+          },
+          {
+            name: 'toggleOscillation',
+            label: 'Toggle Oscillation',
+            type: 'toggle',
+            params: ['oscillating'],
+          },
+          {
+            name: 'setTimer',
+            label: 'Set Timer (minutes)',
+            type: 'slider',
+            params: ['timer'],
+            min: 0,
+            max: 120,
+          },
         ],
-        'Valve': [
+        Valve: [
           { name: 'open', label: 'Open Valve', type: 'button', params: [] },
           { name: 'close', label: 'Close Valve', type: 'button', params: [] },
-          { name: 'setPosition', label: 'Set Position (%)', type: 'slider', params: ['position'], min: 0, max: 100 }
+          {
+            name: 'setPosition',
+            label: 'Set Position (%)',
+            type: 'slider',
+            params: ['position'],
+            min: 0,
+            max: 100,
+          },
         ],
-        'Thermostat': [
-          { name: 'setTemperature', label: 'Set Temperature', type: 'slider', params: ['temperature'], min: 10, max: 35 },
-          { name: 'setMode', label: 'Set Mode', type: 'select', params: ['mode'], options: ['heat', 'cool', 'auto', 'off'] },
-          { name: 'setFanSpeed', label: 'Set Fan Speed', type: 'select', params: ['fanSpeed'], options: ['low', 'medium', 'high', 'auto'] }
+        Thermostat: [
+          {
+            name: 'setTemperature',
+            label: 'Set Temperature',
+            type: 'slider',
+            params: ['temperature'],
+            min: 10,
+            max: 35,
+          },
+          {
+            name: 'setMode',
+            label: 'Set Mode',
+            type: 'select',
+            params: ['mode'],
+            options: ['heat', 'cool', 'auto', 'off'],
+          },
+          {
+            name: 'setFanSpeed',
+            label: 'Set Fan Speed',
+            type: 'select',
+            params: ['fanSpeed'],
+            options: ['low', 'medium', 'high', 'auto'],
+          },
         ],
-        'Switch': [
+        Switch: [
           { name: 'power', label: 'Power On/Off', type: 'toggle', params: ['state'] },
-          { name: 'toggle', label: 'Toggle Switch', type: 'button', params: [] }
+          { name: 'toggle', label: 'Toggle Switch', type: 'button', params: [] },
         ],
-        'Dimmer': [
+        Dimmer: [
           { name: 'power', label: 'Power On/Off', type: 'toggle', params: ['state'] },
-          { name: 'setLevel', label: 'Set Dimmer Level', type: 'slider', params: ['level'], min: 0, max: 100 }
+          {
+            name: 'setLevel',
+            label: 'Set Dimmer Level',
+            type: 'slider',
+            params: ['level'],
+            min: 0,
+            max: 100,
+          },
         ],
-        'Motor': [
+        Motor: [
           { name: 'start', label: 'Start Motor', type: 'button', params: [] },
           { name: 'stop', label: 'Stop Motor', type: 'button', params: [] },
-          { name: 'setSpeed', label: 'Set Speed', type: 'slider', params: ['speed'], min: 0, max: 100 },
-          { name: 'setDirection', label: 'Set Direction', type: 'select', params: ['direction'], options: ['forward', 'reverse'] }
-        ]
+          {
+            name: 'setSpeed',
+            label: 'Set Speed',
+            type: 'slider',
+            params: ['speed'],
+            min: 0,
+            max: 100,
+          },
+          {
+            name: 'setDirection',
+            label: 'Set Direction',
+            type: 'select',
+            params: ['direction'],
+            options: ['forward', 'reverse'],
+          },
+        ],
       };
 
       return {
         success: true,
         data: {
           deviceId,
-          commands: commandsByType[deviceType] || []
-        }
+          commands: commandsByType[deviceType] || [],
+        },
       };
     }
   }
@@ -1032,8 +1146,8 @@ class ApiService {
           schedule: scheduleData.schedule,
           enabled: true,
           createdAt: new Date().toISOString(),
-          nextExecution: new Date(Date.now() + 3600000).toISOString() // 1 hour from now
-        }
+          nextExecution: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+        },
       };
     }
   }
@@ -1055,10 +1169,10 @@ class ApiService {
               params: { state: true },
               schedule: '0 6 * * *', // 6 AM daily
               enabled: true,
-              nextExecution: new Date(Date.now() + 3600000).toISOString()
-            }
-          ]
-        }
+              nextExecution: new Date(Date.now() + 3600000).toISOString(),
+            },
+          ],
+        },
       };
     }
   }
@@ -1073,7 +1187,7 @@ class ApiService {
     try {
       const response = await this.makeAuthenticatedRequest(`/telemetry/device/${deviceId}`, {
         method: 'GET',
-        params: { limit: 1 }
+        params: { limit: 1 },
       });
       return response;
     } catch (error) {
@@ -1094,12 +1208,12 @@ class ApiService {
         limit: params.limit || 1000,
         aggregation: params.aggregation || 'none',
         interval: params.interval || 'raw',
-        metric: params.sensorType
+        metric: params.sensorType,
       };
 
       const response = await this.makeAuthenticatedRequest(`/telemetry/device/${deviceId}`, {
         method: 'GET',
-        params: queryParams
+        params: queryParams,
       });
       return response;
     } catch (error) {
@@ -1115,7 +1229,7 @@ class ApiService {
     try {
       const response = await this.makeAuthenticatedRequest('/telemetry/user/overview', {
         method: 'GET',
-        params: { time_range: timeRange }
+        params: { time_range: timeRange },
       });
       return response;
     } catch (error) {
@@ -1132,8 +1246,8 @@ class ApiService {
       const response = await this.api.post(`/telemetry/${deviceId}`, telemetryData, {
         headers: {
           'X-API-Key': apiKey, // Use X-API-Key for device authentication
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
       return response.data;
     } catch (error) {
@@ -1181,43 +1295,43 @@ class ApiService {
       timestamp: new Date().toISOString(),
       iotdb_path: `root.iotflow.users.user_${currentUser.id}.device_${deviceId}`,
       user_id: currentUser.id,
-      data: {}
+      data: {},
     };
 
     // Generate sensor data based on device type
     switch (device.type) {
       case 'Temperature':
         telemetryData.data = {
-          temperature: 20 + Math.random() * 15 + (currentUser.id * 2),
+          temperature: 20 + Math.random() * 15 + currentUser.id * 2,
           humidity: 40 + Math.random() * 40,
           battery_level: device.battery_level || 85 + Math.random() * 15,
-          signal_strength: -40 - Math.random() * 30
+          signal_strength: -40 - Math.random() * 30,
         };
         break;
       case 'Pressure':
         telemetryData.data = {
           pressure: 1000 + Math.random() * 50,
           battery_level: device.battery_level || 90 + Math.random() * 10,
-          signal_strength: -35 - Math.random() * 25
+          signal_strength: -35 - Math.random() * 25,
         };
         break;
       case 'LED':
         telemetryData.data = {
           brightness: Math.floor(Math.random() * 100),
           power: Math.random() > 0.5,
-          signal_strength: -30 - Math.random() * 20
+          signal_strength: -30 - Math.random() * 20,
         };
         break;
       default:
         telemetryData.data = {
           value: Math.random() * 100,
-          signal_strength: -40 - Math.random() * 30
+          signal_strength: -40 - Math.random() * 30,
         };
     }
 
     return {
       success: true,
-      data: telemetryData
+      data: telemetryData,
     };
   }
 
@@ -1248,18 +1362,19 @@ class ApiService {
         timestamp,
         device_id: deviceId,
         user_id: currentUser.id,
-        iotdb_path: `root.iotflow.users.user_${currentUser.id}.device_${deviceId}`
+        iotdb_path: `root.iotflow.users.user_${currentUser.id}.device_${deviceId}`,
       };
 
       // Generate realistic sensor data with time-based patterns
       const hour = new Date(currentTime).getHours();
       switch (device.type) {
         case 'Temperature':
-          dataPoint.temperature = 20 + Math.sin((hour - 6) * Math.PI / 12) * 8 + Math.random() * 2;
-          dataPoint.humidity = 60 - Math.sin((hour - 6) * Math.PI / 12) * 20 + Math.random() * 10;
+          dataPoint.temperature =
+            20 + Math.sin(((hour - 6) * Math.PI) / 12) * 8 + Math.random() * 2;
+          dataPoint.humidity = 60 - Math.sin(((hour - 6) * Math.PI) / 12) * 20 + Math.random() * 10;
           break;
         case 'Pressure':
-          dataPoint.pressure = 1013.25 + Math.sin(hour * Math.PI / 12) * 20 + Math.random() * 5;
+          dataPoint.pressure = 1013.25 + Math.sin((hour * Math.PI) / 12) * 20 + Math.random() * 5;
           break;
         case 'LED':
           dataPoint.brightness = Math.floor(Math.random() * 100);
@@ -1284,9 +1399,9 @@ class ApiService {
         total_points: dataPoints.length,
         time_range: {
           start: startTime.toISOString(),
-          end: endTime.toISOString()
-        }
-      }
+          end: endTime.toISOString(),
+        },
+      },
     };
   }
 
@@ -1299,12 +1414,18 @@ class ApiService {
 
     // Get user's devices
     const devicesResult = await this.getDevices();
-    const devices = Array.isArray(devicesResult?.data) ? devicesResult.data :
-      Array.isArray(devicesResult?.data?.devices) ? devicesResult.data.devices : [];
+    const devices = Array.isArray(devicesResult?.data)
+      ? devicesResult.data
+      : Array.isArray(devicesResult?.data?.devices)
+        ? devicesResult.data.devices
+        : [];
 
     const activeDevices = devices.filter(d => d.status === 'active').length;
     const totalDevices = devices.length;
-    const totalMessages = devices.reduce((sum, device) => sum + (device.message_count_today || 0), 0);
+    const totalMessages = devices.reduce(
+      (sum, device) => sum + (device.message_count_today || 0),
+      0
+    );
 
     return {
       success: true,
@@ -1317,7 +1438,7 @@ class ApiService {
           total_messages_today: totalMessages,
           avg_messages_per_device: Math.round(totalMessages / Math.max(activeDevices, 1)),
           uptime_percentage: Math.round((activeDevices / Math.max(totalDevices, 1)) * 100),
-          last_activity: new Date().toISOString()
+          last_activity: new Date().toISOString(),
         },
         time_range: timeRange,
         devices_summary: devices.map(device => ({
@@ -1327,9 +1448,9 @@ class ApiService {
           status: device.status,
           message_count_today: device.message_count_today || 0,
           last_seen: device.lastSeen,
-          iotdb_path: `root.iotflow.users.user_${currentUser.id}.device_${device.id}`
-        }))
-      }
+          iotdb_path: `root.iotflow.users.user_${currentUser.id}.device_${device.id}`,
+        })),
+      },
     };
   }
 
@@ -1343,8 +1464,8 @@ class ApiService {
         status: 'accepted',
         iotdb_path: `root.iotflow.users.user_${this.getCurrentUserFromStorage()?.id}.device_${deviceId}`,
         processing_time_ms: Math.floor(Math.random() * 50) + 10,
-        data_points: Object.keys(telemetryData).length
-      }
+        data_points: Object.keys(telemetryData).length,
+      },
     };
   }
 
@@ -1359,13 +1480,16 @@ class ApiService {
    */
   async sendCustomDeviceControl(deviceId, command, parameters = {}) {
     try {
-      const response = await axios.post(`http://localhost:5000/api/v1/devices/${deviceId}/control`, {
-        command,
-        parameters
-      });
+      const response = await axios.post(
+        `http://localhost:5000/api/v1/devices/${deviceId}/control`,
+        {
+          command,
+          parameters,
+        }
+      );
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Device control error:', error.response?.data || error.message);
@@ -1381,8 +1505,8 @@ class ApiService {
           parameters,
           status: 'pending',
           timestamp: new Date().toISOString(),
-          message: `Command '${command}' queued for device ${deviceId}`
-        }
+          message: `Command '${command}' queued for device ${deviceId}`,
+        },
       };
     }
   }
@@ -1395,10 +1519,12 @@ class ApiService {
    */
   async getControlCommandStatus(deviceId, controlId) {
     try {
-      const response = await axios.get(`http://localhost:5000/api/v1/devices/${deviceId}/control/${controlId}/status`);
+      const response = await axios.get(
+        `http://localhost:5000/api/v1/devices/${deviceId}/control/${controlId}/status`
+      );
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Control status error:', error.response?.data || error.message);
@@ -1415,8 +1541,9 @@ class ApiService {
           status: randomStatus,
           timestamp: new Date().toISOString(),
           message: `Command status: ${randomStatus}`,
-          execution_time: randomStatus === 'completed' ? Math.floor(Math.random() * 1000) + 100 : null
-        }
+          execution_time:
+            randomStatus === 'completed' ? Math.floor(Math.random() * 1000) + 100 : null,
+        },
       };
     }
   }
@@ -1428,11 +1555,13 @@ class ApiService {
    */
   async getPendingControlCommands(deviceId) {
     try {
-      const response = await axios.get(`http://localhost:5000/api/v1/devices/${deviceId}/control/pending`);
+      const response = await axios.get(
+        `http://localhost:5000/api/v1/devices/${deviceId}/control/pending`
+      );
       console.log(response.data);
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       // Only show real backend data; do not return demo/fake data
@@ -1449,7 +1578,7 @@ class ApiService {
         success: true,
         data: response.data.data || [],
         total: response.data.total || 0,
-        unreadCount: response.data.unreadCount || 0
+        unreadCount: response.data.unreadCount || 0,
       };
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -1462,7 +1591,7 @@ class ApiService {
       const response = await this.api.get('/notifications/unread/count');
       return {
         success: true,
-        count: response.data.count || 0
+        count: response.data.count || 0,
       };
     } catch (error) {
       console.error('Error fetching unread notification count:', error);
@@ -1475,7 +1604,7 @@ class ApiService {
       const response = await this.api.patch(`/notifications/${notificationId}/read`);
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -1488,7 +1617,7 @@ class ApiService {
       const response = await this.api.patch('/notifications/mark-all-read');
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -1501,7 +1630,7 @@ class ApiService {
       const response = await this.api.delete(`/notifications/${notificationId}`);
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -1514,7 +1643,7 @@ class ApiService {
       const response = await this.api.delete('/notifications');
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Error clearing all notifications:', error);
@@ -1527,7 +1656,7 @@ class ApiService {
       const response = await this.api.get('/notifications/stats');
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       console.error('Error fetching notification stats:', error);

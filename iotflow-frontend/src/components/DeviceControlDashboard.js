@@ -9,7 +9,7 @@ import {
   PlayArrow,
   Refresh,
   Schedule,
-  Send
+  Send,
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -41,7 +41,7 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
@@ -111,11 +111,9 @@ const DeviceControlDashboard = () => {
     }
   };
 
-  const loadDeviceData = async (deviceId) => {
+  const loadDeviceData = async deviceId => {
     try {
-      const [pendingResult] = await Promise.all([
-        apiService.getPendingControlCommands(deviceId)
-      ]);
+      const [pendingResult] = await Promise.all([apiService.getPendingControlCommands(deviceId)]);
       console.log('API pendingResult:', pendingResult);
       if (pendingResult.success && Array.isArray(pendingResult.data)) {
         // API returns { success: true, data: [ ... ] }
@@ -123,7 +121,7 @@ const DeviceControlDashboard = () => {
           pendingResult.data.map(cmd => ({
             ...cmd,
             control_id: cmd.control_id || cmd.id,
-            status: cmd.status || "pending" // default to 'pending' if missing
+            status: cmd.status || 'pending', // default to 'pending' if missing
           }))
         );
       } else {
@@ -134,7 +132,7 @@ const DeviceControlDashboard = () => {
     }
   };
 
-  const handleDeviceSelect = (device) => {
+  const handleDeviceSelect = device => {
     setSelectedDevice(device);
     setCommand('');
     setParameters([{ key: '', value: '' }]);
@@ -151,7 +149,7 @@ const DeviceControlDashboard = () => {
     setParameters([...parameters, { key: '', value: '' }]);
   };
 
-  const removeParameter = (index) => {
+  const removeParameter = index => {
     if (parameters.length > 1) {
       const newParameters = parameters.filter((_, i) => i !== index);
       setParameters(newParameters);
@@ -189,7 +187,7 @@ const DeviceControlDashboard = () => {
         if (result.data.control_id) {
           setStatusPolling(prev => ({
             ...prev,
-            [result.data.control_id]: true
+            [result.data.control_id]: true,
           }));
 
           // Add to pending commands
@@ -231,7 +229,7 @@ const DeviceControlDashboard = () => {
         if (status === 'completed' || status === 'failed') {
           setStatusPolling(prev => ({
             ...prev,
-            [controlId]: false
+            [controlId]: false,
           }));
 
           // Show completion notification
@@ -253,25 +251,37 @@ const DeviceControlDashboard = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'pending': return 'warning';
-      case 'acknowledged': return 'info';
-      case 'executing': return 'info';
-      case 'completed': return 'success';
-      case 'failed': return 'error';
-      default: return 'default';
+      case 'pending':
+        return 'warning';
+      case 'acknowledged':
+        return 'info';
+      case 'executing':
+        return 'info';
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
-      case 'pending': return <Schedule />;
-      case 'acknowledged': return <CheckCircle />;
-      case 'executing': return <PlayArrow />;
-      case 'completed': return <CheckCircle />;
-      case 'failed': return <Error />;
-      default: return <DeviceHub />;
+      case 'pending':
+        return <Schedule />;
+      case 'acknowledged':
+        return <CheckCircle />;
+      case 'executing':
+        return <PlayArrow />;
+      case 'completed':
+        return <CheckCircle />;
+      case 'failed':
+        return <Error />;
+      default:
+        return <DeviceHub />;
     }
   };
 
@@ -304,7 +314,7 @@ const DeviceControlDashboard = () => {
                 Your Devices
               </Typography>
               <List>
-                {devices.map((device) => (
+                {devices.map(device => (
                   <ListItem
                     key={device.id}
                     button
@@ -313,9 +323,8 @@ const DeviceControlDashboard = () => {
                     sx={{
                       borderRadius: 1,
                       mb: 1,
-                      bgcolor: selectedDevice?.id === device.id
-                        ? alpha('#1976d2', 0.1)
-                        : 'transparent'
+                      bgcolor:
+                        selectedDevice?.id === device.id ? alpha('#1976d2', 0.1) : 'transparent',
                     }}
                   >
                     <ListItemIcon>
@@ -349,9 +358,7 @@ const DeviceControlDashboard = () => {
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">
-                    Control: {selectedDevice.name}
-                  </Typography>
+                  <Typography variant="h6">Control: {selectedDevice.name}</Typography>
                   <Box>
                     <Button
                       variant="outlined"
@@ -381,7 +388,7 @@ const DeviceControlDashboard = () => {
                     </Typography>
                     <IconButton
                       size="small"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         refreshPendingCommands();
                       }}
@@ -403,7 +410,7 @@ const DeviceControlDashboard = () => {
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {pendingCommands.map((cmd) => (
+                            {pendingCommands.map(cmd => (
                               <TableRow key={cmd.control_id}>
                                 <TableCell>
                                   <Typography variant="body2" fontWeight="medium">
@@ -443,9 +450,7 @@ const DeviceControlDashboard = () => {
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Alert severity="info">
-                        No pending commands for this device
-                      </Alert>
+                      <Alert severity="info">No pending commands for this device</Alert>
                     )}
                   </AccordionDetails>
                 </Accordion>
@@ -454,9 +459,7 @@ const DeviceControlDashboard = () => {
           ) : (
             <Card>
               <CardContent>
-                <Alert severity="info">
-                  Select a device from the list to start controlling it
-                </Alert>
+                <Alert severity="info">Select a device from the list to start controlling it</Alert>
               </CardContent>
             </Card>
           )}
@@ -470,9 +473,7 @@ const DeviceControlDashboard = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          Send Command to {selectedDevice?.name}
-        </DialogTitle>
+        <DialogTitle>Send Command to {selectedDevice?.name}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             {/* Command Input */}
@@ -481,7 +482,7 @@ const DeviceControlDashboard = () => {
               label="Command"
               placeholder="e.g., turn_on, set_brightness, lock, unlock"
               value={command}
-              onChange={(e) => setCommand(e.target.value)}
+              onChange={e => setCommand(e.target.value)}
               sx={{ mb: 3 }}
               helperText="Enter the command you want to send to the device"
             />
@@ -496,14 +497,14 @@ const DeviceControlDashboard = () => {
                   label="Key"
                   placeholder="e.g., level, duration, mode"
                   value={param.key}
-                  onChange={(e) => handleParameterChange(index, 'key', e.target.value)}
+                  onChange={e => handleParameterChange(index, 'key', e.target.value)}
                   sx={{ flex: 1 }}
                 />
                 <TextField
                   label="Value"
                   placeholder="e.g., 50, 10, auto"
                   value={param.value}
-                  onChange={(e) => handleParameterChange(index, 'value', e.target.value)}
+                  onChange={e => handleParameterChange(index, 'value', e.target.value)}
                   sx={{ flex: 1 }}
                 />
                 <IconButton
@@ -516,12 +517,7 @@ const DeviceControlDashboard = () => {
               </Box>
             ))}
 
-            <Button
-              startIcon={<Add />}
-              onClick={addParameter}
-              variant="outlined"
-              size="small"
-            >
+            <Button startIcon={<Add />} onClick={addParameter} variant="outlined" size="small">
               Add Parameter
             </Button>
 
@@ -532,25 +528,27 @@ const DeviceControlDashboard = () => {
               </Typography>
               <Paper sx={{ p: 1, bgcolor: 'background.paper' }}>
                 <code>
-                  {JSON.stringify({
-                    command: command || 'your_command',
-                    parameters: parameters.reduce((obj, { key, value }) => {
-                      if (key.trim()) {
-                        const numValue = Number(value);
-                        obj[key.trim()] = isNaN(numValue) ? value : numValue;
-                      }
-                      return obj;
-                    }, {})
-                  }, null, 2)}
+                  {JSON.stringify(
+                    {
+                      command: command || 'your_command',
+                      parameters: parameters.reduce((obj, { key, value }) => {
+                        if (key.trim()) {
+                          const numValue = Number(value);
+                          obj[key.trim()] = isNaN(numValue) ? value : numValue;
+                        }
+                        return obj;
+                      }, {}),
+                    },
+                    null,
+                    2
+                  )}
                 </code>
               </Paper>
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setControlDialogOpen(false)}>
-            Cancel
-          </Button>
+          <Button onClick={() => setControlDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleSendCommand}
@@ -569,9 +567,7 @@ const DeviceControlDashboard = () => {
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>
-          Command History - {selectedDevice?.name}
-        </DialogTitle>
+        <DialogTitle>Command History - {selectedDevice?.name}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Recent commands sent to this device
@@ -582,9 +578,7 @@ const DeviceControlDashboard = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setHistoryDialogOpen(false)}>
-            Close
-          </Button>
+          <Button onClick={() => setHistoryDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -11,7 +11,7 @@ import {
   Refresh,
   Speed,
   Thermostat,
-  Timeline
+  Timeline,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -37,7 +37,7 @@ import {
   Select,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -77,9 +77,10 @@ const Telemetry = () => {
   const [measurementFilter, setMeasurementFilter] = useState('all');
 
   // Get available measurements for the selected device
-  const availableMeasurements = selectedDevice && telemetryHistory[selectedDevice]
-    ? Object.keys(telemetryHistory[selectedDevice])
-    : [];
+  const availableMeasurements =
+    selectedDevice && telemetryHistory[selectedDevice]
+      ? Object.keys(telemetryHistory[selectedDevice])
+      : [];
 
   // Fetch devices from the backend
   useEffect(() => {
@@ -128,7 +129,7 @@ const Telemetry = () => {
           if (allChartDevices.size > 0) {
             const allDevicesData = {};
             await Promise.all(
-              Array.from(allChartDevices).map(async (deviceId) => {
+              Array.from(allChartDevices).map(async deviceId => {
                 const deviceData = await fetchTelemetryForDevice(deviceId);
                 if (Object.keys(deviceData).length > 0) {
                   allDevicesData[deviceId] = deviceData;
@@ -153,13 +154,13 @@ const Telemetry = () => {
     setChartCustomizationOpen(true);
   };
 
-  const handleEditChart = (chart) => {
+  const handleEditChart = chart => {
     setEditingChart(chart);
     setChartCustomizationOpen(true);
     setChartMenuAnchor(null);
   };
 
-  const handleDeleteChart = async (chartId) => {
+  const handleDeleteChart = async chartId => {
     if (!window.confirm('Are you sure you want to delete this chart?')) {
       return;
     }
@@ -174,14 +175,16 @@ const Telemetry = () => {
     }
   };
 
-  const handleSaveChart = async (chartConfig) => {
+  const handleSaveChart = async chartConfig => {
     try {
       let updatedCharts;
       if (editingChart) {
         // Update existing chart
         const updatedChart = await chartService.updateChart(editingChart.id, chartConfig);
         const transformedChart = chartService.transformFromBackendFormat(updatedChart);
-        updatedCharts = customCharts.map(chart => chart.id === editingChart.id ? transformedChart : chart);
+        updatedCharts = customCharts.map(chart =>
+          chart.id === editingChart.id ? transformedChart : chart
+        );
         setCustomCharts(updatedCharts);
         toast.success('Chart updated successfully');
       } else {
@@ -213,7 +216,7 @@ const Telemetry = () => {
     setSelectedChartForMenu(null);
   };
 
-  const handleDuplicateChart = async (chartId) => {
+  const handleDuplicateChart = async chartId => {
     try {
       const duplicatedChart = await chartService.duplicateChart(chartId);
       const transformedChart = chartService.transformFromBackendFormat(duplicatedChart);
@@ -245,7 +248,7 @@ const Telemetry = () => {
             start_date: startTime.toISOString(),
             end_date: now.toISOString(),
             limit: 1000,
-          }
+          },
         });
 
         // Process the telemetry data from IoTDB format
@@ -281,7 +284,6 @@ const Telemetry = () => {
         });
 
         setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
-
       } catch (error) {
         toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
       } finally {
@@ -301,8 +303,7 @@ const Telemetry = () => {
     }
   }, [selectedDevice, timeRange, autoRefresh, token]);
 
-
-  const handleDeviceChange = (event) => {
+  const handleDeviceChange = event => {
     const deviceId = event.target.value;
     if (selectedDevice) {
       unsubscribeFromDevice(selectedDevice);
@@ -315,7 +316,7 @@ const Telemetry = () => {
     }
   };
 
-  const getTimeRangeDates = (range) => {
+  const getTimeRangeDates = range => {
     const now = new Date();
     let startTime;
 
@@ -342,7 +343,7 @@ const Telemetry = () => {
         startTime = new Date(now.getTime() - 3600000);
     }
     return { startTime, endTime: now };
-  }
+  };
 
   const handleTimeRangeChange = (event, newRange) => {
     if (newRange !== null) {
@@ -368,7 +369,10 @@ const Telemetry = () => {
       if (deviceMeasurements.hasOwnProperty(measurement)) {
         const latestData = deviceMeasurements[measurement]?.slice(-1)[0];
         stats.push({
-          device: { ...devices.find(d => d.id === selectedDevice), name: `${devices.find(d => d.id === selectedDevice)?.name} - ${measurement}` },
+          device: {
+            ...devices.find(d => d.id === selectedDevice),
+            name: `${devices.find(d => d.id === selectedDevice)?.name} - ${measurement}`,
+          },
           value: latestData?.value || 0,
           timestamp: latestData?.timestamp || new Date(),
         });
@@ -377,7 +381,7 @@ const Telemetry = () => {
     return stats;
   };
 
-  const handleExport = async (format) => {
+  const handleExport = async format => {
     setLoading(true);
     try {
       // Simulate export process
@@ -421,13 +425,18 @@ const Telemetry = () => {
   };
 
   const MetricCard = ({ device, value, timestamp }) => {
-    const getDeviceIcon = (type) => {
+    const getDeviceIcon = type => {
       switch (type) {
-        case 'Temperature': return <Thermostat />;
-        case 'Humidity': return <Opacity />;
-        case 'Pressure': return <Speed />;
-        case 'Vibration': return <Timeline />;
-        default: return <DeviceHub />;
+        case 'Temperature':
+          return <Thermostat />;
+        case 'Humidity':
+          return <Opacity />;
+        case 'Pressure':
+          return <Speed />;
+        case 'Vibration':
+          return <Timeline />;
+        default:
+          return <DeviceHub />;
       }
     };
 
@@ -453,20 +462,19 @@ const Telemetry = () => {
               {getDeviceIcon(device.type)}
             </Avatar>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h4" component="div"
-                sx={{ fontWeight: 600, color: `${getValueColor(device.type, value)}.main` }}>
-                {value}{device.unit}
+              <Typography
+                variant="h4"
+                component="div"
+                sx={{ fontWeight: 600, color: `${getValueColor(device.type, value)}.main` }}
+              >
+                {value}
+                {device.unit}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {device.name}
               </Typography>
             </Box>
-            <Chip
-              label="LIVE"
-              color="success"
-              size="small"
-              variant="outlined"
-            />
+            <Chip label="LIVE" color="success" size="small" variant="outlined" />
           </Box>
           <Typography variant="caption" color="text.secondary">
             Last updated: {timestamp.toLocaleTimeString()}
@@ -494,7 +502,7 @@ const Telemetry = () => {
           start_date: startTime.toISOString(),
           end_date: now.toISOString(),
           limit: 1000,
-        }
+        },
       });
 
       const telemetryData = telemetryResponse.data.telemetry || [];
@@ -541,7 +549,7 @@ const Telemetry = () => {
     if (allChartDevices.size > 0) {
       const allDevicesData = {};
       await Promise.all(
-        Array.from(allChartDevices).map(async (deviceId) => {
+        Array.from(allChartDevices).map(async deviceId => {
           const deviceData = await fetchTelemetryForDevice(deviceId);
           if (Object.keys(deviceData).length > 0) {
             allDevicesData[deviceId] = deviceData;
@@ -575,7 +583,7 @@ const Telemetry = () => {
                 label="Device"
                 onChange={handleDeviceChange}
               >
-                {devices.map((device) => (
+                {devices.map(device => (
                   <MenuItem key={device.id} value={device.id}>
                     {device.name}
                   </MenuItem>
@@ -609,7 +617,7 @@ const Telemetry = () => {
                         start_date: startTime.toISOString(),
                         end_date: now.toISOString(),
                         limit: 1000,
-                      }
+                      },
                     });
 
                     // Process the telemetry data from IoTDB format
@@ -645,7 +653,6 @@ const Telemetry = () => {
                     });
 
                     setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
-
                   } catch (error) {
                     toast.error(`Failed to fetch telemetry for device ${selectedDevice}`);
                   } finally {
@@ -664,7 +671,9 @@ const Telemetry = () => {
 
         {/* Controls */}
         <Card sx={{ mb: 4 }}>
-          <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <CardContent
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <FormControl sx={{ minWidth: 180 }}>
                 <InputLabel id="measurement-filter-label">Measurement</InputLabel>
@@ -677,7 +686,9 @@ const Telemetry = () => {
                 >
                   <MenuItem value="all">All Measurements</MenuItem>
                   {availableMeasurements.map(m => (
-                    <MenuItem key={m} value={m}>{m}</MenuItem>
+                    <MenuItem key={m} value={m}>
+                      {m}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -687,12 +698,24 @@ const Telemetry = () => {
                 onChange={handleTimeRangeChange}
                 aria-label="time range"
               >
-                <ToggleButton value="15m" aria-label="15 minutes">15m</ToggleButton>
-                <ToggleButton value="1h" aria-label="1 hour">1h</ToggleButton>
-                <ToggleButton value="6h" aria-label="6 hours">6h</ToggleButton>
-                <ToggleButton value="24h" aria-label="24 hours">24h</ToggleButton>
-                <ToggleButton value="7d" aria-label="7 days">7d</ToggleButton>
-                <ToggleButton value="lifetime" aria-label="lifetime">Lifetime</ToggleButton>
+                <ToggleButton value="15m" aria-label="15 minutes">
+                  15m
+                </ToggleButton>
+                <ToggleButton value="1h" aria-label="1 hour">
+                  1h
+                </ToggleButton>
+                <ToggleButton value="6h" aria-label="6 hours">
+                  6h
+                </ToggleButton>
+                <ToggleButton value="24h" aria-label="24 hours">
+                  24h
+                </ToggleButton>
+                <ToggleButton value="7d" aria-label="7 days">
+                  7d
+                </ToggleButton>
+                <ToggleButton value="lifetime" aria-label="lifetime">
+                  Lifetime
+                </ToggleButton>
               </ToggleButtonGroup>
               <ToggleButtonGroup
                 value={chartType}
@@ -743,51 +766,57 @@ const Telemetry = () => {
             {/* Main Chart */}
             <Card>
               <CardContent>
-                {telemetryHistory[selectedDevice] && Object.keys(telemetryHistory[selectedDevice]).length > 0 ? (
+                {telemetryHistory[selectedDevice] &&
+                Object.keys(telemetryHistory[selectedDevice]).length > 0 ? (
                   <CustomChart
                     chartConfig={{
                       id: 'main-telemetry-chart',
                       name: `${devices.find(d => d.id === selectedDevice)?.name || 'Device'} - ${measurementFilter === 'all' ? 'All Measurements' : measurementFilter}`,
                       type: chartType,
-                      measurements: measurementFilter === 'all'
-                        ? Object.keys(telemetryHistory[selectedDevice])
-                        : [measurementFilter],
+                      measurements:
+                        measurementFilter === 'all'
+                          ? Object.keys(telemetryHistory[selectedDevice])
+                          : [measurementFilter],
                       timeRange: timeRange,
                       showLegend: true,
                       showGrid: true,
                       animations: true,
                       refreshInterval: autoRefresh ? 30 : null,
-                      devices: [selectedDevice]
+                      devices: [selectedDevice],
                     }}
                     telemetryData={
                       measurementFilter === 'all'
-                        ? Object.keys(telemetryHistory[selectedDevice]).map(m =>
-                          telemetryHistory[selectedDevice][m] || []
-                        )
+                        ? Object.keys(telemetryHistory[selectedDevice]).map(
+                            m => telemetryHistory[selectedDevice][m] || []
+                          )
                         : [telemetryHistory[selectedDevice][measurementFilter] || []]
                     }
-                    onEdit={() => { }}
-                    onDelete={() => { }}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
                     devices={devices}
                     isMainChart={true}
                   />
                 ) : (
-                  <Box sx={{
-                    height: 400,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: 'background.paper',
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    borderRadius: 1
-                  }}>
+                  <Box
+                    sx={{
+                      height: 400,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'background.paper',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                    }}
+                  >
                     <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
                       No Telemetry Data Available
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {selectedDevice ? 'No data found for the selected time range' : 'Please select a device'}
+                      {selectedDevice
+                        ? 'No data found for the selected time range'
+                        : 'Please select a device'}
                     </Typography>
                   </Box>
                 )}
@@ -796,15 +825,18 @@ const Telemetry = () => {
 
             {/* Custom Charts */}
             <Box sx={{ mt: 4 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
                 <Typography variant="h5" component="h2">
                   Custom Analytics Charts
                 </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={handleAddChart}
-                >
+                <Button variant="contained" startIcon={<Add />} onClick={handleAddChart}>
                   Add Custom Chart
                 </Button>
               </Box>
@@ -827,7 +859,9 @@ const Telemetry = () => {
                       });
                     }
 
-                    const hasData = chartTelemetryData.length > 0 && chartTelemetryData.some(data => data.length > 0);
+                    const hasData =
+                      chartTelemetryData.length > 0 &&
+                      chartTelemetryData.some(data => data.length > 0);
 
                     return (
                       <Grid item xs={12} md={6} lg={4} key={chart.id}>
@@ -843,21 +877,26 @@ const Telemetry = () => {
                           <Card sx={{ position: 'relative', minHeight: 350 }}>
                             <IconButton
                               sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
-                              onClick={(e) => handleChartMenuOpen(e, chart)}
+                              onClick={e => handleChartMenuOpen(e, chart)}
                             >
                               <MoreVert />
                             </IconButton>
-                            <CardContent sx={{
-                              height: '100%',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
+                            <CardContent
+                              sx={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
                               <Alert severity="warning" sx={{ mb: 2 }}>
-                                No telemetry data available for measurement(s): {chart.measurements?.join(', ') || 'N/A'}
+                                No telemetry data available for measurement(s):{' '}
+                                {chart.measurements?.join(', ') || 'N/A'}
                               </Alert>
-                              <Typography variant="h6" sx={{ mb: 1 }}>{chart.name}</Typography>
+                              <Typography variant="h6" sx={{ mb: 1 }}>
+                                {chart.name}
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 Chart Type: {chart.type} | Time Range: {chart.timeRange}
                               </Typography>
@@ -869,7 +908,9 @@ const Telemetry = () => {
                   })}
                 </Grid>
               ) : (
-                <Alert severity="info">No custom charts created yet. Click "Add Chart" to get started.</Alert>
+                <Alert severity="info">
+                  No custom charts created yet. Click "Add Chart" to get started.
+                </Alert>
               )}
             </Box>
           </>
@@ -886,15 +927,21 @@ const Telemetry = () => {
           onClose={handleChartMenuClose}
         >
           <MenuItem onClick={() => handleEditChart(selectedChartForMenu)}>
-            <ListItemIcon><Edit fontSize="small" /></ListItemIcon>
+            <ListItemIcon>
+              <Edit fontSize="small" />
+            </ListItemIcon>
             <ListItemText>Edit</ListItemText>
           </MenuItem>
           <MenuItem onClick={() => handleDeleteChart(selectedChartForMenu.id)}>
-            <ListItemIcon><Delete fontSize="small" /></ListItemIcon>
+            <ListItemIcon>
+              <Delete fontSize="small" />
+            </ListItemIcon>
             <ListItemText>Delete</ListItemText>
           </MenuItem>
           <MenuItem onClick={() => handleDuplicateChart(selectedChartForMenu.id)}>
-            <ListItemIcon><ContentCopy fontSize="small" /></ListItemIcon>
+            <ListItemIcon>
+              <ContentCopy fontSize="small" />
+            </ListItemIcon>
             <ListItemText>Duplicate</ListItemText>
           </MenuItem>
         </Menu>
@@ -922,7 +969,11 @@ const Telemetry = () => {
           onClose={() => setChartCustomizationOpen(false)}
           onSaveChart={handleSaveChart}
           devices={devices}
-          measurements={selectedDevice && telemetryHistory[selectedDevice] ? Object.keys(telemetryHistory[selectedDevice]) : []}
+          measurements={
+            selectedDevice && telemetryHistory[selectedDevice]
+              ? Object.keys(telemetryHistory[selectedDevice])
+              : []
+          }
           editingChart={editingChart}
         />
       </Box>

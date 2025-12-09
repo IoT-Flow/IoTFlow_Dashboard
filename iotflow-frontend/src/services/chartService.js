@@ -5,7 +5,7 @@ class ChartService {
     const token = localStorage.getItem('iotflow_token'); // FIXED: use the same key as login
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     };
   }
 
@@ -22,7 +22,7 @@ class ChartService {
       const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/charts`, {
         method: 'GET',
-        headers
+        headers,
       });
       const result = await this.handleResponse(response);
       return result.data;
@@ -36,7 +36,7 @@ class ChartService {
     try {
       const response = await fetch(`${API_BASE_URL}/charts/${id}`, {
         method: 'GET',
-        headers: await this.getAuthHeaders()
+        headers: await this.getAuthHeaders(),
       });
       const result = await this.handleResponse(response);
       return result.data;
@@ -56,7 +56,7 @@ class ChartService {
       const response = await fetch(`${API_BASE_URL}/charts`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(backendConfig)
+        body: JSON.stringify(backendConfig),
       });
       const result = await this.handleResponse(response);
       return result.data;
@@ -74,7 +74,7 @@ class ChartService {
       const response = await fetch(`${API_BASE_URL}/charts/${id}`, {
         method: 'PUT',
         headers: await this.getAuthHeaders(),
-        body: JSON.stringify(backendConfig)
+        body: JSON.stringify(backendConfig),
       });
       const result = await this.handleResponse(response);
       return result.data;
@@ -88,7 +88,7 @@ class ChartService {
     try {
       const response = await fetch(`${API_BASE_URL}/charts/${id}`, {
         method: 'DELETE',
-        headers: await this.getAuthHeaders()
+        headers: await this.getAuthHeaders(),
       });
       const result = await this.handleResponse(response);
       return result;
@@ -102,7 +102,7 @@ class ChartService {
     try {
       const response = await fetch(`${API_BASE_URL}/charts/${id}/duplicate`, {
         method: 'POST',
-        headers: await this.getAuthHeaders()
+        headers: await this.getAuthHeaders(),
       });
       const result = await this.handleResponse(response);
       return result.data;
@@ -137,7 +137,7 @@ class ChartService {
       customColors: chartConfig.customColors,
       backgroundColor: chartConfig.backgroundColor,
       borderColor: chartConfig.borderColor,
-      pointStyle: chartConfig.pointStyle
+      pointStyle: chartConfig.pointStyle,
     };
   }
 
@@ -171,7 +171,7 @@ class ChartService {
       customColors: appearanceConfig.customColors || [],
       backgroundColor: appearanceConfig.backgroundColor || '#ffffff',
       borderColor: appearanceConfig.borderColor || '#1976d2',
-      pointStyle: appearanceConfig.pointStyle || 'circle'
+      pointStyle: appearanceConfig.pointStyle || 'circle',
     };
   }
 }

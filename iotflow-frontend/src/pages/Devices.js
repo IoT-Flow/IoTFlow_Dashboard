@@ -13,7 +13,7 @@ import {
   Schedule,
   Search,
   Visibility,
-  Warning
+  Warning,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -113,7 +113,7 @@ const Devices = () => {
               description: device.description || '',
               created_at: new Date(device.createdAt),
               is_online: device.status === 'active',
-              user_id: device.user_id
+              user_id: device.user_id,
             };
           });
           setDevices(transformedDevices);
@@ -135,46 +135,58 @@ const Devices = () => {
     }
   }, [user]);
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'active': return 'success';
-      case 'inactive': return 'default';
-      case 'error': return 'error';
-      case 'maintenance': return 'warning';
-      default: return 'default';
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'default';
+      case 'error':
+        return 'error';
+      case 'maintenance':
+        return 'warning';
+      default:
+        return 'default';
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
-      case 'active': return <CheckCircle />;
-      case 'inactive': return <Schedule />;
-      case 'error': return <Error />;
-      case 'maintenance': return <Warning />;
-      default: return <CheckCircle />;
+      case 'active':
+        return <CheckCircle />;
+      case 'inactive':
+        return <Schedule />;
+      case 'error':
+        return <Error />;
+      case 'maintenance':
+        return <Warning />;
+      default:
+        return <CheckCircle />;
     }
   };
 
   const filteredDevices = devices.filter(device => {
-    const matchesSearch = device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       device.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
       device.type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || device.status === statusFilter;
-    const matchesType = typeFilter === 'all' || device.type.toLowerCase().includes(typeFilter.toLowerCase());
+    const matchesType =
+      typeFilter === 'all' || device.type.toLowerCase().includes(typeFilter.toLowerCase());
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const handleSelectAllClick = (event) => {
+  const handleSelectAllClick = event => {
     if (event.target.checked) {
-      const newSelected = filteredDevices.map((device) => device.id);
+      const newSelected = filteredDevices.map(device => device.id);
       setSelectedDevices(newSelected);
       return;
     }
     setSelectedDevices([]);
   };
 
-  const handleDeviceSelect = (deviceId) => {
+  const handleDeviceSelect = deviceId => {
     const selectedIndex = selectedDevices.indexOf(deviceId);
     let newSelected = [];
 
@@ -187,7 +199,7 @@ const Devices = () => {
     } else if (selectedIndex > 0) {
       newSelected = newSelected.concat(
         selectedDevices.slice(0, selectedIndex),
-        selectedDevices.slice(selectedIndex + 1),
+        selectedDevices.slice(selectedIndex + 1)
       );
     }
 
@@ -207,7 +219,7 @@ const Devices = () => {
     setDeviceDialogOpen(true);
   };
 
-  const handleEditDevice = (device) => {
+  const handleEditDevice = device => {
     setSelectedDevice(device);
     setDeviceForm({
       name: device.name,
@@ -227,9 +239,9 @@ const Devices = () => {
       if (selectedDevice) {
         // Update existing device
         const updatedDevice = { ...selectedDevice, ...deviceForm };
-        setDevices(devices.map(device =>
-          device.id === selectedDevice.id ? updatedDevice : device
-        ));
+        setDevices(
+          devices.map(device => (device.id === selectedDevice.id ? updatedDevice : device))
+        );
         toast.success('Device updated successfully');
         setDeviceDialogOpen(false);
       } else {
@@ -252,7 +264,7 @@ const Devices = () => {
             created_at: new Date(result.data.createdAt || Date.now()),
             telemetry_count: 0,
             is_online: result.data.status === 'active',
-            user_id: result.data.owner
+            user_id: result.data.owner,
           };
 
           setDevices([...devices, newDevice]);
@@ -278,7 +290,7 @@ const Devices = () => {
     }
   };
 
-  const handleDeleteDevice = (device) => {
+  const handleDeleteDevice = device => {
     setDeviceToDelete(device);
   };
 
@@ -300,58 +312,88 @@ const Devices = () => {
     }
   };
 
-  const handleShowConnectionDetails = (device) => {
+  const handleShowConnectionDetails = device => {
     setSelectedDevice(device);
-    setNewDeviceConnection(device.connectionDetails || {
-      api_key: device.apiKey || device.api_key || 'N/A',
-      gatewayIP: '192.168.1.100',
-      mqttEndpoint: 'mqtt://192.168.1.100:1883',
-      httpsEndpoint: 'https://192.168.1.100:8443',
-      mqttTopic: `devices/${user?.id}/${device.name.toLowerCase().replace(/\s+/g, '_')}`,
-      reconnectInterval: 30,
-      heartbeatInterval: 60
-    });
+    setNewDeviceConnection(
+      device.connectionDetails || {
+        api_key: device.apiKey || device.api_key || 'N/A',
+        gatewayIP: '192.168.1.100',
+        mqttEndpoint: 'mqtt://192.168.1.100:1883',
+        httpsEndpoint: 'https://192.168.1.100:8443',
+        mqttTopic: `devices/${user?.id}/${device.name.toLowerCase().replace(/\s+/g, '_')}`,
+        reconnectInterval: 30,
+        heartbeatInterval: 60,
+      }
+    );
     setConnectionDialogOpen(true);
   };
 
-  const handleControlDevice = (device) => {
+  const handleControlDevice = device => {
     setSelectedDevice(device);
     setControlDialogOpen(true);
   };
 
-  const isControllableDevice = (device) => {
-    const controllableTypes = ['LED', 'Engine', 'Door Lock', 'Pump', 'Fan', 'Valve', 'Thermostat', 'Switch', 'Dimmer', 'Motor', 'Actuator'];
+  const isControllableDevice = device => {
+    const controllableTypes = [
+      'LED',
+      'Engine',
+      'Door Lock',
+      'Pump',
+      'Fan',
+      'Valve',
+      'Thermostat',
+      'Switch',
+      'Dimmer',
+      'Motor',
+      'Actuator',
+    ];
     return controllableTypes.includes(device.type);
   };
 
-  const handleBulkStatusUpdate = (newStatus) => {
-    setDevices(devices.map(device =>
-      selectedDevices.includes(device.id)
-        ? { ...device, status: newStatus }
-        : device
-    ));
+  const handleBulkStatusUpdate = newStatus => {
+    setDevices(
+      devices.map(device =>
+        selectedDevices.includes(device.id) ? { ...device, status: newStatus } : device
+      )
+    );
     setSelectedDevices([]);
     toast.success(`Updated ${selectedDevices.length} device(s) to ${newStatus}`);
   };
 
   const DeviceActionsMenu = ({ device, anchorEl, onClose }) => (
-    <Menu
-      anchorEl={anchorEl}
-      open={Boolean(anchorEl)}
-      onClose={onClose}
-    >
+    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={onClose}>
       {isControllableDevice(device) && (
-        <MenuItem onClick={() => { handleControlDevice(device); onClose(); }}>
+        <MenuItem
+          onClick={() => {
+            handleControlDevice(device);
+            onClose();
+          }}
+        >
           <ControlPoint sx={{ mr: 1 }} /> Control Device
         </MenuItem>
       )}
-      <MenuItem onClick={() => { handleEditDevice(device); onClose(); }}>
+      <MenuItem
+        onClick={() => {
+          handleEditDevice(device);
+          onClose();
+        }}
+      >
         <Edit sx={{ mr: 1 }} /> Edit Device
       </MenuItem>
-      <MenuItem onClick={() => { handleShowConnectionDetails(device); onClose(); }}>
+      <MenuItem
+        onClick={() => {
+          handleShowConnectionDetails(device);
+          onClose();
+        }}
+      >
         <Key sx={{ mr: 1 }} /> Connection Details
       </MenuItem>
-      <MenuItem onClick={() => { handleDeleteDevice(device); onClose(); }}>
+      <MenuItem
+        onClick={() => {
+          handleDeleteDevice(device);
+          onClose();
+        }}
+      >
         <Delete sx={{ mr: 1 }} /> Delete Device
       </MenuItem>
     </Menu>
@@ -392,12 +434,7 @@ const Devices = () => {
           >
             Device Control
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleCreateDevice}
-            size="large"
-          >
+          <Button variant="contained" startIcon={<Add />} onClick={handleCreateDevice} size="large">
             Add Device
           </Button>
         </Box>
@@ -412,7 +449,7 @@ const Devices = () => {
                 fullWidth
                 placeholder="Search devices..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -428,7 +465,7 @@ const Devices = () => {
                 <Select
                   value={statusFilter}
                   label="Status"
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={e => setStatusFilter(e.target.value)}
                 >
                   <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
@@ -444,7 +481,7 @@ const Devices = () => {
                 <Select
                   value={typeFilter}
                   label="Type"
-                  onChange={(e) => setTypeFilter(e.target.value)}
+                  onChange={e => setTypeFilter(e.target.value)}
                 >
                   <MenuItem value="all">All Types</MenuItem>
                   <MenuItem value="sensor">Sensor</MenuItem>
@@ -455,8 +492,12 @@ const Devices = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                <Button variant="outlined" startIcon={<FilterList />}>More Filters</Button>
-                <Button variant="outlined" startIcon={<Download />}>Export</Button>
+                <Button variant="outlined" startIcon={<FilterList />}>
+                  More Filters
+                </Button>
+                <Button variant="outlined" startIcon={<Download />}>
+                  Export
+                </Button>
               </Box>
             </Grid>
           </Grid>
@@ -482,22 +523,13 @@ const Devices = () => {
               {selectedDevices.length} device(s) selected
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                size="small"
-                onClick={() => handleBulkStatusUpdate('active')}
-              >
+              <Button size="small" onClick={() => handleBulkStatusUpdate('active')}>
                 Activate
               </Button>
-              <Button
-                size="small"
-                onClick={() => handleBulkStatusUpdate('inactive')}
-              >
+              <Button size="small" onClick={() => handleBulkStatusUpdate('inactive')}>
                 Deactivate
               </Button>
-              <Button
-                size="small"
-                onClick={() => handleBulkStatusUpdate('maintenance')}
-              >
+              <Button size="small" onClick={() => handleBulkStatusUpdate('maintenance')}>
                 Maintenance
               </Button>
             </Box>
@@ -523,11 +555,7 @@ const Devices = () => {
                 : 'Try adjusting your search or filter criteria.'}
             </Typography>
             {devices.length === 0 && (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleCreateDevice}
-              >
+              <Button variant="contained" startIcon={<Add />} onClick={handleCreateDevice}>
                 Add Your First Device
               </Button>
             )}
@@ -540,8 +568,14 @@ const Devices = () => {
                   <TableRow>
                     <TableCell padding="checkbox">
                       <Checkbox
-                        indeterminate={selectedDevices.length > 0 && selectedDevices.length < filteredDevices.length}
-                        checked={filteredDevices.length > 0 && selectedDevices.length === filteredDevices.length}
+                        indeterminate={
+                          selectedDevices.length > 0 &&
+                          selectedDevices.length < filteredDevices.length
+                        }
+                        checked={
+                          filteredDevices.length > 0 &&
+                          selectedDevices.length === filteredDevices.length
+                        }
                         onChange={handleSelectAllClick}
                       />
                     </TableCell>
@@ -556,7 +590,7 @@ const Devices = () => {
                 <TableBody>
                   {filteredDevices
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((device) => {
+                    .map(device => {
                       const isSelected = selectedDevices.indexOf(device.id) !== -1;
                       return (
                         <TableRow
@@ -607,7 +641,7 @@ const Devices = () => {
                                 <Tooltip title="Control Device">
                                   <IconButton
                                     size="small"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       handleControlDevice(device);
                                     }}
@@ -620,7 +654,7 @@ const Devices = () => {
                               <Tooltip title="More Actions">
                                 <IconButton
                                   size="small"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     openMenu(e, device);
                                   }}
@@ -643,7 +677,7 @@ const Devices = () => {
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(e, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(e) => {
+              onRowsPerPageChange={e => {
                 setRowsPerPage(parseInt(e.target.value, 10));
                 setPage(0);
               }}
@@ -659,15 +693,12 @@ const Devices = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          {selectedDevice ? 'Edit Device' : 'Register New Device'}
-        </DialogTitle>
+        <DialogTitle>{selectedDevice ? 'Edit Device' : 'Register New Device'}</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 3 }}>
             {selectedDevice
               ? 'Update your device configuration below.'
-              : 'After registration, you will receive connection credentials to connect your device to the IoT platform.'
-            }
+              : 'After registration, you will receive connection credentials to connect your device to the IoT platform.'}
           </Alert>
 
           <Grid container spacing={3} sx={{ mt: 1 }}>
@@ -676,7 +707,7 @@ const Devices = () => {
                 fullWidth
                 label="Device Name"
                 value={deviceForm.name}
-                onChange={(e) => setDeviceForm({ ...deviceForm, name: e.target.value })}
+                onChange={e => setDeviceForm({ ...deviceForm, name: e.target.value })}
                 placeholder="e.g., Living Room Temperature Sensor"
                 required
               />
@@ -687,7 +718,7 @@ const Devices = () => {
                 <Select
                   value={deviceForm.type}
                   label="Device Type"
-                  onChange={(e) => setDeviceForm({ ...deviceForm, type: e.target.value })}
+                  onChange={e => setDeviceForm({ ...deviceForm, type: e.target.value })}
                 >
                   {/* Sensor Devices */}
                   <MenuItem value="Temperature">Temperature Sensor</MenuItem>
@@ -725,7 +756,7 @@ const Devices = () => {
                 fullWidth
                 label="Device Location"
                 value={deviceForm.location}
-                onChange={(e) => setDeviceForm({ ...deviceForm, location: e.target.value })}
+                onChange={e => setDeviceForm({ ...deviceForm, location: e.target.value })}
                 placeholder="e.g., Living Room, Office, Warehouse Zone A"
                 required
               />
@@ -735,7 +766,7 @@ const Devices = () => {
                 fullWidth
                 label="Firmware Version"
                 value={deviceForm.firmware_version}
-                onChange={(e) => setDeviceForm({ ...deviceForm, firmware_version: e.target.value })}
+                onChange={e => setDeviceForm({ ...deviceForm, firmware_version: e.target.value })}
                 placeholder="e.g., 1.0.0"
               />
             </Grid>
@@ -744,7 +775,7 @@ const Devices = () => {
                 fullWidth
                 label="Hardware Version"
                 value={deviceForm.hardware_version}
-                onChange={(e) => setDeviceForm({ ...deviceForm, hardware_version: e.target.value })}
+                onChange={e => setDeviceForm({ ...deviceForm, hardware_version: e.target.value })}
                 placeholder="e.g., 1.0"
               />
             </Grid>
@@ -755,7 +786,7 @@ const Devices = () => {
                 multiline
                 rows={3}
                 value={deviceForm.description}
-                onChange={(e) => setDeviceForm({ ...deviceForm, description: e.target.value })}
+                onChange={e => setDeviceForm({ ...deviceForm, description: e.target.value })}
                 placeholder="Describe your device's purpose and any special notes..."
               />
             </Grid>
@@ -768,7 +799,7 @@ const Devices = () => {
             variant="contained"
             disabled={loading || !deviceForm.name.trim() || !deviceForm.location.trim()}
           >
-            {loading ? 'Processing...' : (selectedDevice ? 'Update Device' : 'Register Device')}
+            {loading ? 'Processing...' : selectedDevice ? 'Update Device' : 'Register Device'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -884,10 +915,15 @@ const Devices = () => {
                       Integration Instructions:
                     </Typography>
                     <Typography variant="body2" component="div">
-                      1. Configure your device with the provided token for authentication<br />
-                      2. Connect to the gateway using the IP address: <code>{newDeviceConnection.gatewayIP}</code><br />
-                      3. Use MQTT protocol for real-time data transmission<br />
-                      4. Publish telemetry data to the specified MQTT topic<br />
+                      1. Configure your device with the provided token for authentication
+                      <br />
+                      2. Connect to the gateway using the IP address:{' '}
+                      <code>{newDeviceConnection.gatewayIP}</code>
+                      <br />
+                      3. Use MQTT protocol for real-time data transmission
+                      <br />
+                      4. Publish telemetry data to the specified MQTT topic
+                      <br />
                       5. Implement heartbeat messages to maintain connection status
                     </Typography>
                   </Alert>
@@ -912,15 +948,12 @@ const Devices = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={Boolean(deviceToDelete)}
-        onClose={() => setDeviceToDelete(null)}
-      >
+      <Dialog open={Boolean(deviceToDelete)} onClose={() => setDeviceToDelete(null)}>
         <DialogTitle>Confirm Device Deletion</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete device "{deviceToDelete?.name}"?
-            This action cannot be undone and will remove all associated telemetry data.
+            Are you sure you want to delete device "{deviceToDelete?.name}"? This action cannot be
+            undone and will remove all associated telemetry data.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -933,11 +966,7 @@ const Devices = () => {
 
       {/* Actions Menu */}
       {menuDevice && (
-        <DeviceActionsMenu
-          device={menuDevice}
-          anchorEl={menuAnchor}
-          onClose={closeMenu}
-        />
+        <DeviceActionsMenu device={menuDevice} anchorEl={menuAnchor} onClose={closeMenu} />
       )}
 
       {/* Device Control Dialog */}

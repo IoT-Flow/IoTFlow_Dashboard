@@ -41,7 +41,7 @@ const TopBar = ({ onMenuClick }) => {
     clearNotification,
     clearAllNotifications,
     markNotificationAsRead,
-    markAllNotificationsAsRead
+    markAllNotificationsAsRead,
   } = useWebSocket();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -50,7 +50,7 @@ const TopBar = ({ onMenuClick }) => {
   // Calculate unread count
   const unreadCount = deviceNotifications.filter(n => !n.read).length;
 
-  const handleMenu = (event) => {
+  const handleMenu = event => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -70,12 +70,12 @@ const TopBar = ({ onMenuClick }) => {
 
   const handleNotificationClick = async () => {
     setNotificationDialogOpen(true);
-    
+
     // Mark all unread notifications as read when dialog opens
     const unreadNotifications = deviceNotifications.filter(n => !n.read);
     if (unreadNotifications.length > 0) {
       console.log(`📖 Marking ${unreadNotifications.length} notifications as read...`);
-      
+
       // Mark all unread notifications as read
       for (const notification of unreadNotifications) {
         await markNotificationAsRead(notification.id);
@@ -83,12 +83,16 @@ const TopBar = ({ onMenuClick }) => {
     }
   };
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = type => {
     switch (type) {
-      case 'error': return '🔴';
-      case 'warning': return '🟡';
-      case 'success': return '🟢';
-      default: return '🔵';
+      case 'error':
+        return '🔴';
+      case 'warning':
+        return '🟡';
+      case 'success':
+        return '🟢';
+      default:
+        return '🔵';
     }
   };
 
@@ -96,7 +100,7 @@ const TopBar = ({ onMenuClick }) => {
     <AppBar
       position="fixed"
       sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        zIndex: theme => theme.zIndex.drawer + 1,
         backgroundColor: '#fff',
         color: '#333',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -173,7 +177,7 @@ const TopBar = ({ onMenuClick }) => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
             PaperProps={{
-              sx: { minWidth: 200 }
+              sx: { minWidth: 200 },
             }}
           >
             <Box sx={{ px: 2, py: 1 }}>
@@ -215,16 +219,13 @@ const TopBar = ({ onMenuClick }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Typography variant="h6">
             Notifications ({deviceNotifications.length})
             {unreadCount > 0 && (
-              <Chip
-                label={`${unreadCount} unread`}
-                color="error"
-                size="small"
-                sx={{ ml: 1 }}
-              />
+              <Chip label={`${unreadCount} unread`} color="error" size="small" sx={{ ml: 1 }} />
             )}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -247,8 +248,8 @@ const TopBar = ({ onMenuClick }) => {
                   color: 'error.main',
                   '&:hover': {
                     backgroundColor: 'error.light',
-                    color: 'white'
-                  }
+                    color: 'white',
+                  },
                 }}
               >
                 <Typography variant="caption" sx={{ mr: 1, fontWeight: 600 }}>
@@ -262,16 +263,14 @@ const TopBar = ({ onMenuClick }) => {
           {deviceNotifications.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Notifications sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-              <Typography color="text.secondary">
-                No notifications yet
-              </Typography>
+              <Typography color="text.secondary">No notifications yet</Typography>
             </Box>
           ) : (
             <List>
               {deviceNotifications
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                 .slice(0, 10)
-                .map((notification) => (
+                .map(notification => (
                   <ListItem
                     key={notification.id}
                     sx={{
@@ -279,17 +278,24 @@ const TopBar = ({ onMenuClick }) => {
                       borderColor: 'divider',
                       backgroundColor: notification.read ? 'transparent' : 'action.hover',
                       '&:last-child': { borderBottom: 'none' },
-                      opacity: notification.read ? 0.7 : 1
+                      opacity: notification.read ? 0.7 : 1,
                     }}
                   >
                     <ListItemAvatar>
-                      <Avatar sx={{
-                        bgcolor: notification.type === 'error' ? 'error.main' :
-                          notification.type === 'warning' ? 'warning.main' :
-                            notification.type === 'success' ? 'success.main' : 'info.main',
-                        width: 32,
-                        height: 32
-                      }}>
+                      <Avatar
+                        sx={{
+                          bgcolor:
+                            notification.type === 'error'
+                              ? 'error.main'
+                              : notification.type === 'warning'
+                                ? 'warning.main'
+                                : notification.type === 'success'
+                                  ? 'success.main'
+                                  : 'info.main',
+                          width: 32,
+                          height: 32,
+                        }}
+                      >
                         <Typography variant="caption">
                           {getNotificationIcon(notification.type)}
                         </Typography>
@@ -302,7 +308,7 @@ const TopBar = ({ onMenuClick }) => {
                             variant="body2"
                             sx={{
                               fontWeight: notification.read ? 400 : 600,
-                              flex: 1
+                              flex: 1,
                             }}
                           >
                             {notification.message}
@@ -313,7 +319,7 @@ const TopBar = ({ onMenuClick }) => {
                                 width: 8,
                                 height: 8,
                                 bgcolor: 'primary.main',
-                                borderRadius: '50%'
+                                borderRadius: '50%',
                               }}
                             />
                           )}
@@ -351,8 +357,8 @@ const TopBar = ({ onMenuClick }) => {
                           color: 'error.main',
                           '&:hover': {
                             backgroundColor: 'error.light',
-                            color: 'white'
-                          }
+                            color: 'white',
+                          },
                         }}
                       >
                         🗑️

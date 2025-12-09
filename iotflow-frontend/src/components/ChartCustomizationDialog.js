@@ -31,7 +31,7 @@ import {
   ViewModule,
   WaterDrop,
   Waves,
-  WbSunny
+  WbSunny,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -55,7 +55,7 @@ import {
   Tab,
   Tabs,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -66,7 +66,7 @@ const ChartCustomizationDialog = ({
   devices = [],
   measurements = [], // This can now be empty - we'll fetch our own
   onSaveChart,
-  editingChart = null
+  editingChart = null,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -95,11 +95,11 @@ const ChartCustomizationDialog = ({
     yAxisMax: null,
     customColors: [],
     aggregation: 'none',
-    groupBy: 'device'
+    groupBy: 'device',
   });
 
   // Fetch available measurements for selected devices
-  const fetchMeasurementsForDevices = async (deviceIds) => {
+  const fetchMeasurementsForDevices = async deviceIds => {
     if (!deviceIds || deviceIds.length === 0) {
       setAvailableMeasurements([]);
       return;
@@ -118,7 +118,7 @@ const ChartCustomizationDialog = ({
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             params: {
               limit: 10, // Just get recent data to see what measurements are available
-            }
+            },
           });
 
           const telemetryRecords = response.data.telemetry || [];
@@ -131,7 +131,6 @@ const ChartCustomizationDialog = ({
               }
             });
           });
-
         } catch (deviceError) {
           console.warn(`Failed to fetch measurements for device ${deviceId}:`, deviceError);
         }
@@ -149,63 +148,336 @@ const ChartCustomizationDialog = ({
 
   const chartTypes = [
     // Line & Area Charts - IMPLEMENTED
-    { value: 'line', label: 'Line Chart', icon: <Timeline />, category: 'Line Charts', description: 'Classic line chart for time series data', status: 'ready' },
-    { value: 'spline', label: 'Smooth Line Chart', icon: <ShowChart />, category: 'Line Charts', description: 'Curved line chart with smooth transitions', status: 'ready' },
-    { value: 'area', label: 'Area Chart', icon: <Timeline />, category: 'Line Charts', description: 'Filled area chart showing data trends', status: 'ready' },
-    { value: 'step-line', label: 'Step Line Chart', icon: <Timeline />, category: 'Line Charts', description: 'Step-wise line chart for discrete data', status: 'ready' },
+    {
+      value: 'line',
+      label: 'Line Chart',
+      icon: <Timeline />,
+      category: 'Line Charts',
+      description: 'Classic line chart for time series data',
+      status: 'ready',
+    },
+    {
+      value: 'spline',
+      label: 'Smooth Line Chart',
+      icon: <ShowChart />,
+      category: 'Line Charts',
+      description: 'Curved line chart with smooth transitions',
+      status: 'ready',
+    },
+    {
+      value: 'area',
+      label: 'Area Chart',
+      icon: <Timeline />,
+      category: 'Line Charts',
+      description: 'Filled area chart showing data trends',
+      status: 'ready',
+    },
+    {
+      value: 'step-line',
+      label: 'Step Line Chart',
+      icon: <Timeline />,
+      category: 'Line Charts',
+      description: 'Step-wise line chart for discrete data',
+      status: 'ready',
+    },
 
     // Bar Charts - IMPLEMENTED
-    { value: 'bar', label: 'Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Vertical bar chart for comparing values', status: 'ready' },
-    { value: 'horizontal-bar', label: 'Horizontal Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Horizontal bar chart for comparing categories', status: 'ready' },
-    { value: 'stacked-bar', label: 'Stacked Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Stacked bars showing data composition', status: 'ready' },
-    { value: 'grouped-bar', label: 'Grouped Bar Chart', icon: <BarChart />, category: 'Bar Charts', description: 'Side-by-side bars for multiple series', status: 'ready' },
+    {
+      value: 'bar',
+      label: 'Bar Chart',
+      icon: <BarChart />,
+      category: 'Bar Charts',
+      description: 'Vertical bar chart for comparing values',
+      status: 'ready',
+    },
+    {
+      value: 'horizontal-bar',
+      label: 'Horizontal Bar Chart',
+      icon: <BarChart />,
+      category: 'Bar Charts',
+      description: 'Horizontal bar chart for comparing categories',
+      status: 'ready',
+    },
+    {
+      value: 'stacked-bar',
+      label: 'Stacked Bar Chart',
+      icon: <BarChart />,
+      category: 'Bar Charts',
+      description: 'Stacked bars showing data composition',
+      status: 'ready',
+    },
+    {
+      value: 'grouped-bar',
+      label: 'Grouped Bar Chart',
+      icon: <BarChart />,
+      category: 'Bar Charts',
+      description: 'Side-by-side bars for multiple series',
+      status: 'ready',
+    },
 
     // Circular Charts - IMPLEMENTED
-    { value: 'pie', label: 'Pie Chart', icon: <PieChart />, category: 'Circular Charts', description: 'Traditional pie chart for proportional data', status: 'ready' },
-    { value: 'doughnut', label: 'Doughnut Chart', icon: <DonutLarge />, category: 'Circular Charts', description: 'Ring-shaped chart with center space', status: 'ready' },
-    { value: 'rose', label: 'Rose/Nightingale Chart', icon: <Brightness1 />, category: 'Circular Charts', description: 'Polar chart with varying radius', status: 'ready' },
-    { value: 'sunburst', label: 'Sunburst Chart', icon: <WbSunny />, category: 'Circular Charts', description: 'Multi-level hierarchical chart', status: 'ready' },
+    {
+      value: 'pie',
+      label: 'Pie Chart',
+      icon: <PieChart />,
+      category: 'Circular Charts',
+      description: 'Traditional pie chart for proportional data',
+      status: 'ready',
+    },
+    {
+      value: 'doughnut',
+      label: 'Doughnut Chart',
+      icon: <DonutLarge />,
+      category: 'Circular Charts',
+      description: 'Ring-shaped chart with center space',
+      status: 'ready',
+    },
+    {
+      value: 'rose',
+      label: 'Rose/Nightingale Chart',
+      icon: <Brightness1 />,
+      category: 'Circular Charts',
+      description: 'Polar chart with varying radius',
+      status: 'ready',
+    },
+    {
+      value: 'sunburst',
+      label: 'Sunburst Chart',
+      icon: <WbSunny />,
+      category: 'Circular Charts',
+      description: 'Multi-level hierarchical chart',
+      status: 'ready',
+    },
 
     // Scientific Charts - IMPLEMENTED
-    { value: 'scatter', label: 'Scatter Plot', icon: <ScatterPlot />, category: 'Scientific Charts', description: 'X-Y scatter plot for correlation analysis', status: 'ready' },
-    { value: 'bubble', label: 'Bubble Chart', icon: <BubbleChart />, category: 'Scientific Charts', description: '3D scatter plot with bubble sizes', status: 'ready' },
-    { value: 'heatmap', label: 'Heat Map', icon: <GridView />, category: 'Scientific Charts', description: 'Color-coded data matrix visualization', status: 'ready' },
-    { value: 'candlestick', label: 'Candlestick Chart', icon: <Assessment />, category: 'Scientific Charts', description: 'OHLC financial data visualization', status: 'coming-soon' },
+    {
+      value: 'scatter',
+      label: 'Scatter Plot',
+      icon: <ScatterPlot />,
+      category: 'Scientific Charts',
+      description: 'X-Y scatter plot for correlation analysis',
+      status: 'ready',
+    },
+    {
+      value: 'bubble',
+      label: 'Bubble Chart',
+      icon: <BubbleChart />,
+      category: 'Scientific Charts',
+      description: '3D scatter plot with bubble sizes',
+      status: 'ready',
+    },
+    {
+      value: 'heatmap',
+      label: 'Heat Map',
+      icon: <GridView />,
+      category: 'Scientific Charts',
+      description: 'Color-coded data matrix visualization',
+      status: 'ready',
+    },
+    {
+      value: 'candlestick',
+      label: 'Candlestick Chart',
+      icon: <Assessment />,
+      category: 'Scientific Charts',
+      description: 'OHLC financial data visualization',
+      status: 'coming-soon',
+    },
 
     // Gauges & Meters - IMPLEMENTED
-    { value: 'gauge', label: 'Analog Gauge', icon: <Speed />, category: 'Gauges', description: 'Classic circular gauge meter', status: 'ready' },
-    { value: 'speedometer', label: 'Speedometer', icon: <Speed />, category: 'Gauges', description: 'Automotive-style speedometer gauge', status: 'ready' },
-    { value: 'progress-gauge', label: 'Progress Gauge', icon: <Assessment />, category: 'Gauges', description: 'Progress indicator gauge', status: 'ready' },
-    { value: 'multi-gauge', label: 'Multi-Needle Gauge', icon: <Speed />, category: 'Gauges', description: 'Multiple values on single gauge', status: 'ready' },
+    {
+      value: 'gauge',
+      label: 'Analog Gauge',
+      icon: <Speed />,
+      category: 'Gauges',
+      description: 'Classic circular gauge meter',
+      status: 'ready',
+    },
+    {
+      value: 'speedometer',
+      label: 'Speedometer',
+      icon: <Speed />,
+      category: 'Gauges',
+      description: 'Automotive-style speedometer gauge',
+      status: 'ready',
+    },
+    {
+      value: 'progress-gauge',
+      label: 'Progress Gauge',
+      icon: <Assessment />,
+      category: 'Gauges',
+      description: 'Progress indicator gauge',
+      status: 'ready',
+    },
+    {
+      value: 'multi-gauge',
+      label: 'Multi-Needle Gauge',
+      icon: <Speed />,
+      category: 'Gauges',
+      description: 'Multiple values on single gauge',
+      status: 'ready',
+    },
 
     // Specialized Gauges - IMPLEMENTED
-    { value: 'thermometer', label: 'Thermometer', icon: <Thermostat />, category: 'Specialized', description: 'Temperature display thermometer', status: 'ready' },
-    { value: 'tank-level', label: 'Tank Level Indicator', icon: <WaterDrop />, category: 'Specialized', description: 'Liquid level indicator', status: 'ready' },
-    { value: 'battery-level', label: 'Battery Level', icon: <BatteryFull />, category: 'Specialized', description: 'Battery charge indicator', status: 'ready' },
-    { value: 'signal-strength', label: 'Signal Strength', icon: <SignalWifi4Bar />, category: 'Specialized', description: 'Wireless signal indicator', status: 'ready' },
+    {
+      value: 'thermometer',
+      label: 'Thermometer',
+      icon: <Thermostat />,
+      category: 'Specialized',
+      description: 'Temperature display thermometer',
+      status: 'ready',
+    },
+    {
+      value: 'tank-level',
+      label: 'Tank Level Indicator',
+      icon: <WaterDrop />,
+      category: 'Specialized',
+      description: 'Liquid level indicator',
+      status: 'ready',
+    },
+    {
+      value: 'battery-level',
+      label: 'Battery Level',
+      icon: <BatteryFull />,
+      category: 'Specialized',
+      description: 'Battery charge indicator',
+      status: 'ready',
+    },
+    {
+      value: 'signal-strength',
+      label: 'Signal Strength',
+      icon: <SignalWifi4Bar />,
+      category: 'Specialized',
+      description: 'Wireless signal indicator',
+      status: 'ready',
+    },
 
     // Geographic & Network - COMING SOON
-    { value: 'map-scatter', label: 'Map Scatter', icon: <Map />, category: 'Geographic', description: 'Geo-located data points on map', status: 'coming-soon' },
-    { value: 'heatmap-geo', label: 'Geographic Heatmap', icon: <MapOutlined />, category: 'Geographic', description: 'Heat intensity on geographic map', status: 'coming-soon' },
-    { value: 'network-graph', label: 'Network Graph', icon: <AccountTree />, category: 'Network', description: 'Node-link network visualization', status: 'coming-soon' },
-    { value: 'sankey', label: 'Sankey Diagram', icon: <Waves />, category: 'Network', description: 'Flow diagram showing connections', status: 'coming-soon' },
+    {
+      value: 'map-scatter',
+      label: 'Map Scatter',
+      icon: <Map />,
+      category: 'Geographic',
+      description: 'Geo-located data points on map',
+      status: 'coming-soon',
+    },
+    {
+      value: 'heatmap-geo',
+      label: 'Geographic Heatmap',
+      icon: <MapOutlined />,
+      category: 'Geographic',
+      description: 'Heat intensity on geographic map',
+      status: 'coming-soon',
+    },
+    {
+      value: 'network-graph',
+      label: 'Network Graph',
+      icon: <AccountTree />,
+      category: 'Network',
+      description: 'Node-link network visualization',
+      status: 'coming-soon',
+    },
+    {
+      value: 'sankey',
+      label: 'Sankey Diagram',
+      icon: <Waves />,
+      category: 'Network',
+      description: 'Flow diagram showing connections',
+      status: 'coming-soon',
+    },
 
     // Time Series Specialized - COMING SOON
-    { value: 'timeline', label: 'Timeline Chart', icon: <Timeline />, category: 'Timeline', description: 'Event timeline visualization', status: 'coming-soon' },
-    { value: 'gantt', label: 'Gantt Chart', icon: <DateRange />, category: 'Timeline', description: 'Project timeline and scheduling', status: 'coming-soon' },
-    { value: 'calendar', label: 'Calendar Heatmap', icon: <CalendarToday />, category: 'Timeline', description: 'Calendar-based data visualization', status: 'coming-soon' },
+    {
+      value: 'timeline',
+      label: 'Timeline Chart',
+      icon: <Timeline />,
+      category: 'Timeline',
+      description: 'Event timeline visualization',
+      status: 'coming-soon',
+    },
+    {
+      value: 'gantt',
+      label: 'Gantt Chart',
+      icon: <DateRange />,
+      category: 'Timeline',
+      description: 'Project timeline and scheduling',
+      status: 'coming-soon',
+    },
+    {
+      value: 'calendar',
+      label: 'Calendar Heatmap',
+      icon: <CalendarToday />,
+      category: 'Timeline',
+      description: 'Calendar-based data visualization',
+      status: 'coming-soon',
+    },
 
     // Industrial & IoT - IMPLEMENTED
-    { value: 'funnel', label: 'Funnel Chart', icon: <CompareArrows />, category: 'Industrial', description: 'Process funnel visualization', status: 'ready' },
-    { value: 'radar', label: 'Radar Chart', icon: <Navigation />, category: 'Industrial', description: 'Multi-dimensional data comparison', status: 'ready' },
-    { value: 'liquid-fill', label: 'Liquid Fill Gauge', icon: <LocalGasStation />, category: 'Industrial', description: 'Animated liquid-filled gauge', status: 'ready' },
-    { value: 'tree', label: 'Tree Diagram', icon: <AccountTree />, category: 'Industrial', description: 'Hierarchical tree structure', status: 'coming-soon' },
+    {
+      value: 'funnel',
+      label: 'Funnel Chart',
+      icon: <CompareArrows />,
+      category: 'Industrial',
+      description: 'Process funnel visualization',
+      status: 'ready',
+    },
+    {
+      value: 'radar',
+      label: 'Radar Chart',
+      icon: <Navigation />,
+      category: 'Industrial',
+      description: 'Multi-dimensional data comparison',
+      status: 'ready',
+    },
+    {
+      value: 'liquid-fill',
+      label: 'Liquid Fill Gauge',
+      icon: <LocalGasStation />,
+      category: 'Industrial',
+      description: 'Animated liquid-filled gauge',
+      status: 'ready',
+    },
+    {
+      value: 'tree',
+      label: 'Tree Diagram',
+      icon: <AccountTree />,
+      category: 'Industrial',
+      description: 'Hierarchical tree structure',
+      status: 'coming-soon',
+    },
 
     // Information Cards - IMPLEMENTED
-    { value: 'value-card', label: 'Value Display Card', icon: <ViewModule />, category: 'Cards', description: 'Simple numeric value display', status: 'ready' },
-    { value: 'metric-card', label: 'Metric Card', icon: <Assessment />, category: 'Cards', description: 'KPI metric with trend indicator', status: 'ready' },
-    { value: 'status-card', label: 'Status Card', icon: <ViewCompact />, category: 'Cards', description: 'Device/system status display', status: 'ready' },
-    { value: 'comparison-card', label: 'Comparison Card', icon: <CompareArrows />, category: 'Cards', description: 'Side-by-side value comparison', status: 'ready' }
+    {
+      value: 'value-card',
+      label: 'Value Display Card',
+      icon: <ViewModule />,
+      category: 'Cards',
+      description: 'Simple numeric value display',
+      status: 'ready',
+    },
+    {
+      value: 'metric-card',
+      label: 'Metric Card',
+      icon: <Assessment />,
+      category: 'Cards',
+      description: 'KPI metric with trend indicator',
+      status: 'ready',
+    },
+    {
+      value: 'status-card',
+      label: 'Status Card',
+      icon: <ViewCompact />,
+      category: 'Cards',
+      description: 'Device/system status display',
+      status: 'ready',
+    },
+    {
+      value: 'comparison-card',
+      label: 'Comparison Card',
+      icon: <CompareArrows />,
+      category: 'Cards',
+      description: 'Side-by-side value comparison',
+      status: 'ready',
+    },
   ];
 
   // Widget categories
@@ -222,15 +494,16 @@ const ChartCustomizationDialog = ({
     'Network',
     'Timeline',
     'Industrial',
-    'Cards'
+    'Cards',
   ];
 
   // Filter chart types by category
-  const filteredChartTypes = selectedCategory === 'All'
-    ? chartTypes
-    : selectedCategory === 'Ready Now'
-      ? chartTypes.filter(type => type.status === 'ready')
-      : chartTypes.filter(type => type.category === selectedCategory);
+  const filteredChartTypes =
+    selectedCategory === 'All'
+      ? chartTypes
+      : selectedCategory === 'Ready Now'
+        ? chartTypes.filter(type => type.status === 'ready')
+        : chartTypes.filter(type => type.category === selectedCategory);
 
   const timeRanges = [
     { value: '15m', label: 'Last 15 minutes' },
@@ -239,7 +512,7 @@ const ChartCustomizationDialog = ({
     { value: '24h', label: 'Last 24 hours' },
     { value: '7d', label: 'Last 7 days' },
     { value: '30d', label: 'Last 30 days' },
-    { value: 'custom', label: 'Custom Range' }
+    { value: 'custom', label: 'Custom Range' },
   ];
 
   const aggregationTypes = [
@@ -248,7 +521,7 @@ const ChartCustomizationDialog = ({
     { value: 'min', label: 'Minimum' },
     { value: 'max', label: 'Maximum' },
     { value: 'sum', label: 'Sum' },
-    { value: 'count', label: 'Count' }
+    { value: 'count', label: 'Count' },
   ];
 
   useEffect(() => {
@@ -276,7 +549,7 @@ const ChartCustomizationDialog = ({
         yAxisMax: null,
         customColors: [],
         aggregation: 'none',
-        groupBy: 'device'
+        groupBy: 'device',
       };
 
       const mergedConfig = { ...defaultConfig, ...editingChart };
@@ -290,7 +563,10 @@ const ChartCustomizationDialog = ({
 
       // Fetch measurements for the devices in the chart being edited
       if (editingChart.devices && editingChart.devices.length > 0) {
-        console.debug('[ChartCustomizationDialog] Fetching measurements for devices:', editingChart.devices);
+        console.debug(
+          '[ChartCustomizationDialog] Fetching measurements for devices:',
+          editingChart.devices
+        );
         fetchMeasurementsForDevices(editingChart.devices);
       }
     } else {
@@ -317,7 +593,7 @@ const ChartCustomizationDialog = ({
         yAxisMax: null,
         customColors: [],
         aggregation: 'none',
-        groupBy: 'device'
+        groupBy: 'device',
       });
       setSelectedCategory('Ready Now');
       setAvailableMeasurements([]);
@@ -327,11 +603,11 @@ const ChartCustomizationDialog = ({
   const handleConfigChange = (field, value) => {
     setChartConfig(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleDeviceToggle = (deviceId) => {
+  const handleDeviceToggle = deviceId => {
     const currentDevices = chartConfig.devices || [];
     // Ensure consistent data types for comparison
     const deviceIdString = String(deviceId);
@@ -344,7 +620,7 @@ const ChartCustomizationDialog = ({
       currentDevices,
       currentDevicesStrings,
       isSelected,
-      allDevices: devices.map(d => ({ id: d.id, name: d.name }))
+      allDevices: devices.map(d => ({ id: d.id, name: d.name })),
     });
 
     let newDevices;
@@ -374,18 +650,18 @@ const ChartCustomizationDialog = ({
   //   }
   // };
 
-  const handleMeasurementToggle = (measurement) => {
+  const handleMeasurementToggle = measurement => {
     const current = chartConfig.measurements || [];
     const isSelected = current.includes(measurement);
     if (isSelected) {
       setChartConfig(prev => ({
         ...prev,
-        measurements: current.filter(m => m !== measurement)
+        measurements: current.filter(m => m !== measurement),
       }));
     } else {
       setChartConfig(prev => ({
         ...prev,
-        measurements: [...current, measurement]
+        measurements: [...current, measurement],
       }));
     }
   };
@@ -412,8 +688,9 @@ const ChartCustomizationDialog = ({
       chartConfig.measurements.forEach((dataType, typeIndex) => {
         // Remove reference to availableDataTypes
         // Use the measurement string directly
-        const color = chartConfig.customColors[deviceIndex * chartConfig.measurements.length + typeIndex] ||
-          `hsl(${(deviceIndex * 360 / chartConfig.devices.length + typeIndex * 60) % 360}, 70%, 50%)`;
+        const color =
+          chartConfig.customColors[deviceIndex * chartConfig.measurements.length + typeIndex] ||
+          `hsl(${((deviceIndex * 360) / chartConfig.devices.length + typeIndex * 60) % 360}, 70%, 50%)`;
 
         const data = labels.map(() => {
           // Generate realistic sample data based on data type
@@ -440,7 +717,7 @@ const ChartCustomizationDialog = ({
           fill: chartConfig.fillArea,
           borderWidth: chartConfig.lineWidth,
           pointStyle: chartConfig.pointStyle,
-          tension: 0.4
+          tension: 0.4,
         });
       });
     });
@@ -451,11 +728,7 @@ const ChartCustomizationDialog = ({
   const renderPreviewChart = () => {
     const data = generatePreviewData();
     if (!data) {
-      return (
-        <Alert severity="info">
-          Select devices and data types to see preview
-        </Alert>
-      );
+      return <Alert severity="info">Select devices and data types to see preview</Alert>;
     }
 
     const options = {
@@ -500,7 +773,7 @@ const ChartCustomizationDialog = ({
           bgcolor: 'background.paper',
           border: '1px dashed',
           borderColor: 'divider',
-          borderRadius: 1
+          borderRadius: 1,
         }}
       >
         <Typography variant="body2" color="text.secondary">
@@ -530,12 +803,14 @@ const ChartCustomizationDialog = ({
       // measurement: selectedMeasurement,
       id: editingChart?.id || Date.now().toString(),
       createdAt: editingChart?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     onSaveChart(chartToSave);
     onClose();
-    toast.success(`Chart "${chartConfig.name}" ${editingChart ? 'updated' : 'created'} successfully`);
+    toast.success(
+      `Chart "${chartConfig.name}" ${editingChart ? 'updated' : 'created'} successfully`
+    );
   };
 
   const tabPanels = [
@@ -549,7 +824,7 @@ const ChartCustomizationDialog = ({
               fullWidth
               label="Chart Name"
               value={chartConfig.name}
-              onChange={(e) => handleConfigChange('name', e.target.value)}
+              onChange={e => handleConfigChange('name', e.target.value)}
               placeholder="e.g., Temperature Monitoring"
               required
             />
@@ -560,7 +835,7 @@ const ChartCustomizationDialog = ({
               fullWidth
               label="Chart Title"
               value={chartConfig.title}
-              onChange={(e) => handleConfigChange('title', e.target.value)}
+              onChange={e => handleConfigChange('title', e.target.value)}
               placeholder="e.g., Device Temperature Over Time"
             />
           </Grid>
@@ -572,7 +847,7 @@ const ChartCustomizationDialog = ({
               multiline
               rows={2}
               value={chartConfig.description}
-              onChange={(e) => handleConfigChange('description', e.target.value)}
+              onChange={e => handleConfigChange('description', e.target.value)}
               placeholder="Brief description of what this chart shows..."
             />
           </Grid>
@@ -583,7 +858,8 @@ const ChartCustomizationDialog = ({
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Choose from our comprehensive collection of ECharts-based visualization widgets.
-              Charts marked with ✓ Ready are fully implemented, while 🔄 Soon indicates features in development.
+              Charts marked with ✓ Ready are fully implemented, while 🔄 Soon indicates features in
+              development.
             </Typography>
           </Grid>
 
@@ -593,9 +869,9 @@ const ChartCustomizationDialog = ({
               <Select
                 value={selectedCategory}
                 label="Widget Category"
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={e => setSelectedCategory(e.target.value)}
               >
-                {categories.map((category) => (
+                {categories.map(category => (
                   <MenuItem key={category} value={category}>
                     {category}
                   </MenuItem>
@@ -610,7 +886,7 @@ const ChartCustomizationDialog = ({
               <Select
                 value={chartConfig.type}
                 label="Widget Type"
-                onChange={(e) => handleConfigChange('type', e.target.value)}
+                onChange={e => handleConfigChange('type', e.target.value)}
                 MenuProps={{
                   PaperProps: {
                     style: {
@@ -619,12 +895,22 @@ const ChartCustomizationDialog = ({
                   },
                 }}
               >
-                {filteredChartTypes.map((type) => (
-                  <MenuItem key={type.value} value={type.value} disabled={type.status === 'coming-soon'}>
+                {filteredChartTypes.map(type => (
+                  <MenuItem
+                    key={type.value}
+                    value={type.value}
+                    disabled={type.status === 'coming-soon'}
+                  >
                     <Box display="flex" flexDirection="column" width="100%" py={0.5}>
                       <Box display="flex" alignItems="center" width="100%">
                         {type.icon}
-                        <Typography sx={{ ml: 1, flexGrow: 1, opacity: type.status === 'coming-soon' ? 0.6 : 1 }}>
+                        <Typography
+                          sx={{
+                            ml: 1,
+                            flexGrow: 1,
+                            opacity: type.status === 'coming-soon' ? 0.6 : 1,
+                          }}
+                        >
                           {type.label}
                         </Typography>
                         <Box display="flex" alignItems="center" gap={0.5}>
@@ -650,7 +936,7 @@ const ChartCustomizationDialog = ({
                           ml: 3,
                           mt: 0.5,
                           fontStyle: 'italic',
-                          opacity: type.status === 'coming-soon' ? 0.6 : 1
+                          opacity: type.status === 'coming-soon' ? 0.6 : 1,
                         }}
                       >
                         {type.description}
@@ -665,7 +951,8 @@ const ChartCustomizationDialog = ({
 
           <Grid item xs={12}>
             <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-              💡 Selected: {(() => {
+              💡 Selected:{' '}
+              {(() => {
                 const selectedType = filteredChartTypes.find(t => t.value === chartConfig.type);
                 if (!selectedType) return 'Select a chart type above';
                 return `${selectedType.description} ${selectedType.status === 'ready' ? '(✓ Ready to use)' : '(🔄 Coming soon)'}`;
@@ -679,9 +966,9 @@ const ChartCustomizationDialog = ({
               <Select
                 value={chartConfig.timeRange}
                 label="Time Range"
-                onChange={(e) => handleConfigChange('timeRange', e.target.value)}
+                onChange={e => handleConfigChange('timeRange', e.target.value)}
               >
-                {timeRanges.map((range) => (
+                {timeRanges.map(range => (
                   <MenuItem key={range.value} value={range.value}>
                     {range.label}
                   </MenuItem>
@@ -696,9 +983,9 @@ const ChartCustomizationDialog = ({
               <Select
                 value={chartConfig.aggregation}
                 label="Data Aggregation"
-                onChange={(e) => handleConfigChange('aggregation', e.target.value)}
+                onChange={e => handleConfigChange('aggregation', e.target.value)}
               >
-                {aggregationTypes.map((agg) => (
+                {aggregationTypes.map(agg => (
                   <MenuItem key={agg.value} value={agg.value}>
                     {agg.label}
                   </MenuItem>
@@ -713,12 +1000,12 @@ const ChartCustomizationDialog = ({
               label="Refresh Interval (seconds)"
               type="number"
               value={chartConfig.refreshInterval}
-              onChange={(e) => handleConfigChange('refreshInterval', parseInt(e.target.value))}
+              onChange={e => handleConfigChange('refreshInterval', parseInt(e.target.value))}
               inputProps={{ min: 5, max: 300 }}
             />
           </Grid>
         </Grid>
-      )
+      ),
     },
     {
       label: 'Data Sources',
@@ -730,7 +1017,7 @@ const ChartCustomizationDialog = ({
               Select Devices
             </Typography>
             <Grid container spacing={1}>
-              {devices.map((device) => {
+              {devices.map(device => {
                 // Ensure device ID comparison is consistent (handle both string and number types)
                 const deviceId = String(device.id);
                 const chartDevices = (chartConfig.devices || []).map(id => String(id));
@@ -742,7 +1029,7 @@ const ChartCustomizationDialog = ({
                   deviceName: device.name,
                   isSelected,
                   chartConfigDevices: chartConfig.devices,
-                  chartDevicesString: chartDevices
+                  chartDevicesString: chartDevices,
                 });
 
                 return (
@@ -771,11 +1058,12 @@ const ChartCustomizationDialog = ({
               </Alert>
             ) : availableMeasurements.length === 0 && !loadingMeasurements ? (
               <Alert severity="warning" sx={{ mt: 1 }}>
-                No measurements found for selected devices. Make sure the devices have recent telemetry data.
+                No measurements found for selected devices. Make sure the devices have recent
+                telemetry data.
               </Alert>
             ) : (
               <Grid container spacing={1}>
-                {availableMeasurements.map((m) => (
+                {availableMeasurements.map(m => (
                   <Grid item key={m}>
                     <Chip
                       label={m}
@@ -810,12 +1098,14 @@ const ChartCustomizationDialog = ({
           {chartConfig.devices?.length > 0 && chartConfig.dataTypes?.length > 0 && (
             <Grid item xs={12}>
               <Alert severity="info">
-                This chart will display {chartConfig.devices.length} device(s) × {chartConfig.dataTypes.length} data type(s) = {chartConfig.devices.length * chartConfig.dataTypes.length} data series
+                This chart will display {chartConfig.devices.length} device(s) ×{' '}
+                {chartConfig.dataTypes.length} data type(s) ={' '}
+                {chartConfig.devices.length * chartConfig.dataTypes.length} data series
               </Alert>
             </Grid>
           )}
         </Grid>
-      )
+      ),
     },
     {
       label: 'Appearance',
@@ -827,7 +1117,7 @@ const ChartCustomizationDialog = ({
               control={
                 <Switch
                   checked={chartConfig.showLegend}
-                  onChange={(e) => handleConfigChange('showLegend', e.target.checked)}
+                  onChange={e => handleConfigChange('showLegend', e.target.checked)}
                 />
               }
               label="Show Legend"
@@ -839,7 +1129,7 @@ const ChartCustomizationDialog = ({
               control={
                 <Switch
                   checked={chartConfig.showGrid}
-                  onChange={(e) => handleConfigChange('showGrid', e.target.checked)}
+                  onChange={e => handleConfigChange('showGrid', e.target.checked)}
                 />
               }
               label="Show Grid"
@@ -851,7 +1141,7 @@ const ChartCustomizationDialog = ({
               control={
                 <Switch
                   checked={chartConfig.animations}
-                  onChange={(e) => handleConfigChange('animations', e.target.checked)}
+                  onChange={e => handleConfigChange('animations', e.target.checked)}
                 />
               }
               label="Enable Animations"
@@ -863,7 +1153,7 @@ const ChartCustomizationDialog = ({
               control={
                 <Switch
                   checked={chartConfig.fillArea}
-                  onChange={(e) => handleConfigChange('fillArea', e.target.checked)}
+                  onChange={e => handleConfigChange('fillArea', e.target.checked)}
                 />
               }
               label="Fill Area (Line Charts)"
@@ -895,7 +1185,7 @@ const ChartCustomizationDialog = ({
                 { value: 1, label: '1:1' },
                 { value: 2, label: '2:1' },
                 { value: 3, label: '3:1' },
-                { value: 4, label: '4:1' }
+                { value: 4, label: '4:1' },
               ]}
               valueLabelDisplay="auto"
             />
@@ -907,7 +1197,9 @@ const ChartCustomizationDialog = ({
               label="Y-Axis Minimum"
               type="number"
               value={chartConfig.yAxisMin || ''}
-              onChange={(e) => handleConfigChange('yAxisMin', e.target.value ? parseFloat(e.target.value) : null)}
+              onChange={e =>
+                handleConfigChange('yAxisMin', e.target.value ? parseFloat(e.target.value) : null)
+              }
               placeholder="Auto"
             />
           </Grid>
@@ -918,12 +1210,14 @@ const ChartCustomizationDialog = ({
               label="Y-Axis Maximum"
               type="number"
               value={chartConfig.yAxisMax || ''}
-              onChange={(e) => handleConfigChange('yAxisMax', e.target.value ? parseFloat(e.target.value) : null)}
+              onChange={e =>
+                handleConfigChange('yAxisMax', e.target.value ? parseFloat(e.target.value) : null)
+              }
               placeholder="Auto"
             />
           </Grid>
         </Grid>
-      )
+      ),
     },
     {
       label: 'Preview',
@@ -935,8 +1229,8 @@ const ChartCustomizationDialog = ({
           </Typography>
           {renderPreviewChart()}
         </Box>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -946,7 +1240,7 @@ const ChartCustomizationDialog = ({
       maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { minHeight: '80vh' }
+        sx: { minHeight: '80vh' },
       }}
     >
       <DialogTitle>
@@ -964,25 +1258,16 @@ const ChartCustomizationDialog = ({
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
             {tabPanels.map((panel, index) => (
-              <Tab
-                key={index}
-                label={panel.label}
-                icon={panel.icon}
-                iconPosition="start"
-              />
+              <Tab key={index} label={panel.label} icon={panel.icon} iconPosition="start" />
             ))}
           </Tabs>
         </Box>
 
-        <Box sx={{ mt: 2 }}>
-          {tabPanels[activeTab]?.content}
-        </Box>
+        <Box sx={{ mt: 2 }}>{tabPanels[activeTab]?.content}</Box>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>
-          Cancel
-        </Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
           onClick={handleSave}

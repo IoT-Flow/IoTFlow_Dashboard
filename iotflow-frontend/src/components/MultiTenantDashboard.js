@@ -7,7 +7,7 @@ import {
   PowerSettingsNew,
   Refresh,
   Security,
-  TrendingUp
+  TrendingUp,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -27,11 +27,22 @@ import {
   ListItemText,
   Paper,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import apiService from '../services/apiService';
@@ -43,7 +54,7 @@ const Dashboard = () => {
     isConnected,
     realtimeUpdates = [],
     deviceNotifications = [],
-    telemetryData = {}
+    telemetryData = {},
   } = useWebSocket();
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -91,9 +102,8 @@ const Dashboard = () => {
         total_devices: devices.length,
         active_devices: devices.filter(d => d.status === 'active').length,
         total_messages: 1000,
-        last_updated: new Date().toISOString()
+        last_updated: new Date().toISOString(),
       });
-
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
       setError('Failed to load dashboard data');
@@ -105,23 +115,28 @@ const Dashboard = () => {
   // Prepare chart data
   const deviceStatusData = [
     { name: 'Active', value: telemetryOverview?.active_devices || 0, color: '#4caf50' },
-    { name: 'Inactive', value: telemetryOverview?.inactive_devices || 0, color: '#f44336' }
+    { name: 'Inactive', value: telemetryOverview?.inactive_devices || 0, color: '#f44336' },
   ];
 
-  const deviceTypeData = Array.isArray(devices) ? devices.reduce((acc, device) => {
-    const type = device?.type || 'Unknown';
-    const existing = acc.find(item => item.type === type);
-    if (existing) {
-      existing.count++;
-    } else {
-      acc.push({ type, count: 1 });
-    }
-    return acc;
-  }, []) : [];
+  const deviceTypeData = Array.isArray(devices)
+    ? devices.reduce((acc, device) => {
+        const type = device?.type || 'Unknown';
+        const existing = acc.find(item => item.type === type);
+        if (existing) {
+          existing.count++;
+        } else {
+          acc.push({ type, count: 1 });
+        }
+        return acc;
+      }, [])
+    : [];
 
-  const recentUpdatesCount = Array.isArray(realtimeUpdates) ? realtimeUpdates.filter(update =>
-    update && update.timestamp && Date.now() - new Date(update.timestamp).getTime() < 300000 // Last 5 minutes
-  ).length : 0;
+  const recentUpdatesCount = Array.isArray(realtimeUpdates)
+    ? realtimeUpdates.filter(
+        update =>
+          update && update.timestamp && Date.now() - new Date(update.timestamp).getTime() < 300000 // Last 5 minutes
+      ).length
+    : 0;
   // console.log(devices);
   if (loading) {
     return (
@@ -152,9 +167,7 @@ const Dashboard = () => {
               </Avatar>
             </Grid>
             <Grid item xs>
-              <Typography variant="h6">
-                Welcome, {user.username}
-              </Typography>
+              <Typography variant="h6">Welcome, {user.username}</Typography>
               <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                 <Chip
                   icon={<Person />}
@@ -164,7 +177,7 @@ const Dashboard = () => {
                 />
                 <Chip
                   icon={<Security />}
-                  label={user.role ? user.role.toUpperCase() : (user.is_admin ? 'ADMIN' : 'USER')}
+                  label={user.role ? user.role.toUpperCase() : user.is_admin ? 'ADMIN' : 'USER'}
                   size="small"
                   color="info"
                 />
@@ -203,12 +216,8 @@ const Dashboard = () => {
                   <Devices />
                 </Avatar>
                 <Box>
-                  <Typography variant="h4">
-                    {devices?.length || 0}
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Total Devices
-                  </Typography>
+                  <Typography variant="h4">{devices?.length || 0}</Typography>
+                  <Typography color="text.secondary">Total Devices</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -226,9 +235,7 @@ const Dashboard = () => {
                   <Typography variant="h4">
                     {devices?.filter(device => device.status === 'active').length || 0}
                   </Typography>
-                  <Typography color="text.secondary">
-                    Active Devices
-                  </Typography>
+                  <Typography color="text.secondary">Active Devices</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -246,9 +253,7 @@ const Dashboard = () => {
                   <Typography variant="h4">
                     {telemetryOverview?.total_messages_today || 0}
                   </Typography>
-                  <Typography color="text.secondary">
-                    Messages Today
-                  </Typography>
+                  <Typography color="text.secondary">Messages Today</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -263,12 +268,8 @@ const Dashboard = () => {
                   <Notifications />
                 </Avatar>
                 <Box>
-                  <Typography variant="h4">
-                    {deviceNotifications.length}
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Notifications
-                  </Typography>
+                  <Typography variant="h4">{deviceNotifications.length}</Typography>
+                  <Typography color="text.secondary">Notifications</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -333,10 +334,15 @@ const Dashboard = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Recent Notifications
-                </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant="h6">Recent Notifications</Typography>
                 <Badge badgeContent={deviceNotifications.length} color="error">
                   <Notifications />
                 </Badge>
@@ -344,13 +350,19 @@ const Dashboard = () => {
               <Box sx={{ maxHeight: 250, overflow: 'auto' }}>
                 {(deviceNotifications || []).length > 0 ? (
                   <List dense>
-                    {(deviceNotifications || []).slice(0, 5).map((notif) => (
+                    {(deviceNotifications || []).slice(0, 5).map(notif => (
                       <ListItem key={notif.id}>
                         <ListItemAvatar>
-                          <Avatar sx={{
-                            bgcolor: notif.type === 'error' ? 'error.main' :
-                              notif.type === 'warning' ? 'warning.main' : 'success.main'
-                          }}>
+                          <Avatar
+                            sx={{
+                              bgcolor:
+                                notif.type === 'error'
+                                  ? 'error.main'
+                                  : notif.type === 'warning'
+                                    ? 'warning.main'
+                                    : 'success.main',
+                            }}
+                          >
                             <Notifications />
                           </Avatar>
                         </ListItemAvatar>
@@ -379,7 +391,7 @@ const Dashboard = () => {
                 Your Devices - Real-time Status
               </Typography>
               <Grid container spacing={2}>
-                {(devices || []).slice(0, 6).map((device) => (
+                {(devices || []).slice(0, 6).map(device => (
                   <Grid item xs={12} sm={6} md={4} key={device.id}>
                     <CustomChart deviceId={device.id} compact={true} />
                   </Grid>
@@ -433,11 +445,7 @@ const CustomDashboardTooltip = ({ active, payload, label }) => {
           </Typography>
         )}
         {payload.map((entry, index) => (
-          <Typography
-            key={index}
-            variant="body2"
-            sx={{ color: entry.color, margin: '2px 0' }}
-          >
+          <Typography key={index} variant="body2" sx={{ color: entry.color, margin: '2px 0' }}>
             {entry.name}: {entry.value}
           </Typography>
         ))}

@@ -36,35 +36,35 @@ const Sidebar = ({ open, onToggle }) => {
       path: '/overview',
       icon: <DashboardIcon />,
       description: 'Dashboard & device summary',
-      roles: ['user', 'admin']
+      roles: ['user', 'admin'],
     },
     {
       label: 'Devices',
       path: '/devices',
       icon: <DeviceHubIcon />,
       description: 'Device management',
-      roles: ['user', 'admin']
+      roles: ['user', 'admin'],
     },
     {
       label: 'Device Control',
       path: '/device-control',
       icon: <ControlPointIcon />,
       description: 'Send commands to devices',
-      roles: ['user', 'admin']
+      roles: ['user', 'admin'],
     },
     {
       label: 'Telemetry',
       path: '/telemetry',
       icon: <AnalyticsIcon />,
       description: 'Data visualization',
-      roles: ['user', 'admin']
+      roles: ['user', 'admin'],
     },
     {
       label: 'Profile',
       path: '/profile',
       icon: <PersonIcon />,
       description: 'User profile & settings',
-      roles: ['user', 'admin']
+      roles: ['user', 'admin'],
     },
     // Admin-only features
     {
@@ -72,20 +72,20 @@ const Sidebar = ({ open, onToggle }) => {
       path: '/mqtt',
       icon: <RouterIcon />,
       description: 'Message broker monitoring',
-      roles: ['admin']
+      roles: ['admin'],
     },
     {
       label: 'Admin',
       path: '/admin',
       icon: <SettingsIcon />,
       description: 'System administration',
-      roles: ['admin']
+      roles: ['admin'],
     },
   ].filter(item => item.roles.includes(user?.role || 'user'));
 
   const drawerWidth = open ? 240 : 70;
 
-  const handleNavigation = (path) => {
+  const handleNavigation = path => {
     navigate(path);
     if (isMobile) {
       onToggle();
@@ -136,7 +136,7 @@ const Sidebar = ({ open, onToggle }) => {
       {/* Navigation Items */}
       <Box sx={{ flexGrow: 1, py: 1 }}>
         <List sx={{ px: 1 }}>
-          {navigationItems.map((item) => {
+          {navigationItems.map(item => {
             const isActive = location.pathname === item.path;
 
             return (
@@ -172,8 +172,8 @@ const Sidebar = ({ open, onToggle }) => {
                         sx={{
                           '& .MuiTypography-root': {
                             fontWeight: isActive ? 600 : 400,
-                            fontSize: '0.9rem'
-                          }
+                            fontSize: '0.9rem',
+                          },
                         }}
                       />
                       <Typography
@@ -182,7 +182,7 @@ const Sidebar = ({ open, onToggle }) => {
                           color: isActive ? 'rgba(255,255,255,0.7)' : 'text.secondary',
                           display: 'block',
                           lineHeight: 1,
-                          mt: 0.5
+                          mt: 0.5,
                         }}
                       >
                         {item.description}
@@ -248,9 +248,7 @@ const Sidebar = ({ open, onToggle }) => {
         },
       }}
     >
-      <Box sx={{ mt: '64px' }}>
-        {drawerContent}
-      </Box>
+      <Box sx={{ mt: '64px' }}>{drawerContent}</Box>
     </Drawer>
   );
 };

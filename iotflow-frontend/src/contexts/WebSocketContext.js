@@ -40,9 +40,9 @@ export const WebSocketProvider = ({ children }) => {
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -59,7 +59,7 @@ export const WebSocketProvider = ({ children }) => {
           timestamp: n.created_at,
           user_id: n.user_id,
           read: n.is_read,
-          metadata: n.metadata
+          metadata: n.metadata,
         }));
 
         setDeviceNotifications(formattedNotifications);
@@ -102,17 +102,19 @@ export const WebSocketProvider = ({ children }) => {
 
         // Send authentication message with JWT token
         const token = localStorage.getItem('iotflow_token');
-        wsRef.current.send(JSON.stringify({
-          type: 'auth',
-          token: token,
-          user_id: user.id,
-          timestamp: new Date().toISOString()
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: 'auth',
+            token: token,
+            user_id: user.id,
+            timestamp: new Date().toISOString(),
+          })
+        );
 
         // Notifications will be loaded after auth_success message
       };
 
-      wsRef.current.onmessage = (event) => {
+      wsRef.current.onmessage = event => {
         try {
           const message = JSON.parse(event.data);
           handleWebSocketMessage(message);
@@ -135,11 +137,10 @@ export const WebSocketProvider = ({ children }) => {
         }
       };
 
-      wsRef.current.onerror = (error) => {
+      wsRef.current.onerror = error => {
         console.error('WebSocket error:', error);
         handleWebSocketError(error);
       };
-
     } catch (error) {
       console.error('WebSocket connection failed:', error);
       handleWebSocketError(error);
@@ -165,7 +166,7 @@ export const WebSocketProvider = ({ children }) => {
     // setDeviceNotifications([]);
   };
 
-  const handleWebSocketMessage = (message) => {
+  const handleWebSocketMessage = message => {
     try {
       // console.log('Received WebSocket message:', message);
 
@@ -205,7 +206,7 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const handleNotification = (notification) => {
+  const handleNotification = notification => {
     // Ensure notification belongs to current user
     if (notification.user_id !== user.id) {
       console.warn('Received notification for different user - ignoring');
@@ -224,7 +225,7 @@ export const WebSocketProvider = ({ children }) => {
       timestamp: notification.created_at,
       user_id: notification.user_id,
       read: notification.is_read || false,
-      metadata: notification.metadata
+      metadata: notification.metadata,
     };
 
     // Add to device notifications
@@ -253,7 +254,7 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const handleTelemetryUpdate = (data) => {
+  const handleTelemetryUpdate = data => {
     const { device_id, telemetry, timestamp } = data;
 
     // Update telemetry data for specific device
@@ -263,12 +264,12 @@ export const WebSocketProvider = ({ children }) => {
         ...telemetry,
         timestamp,
         device_id,
-        user_id: data.user_id
-      }
+        user_id: data.user_id,
+      },
     }));
   };
 
-  const handleDeviceStatusUpdate = (data) => {
+  const handleDeviceStatusUpdate = data => {
     const { device_id, status, last_seen } = data;
 
     setDeviceStatuses(prev => ({
@@ -277,8 +278,8 @@ export const WebSocketProvider = ({ children }) => {
         status,
         last_seen,
         timestamp: new Date().toISOString(),
-        user_id: data.user_id
-      }
+        user_id: data.user_id,
+      },
     }));
 
     // Show status change notification
@@ -289,26 +290,29 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const handleCommandResult = (data) => {
+  const handleCommandResult = data => {
     const { command_id, device_id, success, message } = data;
 
     setCommandResults(prev => ({
       ...prev,
       [command_id]: {
         ...data,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     }));
 
     // Add notification for command result
-    setDeviceNotifications(prev => [...prev, {
-      id: Date.now(),
-      type: success ? 'success' : 'error',
-      message: message || `Command ${success ? 'executed successfully' : 'failed'}`,
-      device_id,
-      timestamp: new Date().toISOString(),
-      user_id: data.user_id
-    }]);
+    setDeviceNotifications(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        type: success ? 'success' : 'error',
+        message: message || `Command ${success ? 'executed successfully' : 'failed'}`,
+        device_id,
+        timestamp: new Date().toISOString(),
+        user_id: data.user_id,
+      },
+    ]);
 
     // Show toast notification
     if (success) {
@@ -318,19 +322,22 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const handleSystemAlert = (data) => {
+  const handleSystemAlert = data => {
     const { alert_type, message, device_id, severity } = data;
 
     // Add to device notifications
-    setDeviceNotifications(prev => [...prev, {
-      id: Date.now(),
-      type: severity || 'info',
-      message,
-      device_id,
-      alert_type,
-      timestamp: new Date().toISOString(),
-      user_id: data.user_id
-    }]);
+    setDeviceNotifications(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        type: severity || 'info',
+        message,
+        device_id,
+        alert_type,
+        timestamp: new Date().toISOString(),
+        user_id: data.user_id,
+      },
+    ]);
 
     // Show alert notification based on severity
     switch (severity) {
@@ -348,39 +355,43 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const handleConnectionInfo = (data) => {
+  const handleConnectionInfo = data => {
     // console.log('WebSocket connection info:', data);
     if (data.message) {
       toast.success(data.message);
     }
   };
 
-  const handleWebSocketError = (error) => {
+  const handleWebSocketError = error => {
     console.error('WebSocket error:', error);
     setIsConnected(false);
     toast.error('Real-time connection lost. Attempting to reconnect...');
   };
 
   // Public methods for components to use
-  const subscribeToDevice = (deviceId) => {
+  const subscribeToDevice = deviceId => {
     if (wsRef.current && isConnected) {
-      wsRef.current.send(JSON.stringify({
-        type: 'subscribe',
-        device_id: deviceId,
-        user_id: user.id,
-        timestamp: new Date().toISOString()
-      }));
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'subscribe',
+          device_id: deviceId,
+          user_id: user.id,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   };
 
-  const unsubscribeFromDevice = (deviceId) => {
+  const unsubscribeFromDevice = deviceId => {
     if (wsRef.current && isConnected) {
-      wsRef.current.send(JSON.stringify({
-        type: 'unsubscribe',
-        device_id: deviceId,
-        user_id: user.id,
-        timestamp: new Date().toISOString()
-      }));
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'unsubscribe',
+          device_id: deviceId,
+          user_id: user.id,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   };
 
@@ -388,57 +399,64 @@ export const WebSocketProvider = ({ children }) => {
     if (wsRef.current && isConnected) {
       const commandId = `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
 
-      wsRef.current.send(JSON.stringify({
-        type: 'command',
-        command_id: commandId,
-        device_id: deviceId,
-        command,
-        params,
-        user_id: user.id,
-        timestamp: new Date().toISOString()
-      }));
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'command',
+          command_id: commandId,
+          device_id: deviceId,
+          command,
+          params,
+          user_id: user.id,
+          timestamp: new Date().toISOString(),
+        })
+      );
 
       return commandId;
     }
     return null;
   };
 
-  const requestDeviceState = (deviceId) => {
+  const requestDeviceState = deviceId => {
     if (wsRef.current && isConnected) {
-      wsRef.current.send(JSON.stringify({
-        type: 'request_state',
-        device_id: deviceId,
-        user_id: user.id,
-        timestamp: new Date().toISOString()
-      }));
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'request_state',
+          device_id: deviceId,
+          user_id: user.id,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   };
 
-  const getDeviceTelemetry = (deviceId) => {
+  const getDeviceTelemetry = deviceId => {
     return telemetryData[deviceId] || null;
   };
 
-  const getDeviceStatus = (deviceId) => {
+  const getDeviceStatus = deviceId => {
     return deviceStatuses[deviceId] || null;
   };
 
-  const getCommandResult = (commandId) => {
+  const getCommandResult = commandId => {
     return commandResults[commandId] || null;
   };
 
-  const clearNotification = async (notificationId) => {
+  const clearNotification = async notificationId => {
     try {
       // Remove from local state immediately for better UX
       setDeviceNotifications(prev => prev.filter(n => n.id !== notificationId));
 
       // Delete from backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications/${notificationId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/notifications/${notificationId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('iotflow_token')}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         console.error('Failed to delete notification from backend');
@@ -452,21 +470,24 @@ export const WebSocketProvider = ({ children }) => {
     }
   };
 
-  const markNotificationAsRead = async (notificationId) => {
+  const markNotificationAsRead = async notificationId => {
     try {
       // Update local state immediately for better UX
       setDeviceNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
       );
 
       // Update backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/notifications/${notificationId}/read`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('iotflow_token')}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         console.error('Failed to mark notification as read in backend');
@@ -483,17 +504,15 @@ export const WebSocketProvider = ({ children }) => {
   const markAllNotificationsAsRead = async () => {
     try {
       // Update local state immediately for better UX
-      setDeviceNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
+      setDeviceNotifications(prev => prev.map(n => ({ ...n, read: true })));
 
       // Update backend
       const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications/mark-all-read`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('iotflow_token')}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -517,9 +536,9 @@ export const WebSocketProvider = ({ children }) => {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/notifications`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('iotflow_token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('iotflow_token')}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -565,12 +584,8 @@ export const WebSocketProvider = ({ children }) => {
 
     // Connection management
     reconnect: connectWebSocket,
-    disconnect: disconnectWebSocket
+    disconnect: disconnectWebSocket,
   };
 
-  return (
-    <WebSocketContext.Provider value={value}>
-      {children}
-    </WebSocketContext.Provider>
-  );
+  return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
 };

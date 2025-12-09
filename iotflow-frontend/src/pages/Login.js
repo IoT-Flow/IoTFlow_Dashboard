@@ -21,13 +21,13 @@ const Login = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [loginData, setLoginData] = useState({
     emailOrUsername: '',
-    password: ''
+    password: '',
   });
   const [registerData, setRegisterData] = useState({
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -35,7 +35,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
 
-  const handleLoginSubmit = async (e) => {
+  const handleLoginSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -59,14 +59,17 @@ const Login = () => {
     }
   };
 
-  const handleRegisterSubmit = async (e) => {
+  const handleRegisterSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     // Validation
-    if (!registerData.username.trim() || !registerData.email.trim() ||
-      !registerData.password.trim()) {
+    if (
+      !registerData.username.trim() ||
+      !registerData.email.trim() ||
+      !registerData.password.trim()
+    ) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
@@ -91,17 +94,17 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleLoginChange = (field) => (e) => {
+  const handleLoginChange = field => e => {
     setLoginData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: e.target.value,
     }));
   };
 
-  const handleRegisterChange = (field) => (e) => {
+  const handleRegisterChange = field => e => {
     setRegisterData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: e.target.value,
     }));
   };
 
@@ -164,11 +167,7 @@ const Login = () => {
 
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-              <Tabs
-                value={activeTab}
-                onChange={(e, newValue) => setActiveTab(newValue)}
-                centered
-              >
+              <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered>
                 <Tab label="Sign In" />
                 <Tab label="Sign Up" />
               </Tabs>
@@ -183,7 +182,12 @@ const Login = () => {
             {/* Login Form */}
             {activeTab === 0 && (
               <Box component="form" onSubmit={handleLoginSubmit}>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  gutterBottom
+                  sx={{ fontWeight: 600, mb: 3 }}
+                >
                   Welcome Back
                 </Typography>
 
@@ -262,7 +266,12 @@ const Login = () => {
             {/* Registration Form */}
             {activeTab === 1 && (
               <Box component="form" onSubmit={handleRegisterSubmit}>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  gutterBottom
+                  sx={{ fontWeight: 600, mb: 3 }}
+                >
                   Create Account
                 </Typography>
 
@@ -389,16 +398,20 @@ const Login = () => {
                 <strong>Demo Credentials:</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                <strong>Admin:</strong> <code>admin@iotflow.com</code> / <code>admin</code> - Password: <code>admin123</code>
+                <strong>Admin:</strong> <code>admin@iotflow.com</code> / <code>admin</code> -
+                Password: <code>admin123</code>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                <strong>User 1:</strong> <code>john@iotflow.com</code> / <code>john</code> - Password: <code>john123</code>
+                <strong>User 1:</strong> <code>john@iotflow.com</code> / <code>john</code> -
+                Password: <code>john123</code>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                <strong>User 2:</strong> <code>alice@iotflow.com</code> / <code>alice</code> - Password: <code>alice123</code>
+                <strong>User 2:</strong> <code>alice@iotflow.com</code> / <code>alice</code> -
+                Password: <code>alice123</code>
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                Each user has their own set of devices to manage. Try different accounts to see user-specific device isolation.
+                Each user has their own set of devices to manage. Try different accounts to see
+                user-specific device isolation.
               </Typography>
             </Box>
           </CardContent>

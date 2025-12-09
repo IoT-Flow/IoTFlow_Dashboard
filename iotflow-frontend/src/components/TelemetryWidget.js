@@ -1,10 +1,4 @@
-import {
-  DeviceHub,
-  SignalWifi4Bar,
-  Speed,
-  Thermostat,
-  TrendingUp
-} from '@mui/icons-material';
+import { DeviceHub, SignalWifi4Bar, Speed, Thermostat, TrendingUp } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -13,7 +7,7 @@ import {
   Chip,
   CircularProgress,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
@@ -51,7 +45,7 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
     return telemetryData[deviceId] || null;
   };
 
-  const getDeviceIcon = (deviceType) => {
+  const getDeviceIcon = deviceType => {
     switch (deviceType?.toLowerCase()) {
       case 'temperature':
       case 'temperature_sensor':
@@ -67,7 +61,7 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status?.toLowerCase()) {
       case 'active':
         return 'success';
@@ -99,7 +93,9 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
   if (loading) {
     return (
       <Card sx={{ height: compact ? 200 : 300 }}>
-        <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <CardContent
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
+        >
           <CircularProgress />
         </CardContent>
       </Card>
@@ -109,7 +105,9 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
   if (error || !device) {
     return (
       <Card sx={{ height: compact ? 200 : 300 }}>
-        <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <CardContent
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
+        >
           <Typography color="error" variant="body2">
             {error || 'Device not found'}
           </Typography>
@@ -161,7 +159,11 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
                 .slice(0, compact ? 2 : 4)
                 .map(([key, value]) => (
                   <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ textTransform: 'capitalize' }}
+                    >
                       {key.replace(/_/g, ' ')}:
                     </Typography>
                     <Typography variant="body2" fontWeight="medium">
@@ -175,7 +177,9 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80 }}
+          >
             <Box sx={{ textAlign: 'center' }}>
               <TrendingUp sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
               <Typography variant="body2" color="text.secondary">

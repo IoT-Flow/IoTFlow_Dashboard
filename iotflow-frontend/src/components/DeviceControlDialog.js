@@ -12,7 +12,7 @@ import {
   Send,
   Settings,
   Stop,
-  Warning
+  Warning,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -40,7 +40,7 @@ import {
   Tabs,
   TextField,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -107,7 +107,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       const [statusResult, commandsResult, historyResult] = await Promise.all([
         apiService.getDeviceStatus(device.id),
         apiService.getDeviceCommands(device.id),
-        apiService.getCommandHistory(device.id, { limit: 10 })
+        apiService.getCommandHistory(device.id, { limit: 10 }),
       ]);
       if (statusResult.success) {
         setDeviceState(statusResult.data);
@@ -149,7 +149,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         if (params.hasOwnProperty('state') || params.hasOwnProperty('power')) {
           setDeviceState(prev => ({
             ...prev,
-            state: { ...prev?.state, ...params }
+            state: { ...prev?.state, ...params },
           }));
         }
         loadCommandHistory();
@@ -169,7 +169,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     setCustomParameters([...customParameters, { key: '', value: '' }]);
   };
 
-  const removeParameter = (index) => {
+  const removeParameter = index => {
     setCustomParameters(customParameters.filter((_, i) => i !== index));
   };
 
@@ -198,12 +198,16 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         }
       });
 
-      const result = await apiService.sendCustomDeviceControl(device.id, customCommand.trim(), parameters);
+      const result = await apiService.sendCustomDeviceControl(
+        device.id,
+        customCommand.trim(),
+        parameters
+      );
 
       if (result.success) {
         const commandData = {
           ...result.data,
-          sentAt: new Date().toISOString()
+          sentAt: new Date().toISOString(),
         };
         setSentCommands(prev => [commandData, ...prev]);
         toast.success(`Custom command '${customCommand}' sent successfully`);
@@ -225,7 +229,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     }
   };
 
-  const startStatusPolling = (controlId) => {
+  const startStatusPolling = controlId => {
     // Clear existing interval if any
     if (pollingIntervals[controlId]) {
       clearInterval(pollingIntervals[controlId]);
@@ -236,11 +240,13 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         const statusResult = await apiService.getControlCommandStatus(device.id, controlId);
         if (statusResult.success) {
           // Update the command status in sentCommands
-          setSentCommands(prev => prev.map(cmd =>
-            cmd.control_id === controlId
-              ? { ...cmd, ...statusResult.data, lastUpdated: new Date().toISOString() }
-              : cmd
-          ));
+          setSentCommands(prev =>
+            prev.map(cmd =>
+              cmd.control_id === controlId
+                ? { ...cmd, ...statusResult.data, lastUpdated: new Date().toISOString() }
+                : cmd
+            )
+          );
 
           // Stop polling if command is completed or failed
           if (['completed', 'failed'].includes(statusResult.data.status)) {
@@ -259,7 +265,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
 
     setPollingIntervals(prev => ({
       ...prev,
-      [controlId]: interval
+      [controlId]: interval,
     }));
 
     // Auto-stop polling after 2 minutes
@@ -286,7 +292,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
           ...cmd,
           control_id: cmd.control_id || cmd.id, // support both keys
           sentAt: cmd.created_at,
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
         }));
         const existingIds = new Set(sentCommands.map(cmd => cmd.control_id));
         const newCommands = pendingCommands.filter(cmd => !existingIds.has(cmd.control_id));
@@ -300,24 +306,45 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
   };
 
   // --- UI Utilities ---
-  const getCommandIcon = (command) => {
+  const getCommandIcon = command => {
     const iconMap = {
-      'power': <Power />, 'start': <PlayArrow />, 'stop': <Stop />, 'lock': <Settings />, 'unlock': <Settings />, 'open': <PlayArrow />, 'close': <Stop />
+      power: <Power />,
+      start: <PlayArrow />,
+      stop: <Stop />,
+      lock: <Settings />,
+      unlock: <Settings />,
+      open: <PlayArrow />,
+      close: <Stop />,
     };
     return iconMap[command] || <Settings />;
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
-      case 'executed': return <CheckCircle color="success" />;
-      case 'failed': return <Error color="error" />;
-      case 'pending': return <Schedule color="warning" />;
-      default: return <Warning />;
+      case 'executed':
+        return <CheckCircle color="success" />;
+      case 'failed':
+        return <Error color="error" />;
+      case 'pending':
+        return <Schedule color="warning" />;
+      default:
+        return <Warning />;
     }
   };
 
   const isControllableDevice = () => {
-    const controllableTypes = ['LED', 'Engine', 'Door Lock', 'Pump', 'Fan', 'Valve', 'Thermostat', 'Switch', 'Dimmer', 'Motor'];
+    const controllableTypes = [
+      'LED',
+      'Engine',
+      'Door Lock',
+      'Pump',
+      'Fan',
+      'Valve',
+      'Thermostat',
+      'Switch',
+      'Dimmer',
+      'Motor',
+    ];
     return controllableTypes.includes(device?.type);
   };
 
@@ -334,11 +361,16 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       <Grid container spacing={3}>
         {availableCommands.map((command, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>
-            <Card variant="outlined" sx={{ height: '100%', '&:hover': { boxShadow: 2, borderColor: 'primary.main' } }}>
+            <Card
+              variant="outlined"
+              sx={{ height: '100%', '&:hover': { boxShadow: 2, borderColor: 'primary.main' } }}
+            >
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
                   {getCommandIcon(command.name)}
-                  <Typography variant="h6" sx={{ ml: 1 }}>{command.label}</Typography>
+                  <Typography variant="h6" sx={{ ml: 1 }}>
+                    {command.label}
+                  </Typography>
                 </Box>
                 {renderCommandControl(command)}
               </CardContent>
@@ -349,13 +381,19 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     );
   };
 
-  const renderCommandControl = (command) => {
+  const renderCommandControl = command => {
     const commandKey = `${command.name}_${JSON.stringify(controlValues)}`;
     const isLoading = commandLoading[commandKey];
     switch (command.type) {
       case 'button':
         return (
-          <Button fullWidth variant="contained" onClick={() => executeCommand(command.name, {})} disabled={isLoading} startIcon={isLoading ? <CircularProgress size={16} /> : getCommandIcon(command.name)}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => executeCommand(command.name, {})}
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={16} /> : getCommandIcon(command.name)}
+          >
             {command.label}
           </Button>
         );
@@ -367,7 +405,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
             control={
               <Switch
                 checked={isOn}
-                onChange={(e) => {
+                onChange={e => {
                   const newValue = e.target.checked;
                   setControlValues(prev => ({ ...prev, [paramName]: newValue }));
                   executeCommand(command.name, { [paramName]: newValue });
@@ -384,13 +422,17 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         const sliderValue = controlValues[sliderParam] || command.min || 0;
         return (
           <Box>
-            <Typography variant="body2" gutterBottom>{command.label}: {sliderValue}</Typography>
+            <Typography variant="body2" gutterBottom>
+              {command.label}: {sliderValue}
+            </Typography>
             <Slider
               value={sliderValue}
               min={command.min || 0}
               max={command.max || 100}
               onChange={(e, value) => setControlValues(prev => ({ ...prev, [sliderParam]: value }))}
-              onChangeCommitted={(e, value) => executeCommand(command.name, { [sliderParam]: value })}
+              onChangeCommitted={(e, value) =>
+                executeCommand(command.name, { [sliderParam]: value })
+              }
               disabled={isLoading}
               valueLabelDisplay="auto"
             />
@@ -406,7 +448,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
             <Select
               value={selectValue}
               label={command.label}
-              onChange={(e) => {
+              onChange={e => {
                 const newValue = e.target.value;
                 setControlValues(prev => ({ ...prev, [selectParam]: newValue }));
                 executeCommand(command.name, { [selectParam]: newValue });
@@ -414,7 +456,9 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
               disabled={isLoading}
             >
               {command.options?.map((option, idx) => (
-                <MenuItem key={idx} value={option}>{option}</MenuItem>
+                <MenuItem key={idx} value={option}>
+                  {option}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -423,8 +467,15 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       case 'color':
         return (
           <Box>
-            <Typography variant="body2" gutterBottom>Color Control</Typography>
-            <Button fullWidth variant="outlined" onClick={() => executeCommand(command.name, { r: 255, g: 0, b: 0 })} disabled={isLoading}>
+            <Typography variant="body2" gutterBottom>
+              Color Control
+            </Typography>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => executeCommand(command.name, { r: 255, g: 0, b: 0 })}
+              disabled={isLoading}
+            >
               Set Color
             </Button>
           </Box>
@@ -435,7 +486,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
             fullWidth
             type="password"
             label={command.label}
-            onKeyPress={(e) => {
+            onKeyPress={e => {
               if (e.key === 'Enter') {
                 executeCommand(command.name, { [command.params[0]]: e.target.value });
                 e.target.value = '';
@@ -473,7 +524,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
                 label="Command"
                 placeholder="e.g., turn_on, set_brightness, lock"
                 value={customCommand}
-                onChange={(e) => setCustomCommand(e.target.value)}
+                onChange={e => setCustomCommand(e.target.value)}
                 helperText="Enter the command you want to send to the device"
               />
             </Grid>
@@ -489,7 +540,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
                     size="small"
                     placeholder="e.g., level, duration"
                     value={param.key}
-                    onChange={(e) => updateParameter(index, 'key', e.target.value)}
+                    onChange={e => updateParameter(index, 'key', e.target.value)}
                     sx={{ flex: 1 }}
                   />
                   <TextField
@@ -497,7 +548,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
                     size="small"
                     placeholder="e.g., 50, on"
                     value={param.value}
-                    onChange={(e) => updateParameter(index, 'value', e.target.value)}
+                    onChange={e => updateParameter(index, 'value', e.target.value)}
                     sx={{ flex: 1 }}
                   />
                   <IconButton
@@ -547,28 +598,28 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
       <Card variant="outlined" sx={{ mt: 3 }}>
         <CardContent>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              Sent Commands
-            </Typography>
-            <Button
-              size="small"
-              startIcon={<Refresh />}
-              onClick={loadPendingCommands}
-            >
+            <Typography variant="h6">Sent Commands</Typography>
+            <Button size="small" startIcon={<Refresh />} onClick={loadPendingCommands}>
               Refresh
             </Button>
           </Box>
 
           <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
             {sentCommands.map((command, index) => {
-              const getStatusColor = (status) => {
+              const getStatusColor = status => {
                 switch (status) {
-                  case 'pending': return 'warning';
-                  case 'acknowledged': return 'info';
-                  case 'executing': return 'primary';
-                  case 'completed': return 'success';
-                  case 'failed': return 'error';
-                  default: return 'default';
+                  case 'pending':
+                    return 'warning';
+                  case 'acknowledged':
+                    return 'info';
+                  case 'executing':
+                    return 'primary';
+                  case 'completed':
+                    return 'success';
+                  case 'failed':
+                    return 'error';
+                  default:
+                    return 'default';
                 }
               };
 
@@ -630,9 +681,7 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
 
                   {command.error_message && (
                     <Alert severity="error" sx={{ mt: 1, py: 0 }}>
-                      <Typography variant="caption">
-                        {command.error_message}
-                      </Typography>
+                      <Typography variant="caption">{command.error_message}</Typography>
                     </Alert>
                   )}
                 </Paper>
@@ -649,22 +698,43 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
     return (
       <Card variant="outlined" sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>Device Status</Typography>
+          <Typography variant="h6" gutterBottom>
+            Device Status
+          </Typography>
           <Grid container spacing={2}>
             <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">Status</Typography>
-              <Chip label={deviceState.status} color={deviceState.status === 'active' ? 'success' : 'default'} size="small" />
+              <Typography variant="body2" color="text.secondary">
+                Status
+              </Typography>
+              <Chip
+                label={deviceState.status}
+                color={deviceState.status === 'active' ? 'success' : 'default'}
+                size="small"
+              />
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">Last Update</Typography>
-              <Typography variant="body2">{deviceState.lastUpdate ? new Date(deviceState.lastUpdate).toLocaleString() : 'Never'}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Last Update
+              </Typography>
+              <Typography variant="body2">
+                {deviceState.lastUpdate
+                  ? new Date(deviceState.lastUpdate).toLocaleString()
+                  : 'Never'}
+              </Typography>
             </Grid>
             {deviceState.state && Object.keys(deviceState.state).length > 0 && (
               <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>Current State</Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Current State
+                </Typography>
                 <Box display="flex" flexWrap="wrap" gap={1}>
                   {Object.entries(deviceState.state).map(([key, value]) => (
-                    <Chip key={key} label={`${key}: ${typeof value === 'boolean' ? (value ? 'ON' : 'OFF') : value}`} variant="outlined" size="small" />
+                    <Chip
+                      key={key}
+                      label={`${key}: ${typeof value === 'boolean' ? (value ? 'ON' : 'OFF') : value}`}
+                      variant="outlined"
+                      size="small"
+                    />
                   ))}
                 </Box>
               </Grid>
@@ -682,17 +752,35 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
         <CardContent>
           <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
             <Typography variant="h6">Recent Commands</Typography>
-            <Button size="small" onClick={loadCommandHistory} startIcon={<Refresh />}>Refresh</Button>
+            <Button size="small" onClick={loadCommandHistory} startIcon={<Refresh />}>
+              Refresh
+            </Button>
           </Box>
           {commandHistory.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">No recent commands</Typography>
+            <Typography variant="body2" color="text.secondary">
+              No recent commands
+            </Typography>
           ) : (
             <Box>
               {commandHistory.map((cmd, index) => (
-                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: index < commandHistory.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 1,
+                    borderBottom: index < commandHistory.length - 1 ? '1px solid' : 'none',
+                    borderColor: 'divider',
+                  }}
+                >
                   <Box>
-                    <Typography variant="body2" fontWeight="medium">{cmd.command}</Typography>
-                    <Typography variant="caption" color="text.secondary">{new Date(cmd.timestamp).toLocaleString()}</Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {cmd.command}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(cmd.timestamp).toLocaleString()}
+                    </Typography>
                   </Box>
                   <Box display="flex" alignItems="center" gap={1}>
                     {getStatusIcon(cmd.status)}
@@ -711,15 +799,30 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
 
   // --- Main Dialog UI ---
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { minHeight: '70vh' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      PaperProps={{ sx: { minHeight: '70vh' } }}
+    >
+      <DialogTitle
+        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}
+      >
         <Box>
-          <Typography variant="h5" component="div">Device Control</Typography>
-          <Typography variant="subtitle1" color="text.secondary">{device.name} ({device.type})</Typography>
+          <Typography variant="h5" component="div">
+            Device Control
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            {device.name} ({device.type})
+          </Typography>
         </Box>
         <Box display="flex" gap={1}>
           <Tooltip title="Command History">
-            <IconButton onClick={() => setShowHistory(!showHistory)} color={showHistory ? 'primary' : 'default'}>
+            <IconButton
+              onClick={() => setShowHistory(!showHistory)}
+              color={showHistory ? 'primary' : 'default'}
+            >
               <History />
             </IconButton>
           </Tooltip>
@@ -757,7 +860,9 @@ const DeviceControlDialog = ({ open, onClose, device }) => {
             <Box sx={{ mt: 2 }}>
               {tabValue === 0 && (
                 <Box>
-                  <Typography variant="h6" gutterBottom>Device Controls</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    Device Controls
+                  </Typography>
                   {renderControlInterface()}
                   {renderCommandHistory()}
                 </Box>

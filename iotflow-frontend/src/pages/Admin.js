@@ -130,33 +130,48 @@ const Admin = () => {
   const [clearCacheDialogOpen, setClearCacheDialogOpen] = useState(false);
   const [backupDialogOpen, setBackupDialogOpen] = useState(false);
 
-  const getServiceStatusColor = (status) => {
+  const getServiceStatusColor = status => {
     switch (status) {
-      case 'running': return 'success';
-      case 'warning': return 'warning';
-      case 'error': return 'error';
-      case 'stopped': return 'default';
-      default: return 'info';
+      case 'running':
+        return 'success';
+      case 'warning':
+        return 'warning';
+      case 'error':
+        return 'error';
+      case 'stopped':
+        return 'default';
+      default:
+        return 'info';
     }
   };
 
-  const getServiceStatusIcon = (status) => {
+  const getServiceStatusIcon = status => {
     switch (status) {
-      case 'running': return <CheckCircle />;
-      case 'warning': return <Warning />;
-      case 'error': return <Error />;
-      case 'stopped': return <Info />;
-      default: return <Info />;
+      case 'running':
+        return <CheckCircle />;
+      case 'warning':
+        return <Warning />;
+      case 'error':
+        return <Error />;
+      case 'stopped':
+        return <Info />;
+      default:
+        return <Info />;
     }
   };
 
-  const getLogLevelColor = (level) => {
+  const getLogLevelColor = level => {
     switch (level) {
-      case 'ERROR': return 'error';
-      case 'WARNING': return 'warning';
-      case 'INFO': return 'info';
-      case 'DEBUG': return 'default';
-      default: return 'default';
+      case 'ERROR':
+        return 'error';
+      case 'WARNING':
+        return 'warning';
+      case 'INFO':
+        return 'info';
+      case 'DEBUG':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
@@ -172,7 +187,7 @@ const Admin = () => {
           memory: '12.4 MB',
           hitRate: 0,
           missRate: 0,
-        }
+        },
       }));
       toast.success('Cache cleared successfully');
       setClearCacheDialogOpen(false);
@@ -291,7 +306,7 @@ const Admin = () => {
             control={
               <Switch
                 checked={maintenanceMode}
-                onChange={(e) => setMaintenanceMode(e.target.checked)}
+                onChange={e => setMaintenanceMode(e.target.checked)}
               />
             }
             label="Maintenance Mode"
@@ -314,10 +329,7 @@ const Admin = () => {
       </Box>
 
       {/* System Health Alert */}
-      <Alert
-        severity={systemHealth.overall === 'good' ? 'success' : 'warning'}
-        sx={{ mb: 3 }}
-      >
+      <Alert severity={systemHealth.overall === 'good' ? 'success' : 'warning'} sx={{ mb: 3 }}>
         System Health: {systemHealth.overall.toUpperCase()} - All critical services are operational
       </Alert>
 
@@ -326,11 +338,7 @@ const Admin = () => {
         <Grid item xs={12} md={8}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
-              <ServiceCard
-                name="IoTDB"
-                service={systemHealth.services.iotdb}
-                icon={<Storage />}
-              />
+              <ServiceCard name="IoTDB" service={systemHealth.services.iotdb} icon={<Storage />} />
             </Grid>
             <Grid item xs={12} sm={6}>
               <ServiceCard
@@ -366,17 +374,30 @@ const Admin = () => {
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Box sx={{ height: 100, position: 'relative', mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                    <Box
+                      sx={{
+                        height: 100,
+                        position: 'relative',
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'grey.100',
+                        borderRadius: 1,
+                      }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         CPU Chart Placeholder
                       </Typography>
-                      <Box sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        textAlign: 'center',
-                      }}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          textAlign: 'center',
+                        }}
+                      >
                         <Typography variant="h6" sx={{ fontWeight: 600 }}>
                           {systemStats.storageUsed}%
                         </Typography>
@@ -390,17 +411,30 @@ const Admin = () => {
 
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Box sx={{ height: 100, position: 'relative', mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'grey.100', borderRadius: 1 }}>
+                    <Box
+                      sx={{
+                        height: 100,
+                        position: 'relative',
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'grey.100',
+                        borderRadius: 1,
+                      }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Memory Chart Placeholder
                       </Typography>
-                      <Box sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        textAlign: 'center',
-                      }}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          textAlign: 'center',
+                        }}
+                      >
                         <Typography variant="h6" sx={{ fontWeight: 600 }}>
                           {systemStats.memoryUsed}%
                         </Typography>
@@ -417,7 +451,9 @@ const Admin = () => {
 
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">CPU Usage</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    CPU Usage
+                  </Typography>
                   <Typography variant="body2">{systemStats.cpuUsage}%</Typography>
                 </Box>
                 <LinearProgress
@@ -441,10 +477,7 @@ const Admin = () => {
       {/* Tabbed Content */}
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
-          >
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
             <Tab label="System Logs" />
             <Tab label="Cache Management" />
             <Tab label="Performance" />
@@ -455,7 +488,9 @@ const Admin = () => {
         {/* System Logs Tab */}
         {activeTab === 0 && (
           <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+            >
               <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
                 System Logs
               </Typography>
@@ -475,21 +510,15 @@ const Admin = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {logs.map((log) => (
+                  {logs.map(log => (
                     <TableRow key={log.id} hover>
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                         {log.timestamp.toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={log.level}
-                          color={getLogLevelColor(log.level)}
-                          size="small"
-                        />
+                        <Chip label={log.level} color={getLogLevelColor(log.level)} size="small" />
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {log.service}
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{log.service}</TableCell>
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                         {log.message}
                       </TableCell>
@@ -518,23 +547,28 @@ const Admin = () => {
                     <List dense>
                       <ListItem>
                         <ListItemText primary="Status" secondary={cacheStats.redis.status} />
-                        <Chip
-                          label={cacheStats.redis.status}
-                          color="success"
-                          size="small"
-                        />
+                        <Chip label={cacheStats.redis.status} color="success" size="small" />
                       </ListItem>
                       <ListItem>
                         <ListItemText primary="Memory Usage" secondary={cacheStats.redis.memory} />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Total Keys" secondary={cacheStats.redis.keys.toLocaleString()} />
+                        <ListItemText
+                          primary="Total Keys"
+                          secondary={cacheStats.redis.keys.toLocaleString()}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Hit Rate" secondary={`${cacheStats.redis.hitRate}%`} />
+                        <ListItemText
+                          primary="Hit Rate"
+                          secondary={`${cacheStats.redis.hitRate}%`}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Miss Rate" secondary={`${cacheStats.redis.missRate}%`} />
+                        <ListItemText
+                          primary="Miss Rate"
+                          secondary={`${cacheStats.redis.missRate}%`}
+                        />
                       </ListItem>
                     </List>
                   </CardContent>
@@ -556,16 +590,10 @@ const Admin = () => {
                       >
                         Clear All Cache
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Refresh />}
-                      >
+                      <Button variant="outlined" startIcon={<Refresh />}>
                         Refresh Cache Stats
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Settings />}
-                      >
+                      <Button variant="outlined" startIcon={<Settings />}>
                         Cache Configuration
                       </Button>
                     </Box>
@@ -665,23 +693,13 @@ const Admin = () => {
                       >
                         Create System Backup
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Refresh />}
-                      >
+                      <Button variant="outlined" startIcon={<Refresh />}>
                         Restart Services
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Build />}
-                      >
+                      <Button variant="outlined" startIcon={<Build />}>
                         System Diagnostics
                       </Button>
-                      <Button
-                        variant="outlined"
-                        color="warning"
-                        startIcon={<Settings />}
-                      >
+                      <Button variant="outlined" color="warning" startIcon={<Settings />}>
                         Update Configuration
                       </Button>
                     </Box>
@@ -696,29 +714,16 @@ const Admin = () => {
                       Database Maintenance
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Storage />}
-                      >
+                      <Button variant="outlined" startIcon={<Storage />}>
                         Optimize IoTDB
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Delete />}
-                        color="warning"
-                      >
+                      <Button variant="outlined" startIcon={<Delete />} color="warning">
                         Clean Old Data
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Timeline />}
-                      >
+                      <Button variant="outlined" startIcon={<Timeline />}>
                         Rebuild Indexes
                       </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Monitor />}
-                      >
+                      <Button variant="outlined" startIcon={<Monitor />}>
                         Database Statistics
                       </Button>
                     </Box>
@@ -731,10 +736,7 @@ const Admin = () => {
       </Card>
 
       {/* Clear Cache Dialog */}
-      <Dialog
-        open={clearCacheDialogOpen}
-        onClose={() => setClearCacheDialogOpen(false)}
-      >
+      <Dialog open={clearCacheDialogOpen} onClose={() => setClearCacheDialogOpen(false)}>
         <DialogTitle>Clear Cache</DialogTitle>
         <DialogContent>
           <Typography>
@@ -759,9 +761,7 @@ const Admin = () => {
       >
         <DialogTitle>System Backup</DialogTitle>
         <DialogContent>
-          <Typography gutterBottom>
-            Create a complete system backup including:
-          </Typography>
+          <Typography gutterBottom>Create a complete system backup including:</Typography>
           <List dense>
             <ListItem>
               <ListItemText primary="• Device configurations and metadata" />

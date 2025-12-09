@@ -72,12 +72,12 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Login failed. Please check your credentials.'
+        error: error.message || 'Login failed. Please check your credentials.',
       };
     }
   };
 
-  const register = async (userData) => {
+  const register = async userData => {
     try {
       const response = await apiService.register(userData);
 
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Registration failed. Please try again.'
+        error: error.response?.data?.message || 'Registration failed. Please try again.',
       };
     }
   };
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     toast.success('Logged out successfully');
   };
 
-  const updateUser = (updatedUser) => {
+  const updateUser = updatedUser => {
     setUser(updatedUser);
     localStorage.setItem('iotflow_user', JSON.stringify(updatedUser));
   };
@@ -136,9 +136,5 @@ export const AuthProvider = ({ children }) => {
     loading,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

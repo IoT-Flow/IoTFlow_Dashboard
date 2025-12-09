@@ -30,7 +30,7 @@ const AppContent = () => {
           justifyContent: 'center',
           alignItems: 'center',
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center', color: 'white' }}>
@@ -38,7 +38,7 @@ const AppContent = () => {
             size={60}
             sx={{
               color: 'white',
-              mb: 2
+              mb: 2,
             }}
           />
           <Typography variant="h6" sx={{ mb: 1 }}>
@@ -81,9 +81,7 @@ const AppContent = () => {
               <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/telemetry" element={<Telemetry />} />
               <Route path="/profile" element={<Profile />} />
-              {user?.role === 'admin' && (
-                <Route path="/admin" element={<Admin />} />
-              )}
+              {user?.role === 'admin' && <Route path="/admin" element={<Admin />} />}
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>
           </Box>

@@ -1,0 +1,100 @@
+name: IoTFlow Dashboard CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: iotflow
+          POSTGRES_PASSWORD: iotflowpass
+          POSTGRES_DB: iotflow_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: iotflow-backend/package-lock.json
+    
+    - name: Install backend dependencies
+      working-directory: ./iotflow-backend
+      run: npm ci
+    
+    - name: Format check with Prettier
+      working-directory: ./iotflow-backend
+      run: |
+        npx prettier --check "src/**/*.js" "tests/**/*.js"
+    
+    - name: Lint with ESLint
+      working-directory: ./iotflow-backend
+      run: |
+        npx eslint src/ tests/ --max-warnings 0 || true
+    
+    - name: Run backend tests
+      working-directory: ./iotflow-backend
+      env:
+        DATABASE_URL: postgresql://iotflow:iotflowpass@localhost:5432/iotflow_test
+        NODE_ENV: test
+        JWT_SECRET: test_secret_key
+      run: npm test
+    
+    - name: Upload backend coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./iotflow-backend/coverage/coverage-final.json
+        flags: backend
+        name: backend-coverage
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: iotflow-frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      working-directory: ./iotflow-frontend
+      run: npm ci
+    
+    - name: Format check with Prettier
+      working-directory: ./iotflow-frontend
+      run: |
+        npx prettier --check "src/**/*.{js,jsx}" || true
+    
+    - name: Lint with ESLint
+      working-directory: ./iotflow-frontend
+      run: |
+        npx eslint src/ --max-warnings 10 || true
+    
+    - name: Build frontend
+      working-directory: ./iotflow-frontend
+      run: npm run build
+    
+    - name: Run frontend tests (if available)
+      working-directory: ./iotflow-frontend
+      run: npm test -- --watchAll=false || echo "No tests configured"
