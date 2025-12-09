@@ -136,7 +136,8 @@ class DeviceGroupController {
   async addDeviceToGroup(req, res) {
     try {
       const { id } = req.params;
-      const { device_id, device_ids } = req.body;
+      // Support both snake_case (device_id, device_ids) and camelCase (deviceId, deviceIds)
+      const { device_id, device_ids, deviceId, deviceIds } = req.body;
 
       const group = await Group.findOne({
         where: { id, user_id: req.user.id },
@@ -146,8 +147,8 @@ class DeviceGroupController {
         return res.status(404).json({ message: 'Group not found' });
       }
 
-      // Handle single device or multiple devices
-      const deviceIdsToAdd = device_ids || [device_id];
+      // Handle single device or multiple devices (support both naming conventions)
+      const deviceIdsToAdd = device_ids || deviceIds || [device_id || deviceId];
 
       // Verify all devices belong to the user
       const devices = await Device.findAll({
