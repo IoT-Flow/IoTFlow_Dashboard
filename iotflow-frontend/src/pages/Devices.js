@@ -8,6 +8,8 @@ import {
   Edit,
   Error,
   FilterList,
+  FolderSpecial,
+  GroupAdd,
   Key,
   MoreVert,
   Schedule,
@@ -53,6 +55,9 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import DeviceControlDialog from '../components/DeviceControlDialog';
+import DeviceGroupFilter from '../components/DeviceGroupFilter';
+import GroupManagementDialog from '../components/GroupManagementDialog';
+import DeviceGroupAssignment from '../components/DeviceGroupAssignment';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/apiService';
 
@@ -67,6 +72,12 @@ const Devices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [groupFilter, setGroupFilter] = useState('all');
+  
+  // Group state
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [deviceGroups, setDeviceGroups] = useState({}); // Map device IDs to group IDs
 
   // Dialog states
   const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
@@ -75,6 +86,13 @@ const Devices = () => {
   const [controlDialogOpen, setControlDialogOpen] = useState(false);
   const [newDeviceConnection, setNewDeviceConnection] = useState(null);
   const [deviceToDelete, setDeviceToDelete] = useState(null);
+  
+  // Group management dialogs
+  const [groupManagementOpen, setGroupManagementOpen] = useState(false);
+  const [groupManagementMode, setGroupManagementMode] = useState('create');
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groupAssignmentOpen, setGroupAssignmentOpen] = useState(false);
+  const [assignmentDevice, setAssignmentDevice] = useState(null);
 
   // Form state
   const [deviceForm, setDeviceForm] = useState({
@@ -135,6 +153,47 @@ const Devices = () => {
     }
   }, [user]);
 
+  // Load device groups
+  useEffect(() => {
+    const loadGroups = async () => {
+      try {
+        setGroupsLoading(true);
+        const groupsData = await apiService.getGroups();
+        setGroups(groupsData);
+
+        // Build a map of device IDs to group IDs for filtering
+        const deviceGroupMap = {};
+        for (const group of groupsData) {
+          // Get devices for each group
+          try {
+            const groupDetails = await apiService.getDevicesByGroup(group.id);
+            if (groupDetails.devices) {
+              groupDetails.devices.forEach(device => {
+                if (!deviceGroupMap[device.id]) {
+                  deviceGroupMap[device.id] = [];
+                }
+                deviceGroupMap[device.id].push(group.id);
+              });
+            }
+          } catch (error) {
+            console.error(`Error loading devices for group ${group.id}:`, error);
+          }
+        }
+        setDeviceGroups(deviceGroupMap);
+      } catch (error) {
+        console.error('Failed to load groups:', error);
+        toast.error('Failed to load device groups');
+        setGroups([]);
+      } finally {
+        setGroupsLoading(false);
+      }
+    };
+
+    if (user) {
+      loadGroups();
+    }
+  }, [user]);
+
   const getStatusColor = status => {
     switch (status) {
       case 'active':
@@ -173,8 +232,12 @@ const Devices = () => {
     const matchesStatus = statusFilter === 'all' || device.status === statusFilter;
     const matchesType =
       typeFilter === 'all' || device.type.toLowerCase().includes(typeFilter.toLowerCase());
+    
+    // Group filter logic
+    const matchesGroup = groupFilter === 'all' || 
+      (deviceGroups[device.id] && deviceGroups[device.id].includes(groupFilter));
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesGroup;
   });
 
   const handleSelectAllClick = event => {
@@ -382,6 +445,14 @@ const Devices = () => {
       </MenuItem>
       <MenuItem
         onClick={() => {
+          handleAssignToGroup(device);
+          onClose();
+        }}
+      >
+        <GroupAdd sx={{ mr: 1 }} /> Assign to Group
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
           handleShowConnectionDetails(device);
           onClose();
         }}
@@ -412,6 +483,76 @@ const Devices = () => {
     setMenuDevice(null);
   };
 
+  // Group Management Handlers
+  const handleCreateGroup = () => {
+    setGroupManagementMode('create');
+    setSelectedGroup(null);
+    setGroupManagementOpen(true);
+  };
+
+  const handleEditGroup = (group) => {
+    setGroupManagementMode('edit');
+    setSelectedGroup(group);
+    setGroupManagementOpen(true);
+  };
+
+  const handleGroupSaved = async (savedGroup) => {
+    // Reload groups
+    try {
+      const groupsData = await apiService.getGroups();
+      setGroups(groupsData);
+    } catch (error) {
+      console.error('Error reloading groups:', error);
+    }
+  };
+
+  const handleAssignToGroup = (device) => {
+    setAssignmentDevice(device);
+    setGroupAssignmentOpen(true);
+  };
+
+  const handleBulkAssignToGroup = () => {
+    if (selectedDevices.length === 0) {
+      toast.error('Please select devices to assign');
+      return;
+    }
+    const devicesToAssign = devices.filter(d => selectedDevices.includes(d.id));
+    setAssignmentDevice(null); // Clear single device
+    setGroupAssignmentOpen(true);
+  };
+
+  const handleGroupAssignmentSaved = async () => {
+    // Reload device groups mapping
+    try {
+      setGroupsLoading(true);
+      const groupsData = await apiService.getGroups();
+      setGroups(groupsData);
+
+      // Rebuild device-group map
+      const deviceGroupMap = {};
+      for (const group of groupsData) {
+        try {
+          const groupDetails = await apiService.getDevicesByGroup(group.id);
+          if (groupDetails.devices) {
+            groupDetails.devices.forEach(device => {
+              if (!deviceGroupMap[device.id]) {
+                deviceGroupMap[device.id] = [];
+              }
+              deviceGroupMap[device.id].push(group.id);
+            });
+          }
+        } catch (error) {
+          console.error(`Error loading devices for group ${group.id}:`, error);
+        }
+      }
+      setDeviceGroups(deviceGroupMap);
+    } catch (error) {
+      console.error('Error reloading groups:', error);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
   return (
     <Box className="fade-in">
       {/* Header */}
@@ -426,6 +567,14 @@ const Devices = () => {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<FolderSpecial />}
+            onClick={handleCreateGroup}
+            size="large"
+          >
+            Manage Groups
+          </Button>
           <Button
             variant="outlined"
             startIcon={<ControlPoint />}
@@ -490,7 +639,15 @@ const Devices = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={6} md={2}>
+              <DeviceGroupFilter
+                groups={groups}
+                selectedGroup={groupFilter}
+                onChange={setGroupFilter}
+                loading={groupsLoading}
+              />
+            </Grid>
+            <Grid item xs={12} md={2}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                 <Button variant="outlined" startIcon={<FilterList />}>
                   More Filters
@@ -523,6 +680,14 @@ const Devices = () => {
               {selectedDevices.length} device(s) selected
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button 
+                size="small" 
+                startIcon={<GroupAdd />}
+                onClick={handleBulkAssignToGroup}
+                variant="outlined"
+              >
+                Assign to Group
+              </Button>
               <Button size="small" onClick={() => handleBulkStatusUpdate('active')}>
                 Activate
               </Button>
@@ -977,6 +1142,28 @@ const Devices = () => {
           setSelectedDevice(null);
         }}
         device={selectedDevice}
+      />
+
+      {/* Group Management Dialog */}
+      <GroupManagementDialog
+        open={groupManagementOpen}
+        onClose={() => setGroupManagementOpen(false)}
+        onSave={handleGroupSaved}
+        mode={groupManagementMode}
+        group={selectedGroup}
+      />
+
+      {/* Device Group Assignment Dialog */}
+      <DeviceGroupAssignment
+        open={groupAssignmentOpen}
+        device={assignmentDevice}
+        devices={assignmentDevice ? null : devices.filter(d => selectedDevices.includes(d.id))}
+        deviceGroups={assignmentDevice ? (deviceGroups[assignmentDevice.id] || []) : []}
+        onClose={() => {
+          setGroupAssignmentOpen(false);
+          setAssignmentDevice(null);
+        }}
+        onSave={handleGroupAssignmentSaved}
       />
     </Box>
   );

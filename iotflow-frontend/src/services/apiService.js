@@ -1664,6 +1664,115 @@ class ApiService {
     }
   }
 
+  // ==================== DEVICE GROUP METHODS ====================
+
+  /**
+   * Get all device groups for the current user
+   * @returns {Promise<Array>} List of device groups
+   */
+  async getGroups() {
+    try {
+      const response = await this.api.get('/groups');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new device group
+   * @param {Object} groupData - Group data (name, description, color, icon)
+   * @returns {Promise<Object>} Created group
+   */
+  async createGroup(groupData) {
+    try {
+      const response = await this.api.post('/groups', groupData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing device group
+   * @param {number} groupId - Group ID
+   * @param {Object} updates - Updated group data
+   * @returns {Promise<Object>} Updated group
+   */
+  async updateGroup(groupId, updates) {
+    try {
+      const response = await this.api.put(`/groups/${groupId}`, updates);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a device group
+   * @param {number} groupId - Group ID
+   * @returns {Promise<Object>} Deletion result
+   */
+  async deleteGroup(groupId) {
+    try {
+      const response = await this.api.delete(`/groups/${groupId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a specific group with its devices
+   * @param {number} groupId - Group ID
+   * @returns {Promise<Object>} Group with devices
+   */
+  async getDevicesByGroup(groupId) {
+    try {
+      const response = await this.api.get(`/groups/${groupId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching devices by group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add a device to a group
+   * @param {number} groupId - Group ID
+   * @param {number} deviceId - Device ID
+   * @returns {Promise<Object>} Result
+   */
+  async addDeviceToGroup(groupId, deviceId) {
+    try {
+      const response = await this.api.post(`/groups/${groupId}/devices`, { deviceId });
+      return response.data;
+    } catch (error) {
+      console.error('Error adding device to group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a device from a group
+   * @param {number} groupId - Group ID
+   * @param {number} deviceId - Device ID
+   * @returns {Promise<Object>} Result
+   */
+  async removeDeviceFromGroup(groupId, deviceId) {
+    try {
+      const response = await this.api.delete(`/groups/${groupId}/devices/${deviceId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error removing device from group:', error);
+      throw error;
+    }
+  }
+
   // ==================== EXISTING DEVICE CONTROL METHODS ====================
 }
 
