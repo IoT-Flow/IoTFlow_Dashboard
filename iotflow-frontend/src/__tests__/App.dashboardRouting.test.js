@@ -169,7 +169,7 @@ describe('Dashboard Routing - User vs Admin', () => {
       });
     });
 
-    test('should display overview page by default for admin users', async () => {
+    test('should display admin page by default for admin users', async () => {
       render(
         <BrowserRouter>
           <App />
@@ -177,7 +177,8 @@ describe('Dashboard Routing - User vs Admin', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('overview-page')).toBeInTheDocument();
+        // Admin users now see the Admin page as their default dashboard
+        expect(screen.getByTestId('admin-page')).toBeInTheDocument();
       });
     });
 

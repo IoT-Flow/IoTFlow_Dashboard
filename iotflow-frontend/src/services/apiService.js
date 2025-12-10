@@ -1772,12 +1772,14 @@ class ApiService {
   // ==================== ADMIN USER MANAGEMENT METHODS ====================
 
   /**
-   * Get all users (admin only)
-   * @returns {Promise<Array>} List of all users
+   * Get all users (admin only) - Using Admin V1 API
+   * @param {Object} params - Query parameters (page, limit, status, search)
+   * @returns {Promise<Object>} Object with users array and pagination info
    */
-  async getAllUsers() {
+  async getAllUsers(params = {}) {
     try {
-      const response = await this.api.get('/users');
+      const config = params && Object.keys(params).length > 0 ? { params } : undefined;
+      const response = await this.api.get('/v1/admin/users', config);
       return response.data;
     } catch (error) {
       console.error('Error fetching all users:', error);
@@ -1785,16 +1787,77 @@ class ApiService {
     }
   }
 
+  /**
+   * Get a single user (admin only) - Using Admin V1 API
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} User object
+   */
+  async getUser(userId) {
+    try {
+      const response = await this.api.get(`/v1/admin/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new user (admin only) - Using Admin V1 API
+   * @param {Object} userData - User data (username, email, password, is_admin)
+   * @returns {Promise<Object>} Created user object
+   */
+  async createUser(userData) {
+    try {
+      const response = await this.api.post('/v1/admin/users', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a user (admin only) - Using Admin V1 API
+   * @param {number} userId - User ID
+   * @param {Object} updateData - Fields to update
+   * @returns {Promise<Object>} Updated user object
+   */
+  async updateUser(userId, updateData) {
+    try {
+      const response = await this.api.put(`/v1/admin/users/${userId}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a user (admin only) - Using Admin V1 API
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} Deletion result
+   */
+  async deleteUser(userId) {
+    try {
+      const response = await this.api.delete(`/v1/admin/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+
   // ==================== ADMIN DEVICE MANAGEMENT METHODS ====================
 
   /**
-   * Get all devices from all users (admin only)
-   * @param {Object} params - Query parameters (status, device_type, user_id)
+   * Get all devices from all users (admin only) - Using Admin V1 API
+   * @param {Object} params - Query parameters (status, device_type, user_id, page, limit, search)
    * @returns {Promise<Object>} Object with devices array and total count
    */
   async adminGetAllDevices(params = {}) {
     try {
-      const response = await this.api.get('/devices/admin/devices', { params });
+      const response = await this.api.get('/v1/admin/devices', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching all devices (admin):', error);
@@ -1803,13 +1866,28 @@ class ApiService {
   }
 
   /**
-   * Delete any device (admin only)
+   * Get a single device (admin only) - Using Admin V1 API
+   * @param {number} deviceId - Device ID
+   * @returns {Promise<Object>} Device object with user info
+   */
+  async getDevice(deviceId) {
+    try {
+      const response = await this.api.get(`/v1/admin/devices/${deviceId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching device:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete any device (admin only) - Using Admin V1 API
    * @param {number} deviceId - Device ID
    * @returns {Promise<Object>} Deletion result
    */
   async adminDeleteDevice(deviceId) {
     try {
-      const response = await this.api.delete(`/devices/admin/devices/${deviceId}`);
+      const response = await this.api.delete(`/v1/admin/devices/${deviceId}`);
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Error deleting device (admin):', error);
@@ -1818,13 +1896,13 @@ class ApiService {
   }
 
   /**
-   * Get user's devices (admin only)
+   * Get user's devices (admin only) - Using Admin V1 API
    * @param {number} userId - User ID
    * @returns {Promise<Object>} User with devices
    */
   async getUserDevices(userId) {
     try {
-      const response = await this.api.get(`/users/${userId}/devices`);
+      const response = await this.api.get(`/v1/admin/users/${userId}/devices`);
       return response.data;
     } catch (error) {
       console.error('Error fetching user devices:', error);
@@ -1833,14 +1911,14 @@ class ApiService {
   }
 
   /**
-   * Update user role (admin only)
+   * Update user role (admin only) - Using Admin V1 API
    * @param {number} userId - User ID
    * @param {boolean} isAdmin - Whether user should be admin
    * @returns {Promise<Object>} Updated user
    */
   async updateUserRole(userId, isAdmin) {
     try {
-      const response = await this.api.put(`/users/${userId}/role`, { is_admin: isAdmin });
+      const response = await this.api.put(`/v1/admin/users/${userId}`, { is_admin: isAdmin });
       return response.data;
     } catch (error) {
       console.error('Error updating user role:', error);
@@ -1849,17 +1927,31 @@ class ApiService {
   }
 
   /**
-   * Update user status (admin only)
+   * Update user status (admin only) - Using Admin V1 API
    * @param {number} userId - User ID
    * @param {boolean} isActive - Whether user should be active
    * @returns {Promise<Object>} Updated user
    */
   async updateUserStatus(userId, isActive) {
     try {
-      const response = await this.api.put(`/users/${userId}/status`, { is_active: isActive });
+      const response = await this.api.put(`/v1/admin/users/${userId}`, { is_active: isActive });
       return response.data;
     } catch (error) {
       console.error('Error updating user status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get admin statistics - Using Admin V1 API
+   * @returns {Promise<Object>} Statistics object
+   */
+  async getAdminStats() {
+    try {
+      const response = await this.api.get('/v1/admin/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
       throw error;
     }
   }

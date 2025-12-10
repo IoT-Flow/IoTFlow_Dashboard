@@ -32,11 +32,12 @@ const Sidebar = ({ open, onToggle }) => {
   const { user } = useAuth();
 
   const navigationItems = [
+    // Admin Dashboard (replaces Overview for admins)
     {
-      label: 'Overview',
-      path: '/overview',
+      label: user?.role === 'admin' ? 'Dashboard' : 'Overview',
+      path: user?.role === 'admin' ? '/admin' : '/overview',
       icon: <DashboardIcon />,
-      description: 'Dashboard & device summary',
+      description: user?.role === 'admin' ? 'Admin dashboard & system overview' : 'Dashboard & device summary',
       roles: ['user', 'admin'],
     },
     {
@@ -80,13 +81,6 @@ const Sidebar = ({ open, onToggle }) => {
       path: '/users',
       icon: <PeopleIcon />,
       description: 'User management',
-      roles: ['admin'],
-    },
-    {
-      label: 'Admin',
-      path: '/admin',
-      icon: <SettingsIcon />,
-      description: 'System administration',
       roles: ['admin'],
     },
   ].filter(item => item.roles.includes(user?.role || 'user'));

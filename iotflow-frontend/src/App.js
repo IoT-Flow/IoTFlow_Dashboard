@@ -76,8 +76,19 @@ const AppContent = () => {
             }}
           >
             <Routes>
-              <Route path="/" element={<Navigate to="/overview" replace />} />
-              <Route path="/overview" element={<Overview />} />
+              {/* Admin users go to /admin by default, regular users go to /overview */}
+              <Route 
+                path="/" 
+                element={<Navigate to={user?.role === 'admin' ? '/admin' : '/overview'} replace />} 
+              />
+              
+              {/* For admin users, redirect /overview to /admin */}
+              {user?.role === 'admin' ? (
+                <Route path="/overview" element={<Navigate to="/admin" replace />} />
+              ) : (
+                <Route path="/overview" element={<Overview />} />
+              )}
+              
               <Route path="/devices" element={<Devices />} />
               <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/telemetry" element={<Telemetry />} />
@@ -85,7 +96,12 @@ const AppContent = () => {
               {user?.role === 'admin' && <Route path="/mqtt" element={<Mqtt />} />}
               {user?.role === 'admin' && <Route path="/admin" element={<Admin />} />}
               {user?.role === 'admin' && <Route path="/users" element={<UsersManagement />} />}
-              <Route path="*" element={<Navigate to="/overview" replace />} />
+              
+              {/* Redirect unknown routes */}
+              <Route 
+                path="*" 
+                element={<Navigate to={user?.role === 'admin' ? '/admin' : '/overview'} replace />} 
+              />
             </Routes>
           </Box>
         </Box>
