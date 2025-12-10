@@ -5,10 +5,12 @@ const { verifyToken, isAdmin } = require('../middlewares/authMiddleware'); // Ch
 
 const router = express.Router();
 
-// Admin routes (must come before generic :id routes)
-router.get('/admin/devices', verifyToken, isAdmin, DeviceController.adminGetAllDevices);
-// Note: Admin device deletion is now handled by the standard DELETE /:id endpoint
-// which checks if user is admin and allows deletion of any device accordingly
+// ============================================================================
+// ADMIN DEVICE ROUTE REMOVED - USE /api/v1/admin/devices INSTEAD
+// ============================================================================
+// The following route has been removed to eliminate duplication with Admin V1 API:
+// - GET /api/devices/admin/devices → Use GET /api/v1/admin/devices
+// ============================================================================
 
 // Device CRUD routes - Protected by user authentication
 router.post('/', verifyToken, DeviceController.createDevice);

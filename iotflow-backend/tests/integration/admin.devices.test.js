@@ -5,7 +5,7 @@ const User = require('../../src/models/user');
 const Device = require('../../src/models/device');
 const bcrypt = require('bcrypt');
 
-describe('Admin Device Management - GET /api/devices/admin/devices', () => {
+describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
   let adminToken;
   let regularUserToken;
   let adminUser;
@@ -73,14 +73,14 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
   describe('Authentication & Authorization', () => {
     test('should return 401 when no token is provided', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices');
+        .get('/api/v1/admin/devices');
 
       expect(response.status).toBe(401);
     });
 
     test('should return 403 when regular user tries to access admin endpoint', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${regularUserToken}`);
 
       expect(response.status).toBe(403);
@@ -89,7 +89,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should return 200 when admin user accesses endpoint', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -138,7 +138,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should return all devices from all users', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -150,7 +150,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should include user information for each device', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -168,7 +168,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should return devices ordered by created_at DESC', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -186,7 +186,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
       await Device.destroy({ where: {}, force: true });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -229,7 +229,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should filter devices by status', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices?status=online')
+        .get('/api/v1/admin/devices?status=online')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -241,7 +241,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should filter devices by device_type', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices?device_type=temperature_sensor')
+        .get('/api/v1/admin/devices?device_type=temperature_sensor')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -253,7 +253,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should filter devices by user_id', async () => {
       const response = await request(app)
-        .get(`/api/devices/admin/devices?user_id=${regularUser.id}`)
+        .get(`/api/v1/admin/devices?user_id=${regularUser.id}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -265,7 +265,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should support multiple filters simultaneously', async () => {
       const response = await request(app)
-        .get(`/api/devices/admin/devices?status=online&device_type=temperature_sensor`)
+        .get(`/api/v1/admin/devices?status=online&device_type=temperature_sensor`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -276,7 +276,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
     test('should return empty array when no devices match filters', async () => {
       const response = await request(app)
-        .get('/api/devices/admin/devices?status=nonexistent')
+        .get('/api/v1/admin/devices?status=nonexistent')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -299,7 +299,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
       });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -328,7 +328,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
       });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -347,7 +347,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
       Device.findAll = jest.fn().mockRejectedValue(new Error('Database error'));
 
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(500);
@@ -367,7 +367,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
       });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -392,7 +392,7 @@ describe('Admin Device Management - GET /api/devices/admin/devices', () => {
 
       const startTime = Date.now();
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
       const endTime = Date.now();
 

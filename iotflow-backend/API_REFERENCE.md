@@ -4,6 +4,13 @@
 
 **Last Updated:** December 10, 2025
 
+> **📢 Important Update (December 10, 2025):**
+> 
+> - **Admin operations consolidated** to `/api/v1/admin/*` namespace
+> - **Duplicate admin routes removed** from `/api/users` and `/api/devices` 
+> - See [Admin V1 API](#admin-v1-api) section below for all admin endpoints
+> - Complete admin documentation: [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md)
+
 ---
 
 ## 🔑 Authentication Methods
@@ -16,6 +23,7 @@
 
 ## 📚 Table of Contents
 
+- [Admin V1 API](#admin-v1-api) ⭐ **RECOMMENDED FOR ADMIN OPERATIONS**
 - [System Routes](#system-routes)
 - [Authentication & Users](#authentication--users)
 - [Devices](#devices)
@@ -24,6 +32,46 @@
 - [Dashboard](#dashboard)
 - [Charts](#charts)
 - [Notifications](#notifications)
+
+---
+
+## Admin V1 API
+
+**⭐ RECOMMENDED:** All administrative operations should use the dedicated Admin V1 API namespace.
+
+**Base Path:** `/api/v1/admin`
+
+**Complete Documentation:** See [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md)
+
+**Available Endpoints:**
+
+### User Management (6 endpoints)
+- `GET /api/v1/admin/users` - Get all users
+- `GET /api/v1/admin/users/:id` - Get single user
+- `POST /api/v1/admin/users` - Create user
+- `PUT /api/v1/admin/users/:id` - Update user
+- `DELETE /api/v1/admin/users/:id` - Delete user
+- `GET /api/v1/admin/users/:id/devices` - Get user's devices
+
+### Device Management (3 endpoints)
+- `GET /api/v1/admin/devices` - Get all devices (with pagination)
+- `GET /api/v1/admin/devices/:id` - Get single device
+- `DELETE /api/v1/admin/devices/:id` - Delete device
+
+### Statistics (1 endpoint)
+- `GET /api/v1/admin/stats` - System statistics
+
+**Authentication:** All Admin V1 routes require JWT Token + Admin Role
+
+**Quick Example:**
+```javascript
+// Get all users
+const response = await fetch('http://localhost:5000/api/v1/admin/users', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+```
 
 ---
 
@@ -94,13 +142,24 @@ POST /api/auth/login
 }
 ```
 
-### Authenticated Routes
+### User Self-Service Routes
 
 #### Get Current User Profile
 ```
 GET /api/users/profile
 ```
 **Authentication:** JWT Token required
+
+**Response:**
+```json
+{
+  "id": "number",
+  "username": "string",
+  "email": "string",
+  "is_admin": "boolean",
+  "api_key": "string"
+}
+```
 
 #### Update Current User Profile
 ```
@@ -122,69 +181,29 @@ POST /api/users/refresh-api-key
 ```
 **Authentication:** JWT Token required
 
-#### Get All Users
-```
-GET /api/users/
-```
-**Authentication:** JWT Token required (admin check in controller)
-
-#### Get User Devices
-```
-GET /api/users/:id/devices
-```
-**Authentication:** JWT Token required (admin check in controller)
-
-#### Update User Role
-```
-PUT /api/users/:id/role
-```
-**Authentication:** JWT Token required (admin check in controller)
-
-**Request Body:**
+**Response:**
 ```json
 {
-  "role": "string"
+  "api_key": "string"
 }
 ```
 
-#### Update User Status
-```
-PUT /api/users/:id/status
-```
-**Authentication:** JWT Token required (admin check in controller)
+### ~~Admin User Management Routes~~ ❌ REMOVED
 
-**Request Body:**
-```json
-{
-  "status": "string"
-}
-```
+> **⚠️ DEPRECATED - Removed December 10, 2025**
+> 
+> The following admin routes have been removed to eliminate duplication.
+> **Use the Admin V1 API instead:** `/api/v1/admin/*`
+> 
+> See [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md) for complete documentation.
 
-### Admin Only Routes
-
-#### Create User
-```
-POST /api/users/
-```
-**Authentication:** JWT Token + Admin Role required
-
-#### Get Specific User
-```
-GET /api/users/:id
-```
-**Authentication:** JWT Token + Admin Role required
-
-#### Update User
-```
-PUT /api/users/:id
-```
-**Authentication:** JWT Token + Admin Role required
-
-#### Delete User
-```
-DELETE /api/users/:id
-```
-**Authentication:** JWT Token + Admin Role required
+**Removed Routes:**
+- ~~`GET /api/users/`~~ → Use `GET /api/v1/admin/users`
+- ~~`GET /api/users/:id`~~ → Use `GET /api/v1/admin/users/:id`
+- ~~`POST /api/users/`~~ → Use `POST /api/v1/admin/users`
+- ~~`PUT /api/users/:id`~~ → Use `PUT /api/v1/admin/users/:id`
+- ~~`DELETE /api/users/:id`~~ → Use `DELETE /api/v1/admin/users/:id`
+- ~~`GET /api/users/:id/devices`~~ → Use `GET /api/v1/admin/users/:id/devices`
 
 ---
 
@@ -192,46 +211,18 @@ DELETE /api/users/:id
 
 **Base Path:** `/api/devices`
 
-### Admin Routes
+### ~~Admin Device Route~~ ❌ REMOVED
 
-#### Get All Devices (Admin)
-```
-GET /api/devices/admin/devices
-```
-**Authentication:** JWT Token + Admin Role required
+> **⚠️ DEPRECATED - Removed December 10, 2025**
+> 
+> **Removed Route:**
+> - ~~`GET /api/devices/admin/devices`~~ → Use `GET /api/v1/admin/devices`
+> 
+> See [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md) for admin device management.
 
-**Query Parameters:**
-- `status` (optional): Filter by device status
-- `device_type` (optional): Filter by device type
-- `user_id` (optional): Filter by user ID
+### User Device Routes
 
-**Response:**
-```json
-{
-  "devices": [
-    {
-      "id": "number",
-      "name": "string",
-      "device_type": "string",
-      "status": "string",
-      "user_id": "number",
-      "created_at": "string",
-      "user": {
-        "id": "number",
-        "username": "string",
-        "email": "string"
-      }
-    }
-  ],
-  "total": "number"
-}
-```
-
-#### Delete Device (Admin)
-```
-DELETE /api/devices/admin/devices/:id
-```
-**Authentication:** JWT Token + Admin Role required
+All device routes below are for managing the authenticated user's own devices.
 
 ### Device Management
 
@@ -311,33 +302,30 @@ PUT /api/devices/:id/configuration
 }
 ```
 
-### Device Control
+### ~~Device Control~~ (REMOVED)
 
-#### Send Control Command
-```
-POST /api/devices/:id/control
-```
-**Authentication:** JWT Token required
+> **⚠️ DEPRECATED AND REMOVED**  
+> These endpoints have been removed from the API as of December 10, 2025.  
+> They were using in-memory storage (global.deviceControls) which was not production-ready.  
+> The Device Control page has also been removed from the frontend navigation.
 
-**Request Body:**
-```json
-{
-  "command": "string",
-  "parameters": "object"
-}
+#### ~~Send Control Command~~ ❌ REMOVED
 ```
+POST /api/devices/:id/control (REMOVED)
+```
+~~**Authentication:** JWT Token required~~
 
-#### Get Control Status
+#### ~~Get Control Status~~ ❌ REMOVED
 ```
-GET /api/devices/:id/control/:controlId/status
+GET /api/devices/:id/control/:controlId/status (REMOVED)
 ```
-**Authentication:** JWT Token required
+~~**Authentication:** JWT Token required~~
 
-#### Get Pending Controls
+#### ~~Get Pending Controls~~ ❌ REMOVED
 ```
-GET /api/devices/:id/control/pending
+GET /api/devices/:id/control/pending (REMOVED)
 ```
-**Authentication:** JWT Token required
+~~**Authentication:** JWT Token required~~
 
 ---
 
@@ -723,16 +711,20 @@ curl -X POST http://localhost:3001/api/auth/login \
 # Response will include a token
 # {"token": "eyJhbGc...", "user": {...}}
 
-# 2. Use token to get devices
+# 2. Use token to get your own devices
 curl -X GET http://localhost:3001/api/devices/ \
   -H "Authorization: Bearer eyJhbGc..."
 
-# 3. Admin: Get all devices from all users
-curl -X GET http://localhost:3001/api/devices/admin/devices \
+# 3. Admin: Get all users (Admin V1 API)
+curl -X GET http://localhost:3001/api/v1/admin/users \
   -H "Authorization: Bearer eyJhbGc..."
 
-# 4. Admin: Get devices with filters
-curl -X GET "http://localhost:3001/api/devices/admin/devices?status=active&device_type=sensor" \
+# 4. Admin: Get all devices from all users (Admin V1 API)
+curl -X GET http://localhost:3001/api/v1/admin/devices \
+  -H "Authorization: Bearer eyJhbGc..."
+
+# 5. Admin: Get devices with filters (Admin V1 API)
+curl -X GET "http://localhost:3001/api/v1/admin/devices?status=active&device_type=sensor" \
   -H "Authorization: Bearer eyJhbGc..."
 ```
 

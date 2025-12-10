@@ -42,14 +42,16 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 **User Dashboard (role='user'):**
 - Overview: Devices + Telemetry data
 - Devices: Device management
-- Device Control: Send commands
+- ~~Device Control: Send commands~~ ❌ REMOVED (Dec 10, 2025)
 - Telemetry: Data visualization
 - Profile: User settings
 
 **Admin Dashboard (role='admin'):**
 - All user features PLUS:
+- Dashboard: Admin dashboard & system overview
+- MQTT: Message broker monitoring
+- Users: User management
 - Admin: User management, system settings
-- Future: User management interface in Admin page
 
 ## Files Modified
 

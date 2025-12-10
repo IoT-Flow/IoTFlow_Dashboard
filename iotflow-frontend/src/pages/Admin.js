@@ -64,6 +64,8 @@ const Admin = () => {
   const [loadingDevices, setLoadingDevices] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   
   // Log user info for debugging
   useEffect(() => {
@@ -234,6 +236,34 @@ const Admin = () => {
     }
   };
 
+  // Fetch all users (admin only)
+  const fetchAllUsers = async () => {
+    const isAdmin = user?.is_admin === true || user?.role === 'admin';
+    if (!isAdmin) {
+      toast.error('Admin privileges required');
+      return;
+    }
+    
+    setLoadingUsers(true);
+    try {
+      const data = await apiService.getAllUsers();
+      // Backend returns array directly when no pagination params, or {users: [...]} when paginated
+      const userList = Array.isArray(data) ? data : (data.users || []);
+      setAllUsers(userList);
+      toast.success(`Loaded ${userList.length} user(s)`);
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      if (error.response?.status === 403) {
+        toast.error('Access denied: Admin privileges required');
+      } else {
+        toast.error('Failed to load users');
+      }
+      setAllUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   // Fetch all devices from all users (admin only)
   const fetchAllDevices = async () => {
     console.log('🔄 Fetching all devices...');
@@ -300,6 +330,13 @@ const Admin = () => {
       toast.error('Failed to delete device');
     }
   };
+
+  // Fetch users when Users tab becomes active
+  useEffect(() => {
+    if (activeTab === 0) { // Users tab
+      fetchAllUsers();
+    }
+  }, [activeTab]);
 
   // Fetch devices when Devices tab becomes active
   useEffect(() => {
@@ -460,10 +497,10 @@ const Admin = () => {
                 Total Users
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                {systemStats.totalUsers}
+                {allUsers.length || systemStats.totalUsers}
               </Typography>
               <Typography variant="body2" color="success.main">
-                {systemStats.activeUsers} active
+                {allUsers.filter(u => u.is_active).length || systemStats.activeUsers} active
               </Typography>
             </CardContent>
           </Card>
@@ -475,7 +512,7 @@ const Admin = () => {
                 Admin Users
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                {systemStats.adminUsers}
+                {allUsers.filter(u => u.is_admin).length || systemStats.adminUsers}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Administrators
@@ -660,16 +697,85 @@ const Admin = () => {
         {/* Users Tab */}
         {activeTab === 0 && (
           <Box sx={{ p: 3 }}>
-            <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 3 }}>
-              User Management
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Manage user accounts, roles, and permissions. View user devices and activity.
-            </Typography>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              This section is now available as a separate page in the sidebar navigation.
-              Navigate to <strong>Admin → Users</strong> for the full user management interface.
-            </Alert>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                All Users ({allUsers.length})
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<Refresh />}
+                onClick={fetchAllUsers}
+                disabled={loadingUsers}
+              >
+                Refresh
+              </Button>
+            </Box>
+
+            {loadingUsers ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : allUsers.length === 0 ? (
+              <Alert severity="info">
+                No users found in the system.
+              </Alert>
+            ) : (
+              <>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  For full user management (edit roles, status, view devices), navigate to <strong>Admin → Users</strong> in the sidebar.
+                </Alert>
+                
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Username</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Role</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Created</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {allUsers.map((usr) => (
+                        <TableRow key={usr.id} hover>
+                          <TableCell>{usr.id}</TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ width: 32, height: 32, bgcolor: usr.is_admin ? 'primary.main' : 'grey.400' }}>
+                                {usr.username.charAt(0).toUpperCase()}
+                              </Avatar>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {usr.username}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>{usr.email}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={usr.is_admin ? 'Admin' : 'User'}
+                              color={usr.is_admin ? 'primary' : 'default'}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={usr.is_active ? 'Active' : 'Inactive'}
+                              color={usr.is_active ? 'success' : 'default'}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {new Date(usr.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            )}
           </Box>
         )}
 

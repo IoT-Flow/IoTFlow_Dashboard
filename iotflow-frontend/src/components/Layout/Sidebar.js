@@ -48,13 +48,6 @@ const Sidebar = ({ open, onToggle }) => {
       roles: ['user', 'admin'],
     },
     {
-      label: 'Device Control',
-      path: '/device-control',
-      icon: <ControlPointIcon />,
-      description: 'Send commands to devices',
-      roles: ['user', 'admin'],
-    },
-    {
       label: 'Telemetry',
       path: '/telemetry',
       icon: <AnalyticsIcon />,

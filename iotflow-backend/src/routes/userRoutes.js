@@ -13,19 +13,19 @@ router.get('/profile', verifyToken, UserController.getProfile);
 router.put('/profile', verifyToken, UserController.updateProfile);
 router.post('/refresh-api-key', verifyToken, UserController.refreshApiKey);
 
-// Admin-only: User management routes (must be before /:id routes)
-router.get('/', verifyToken, UserController.getAllUsers); // Will check admin in controller
-router.get('/:id/devices', verifyToken, UserController.getUserDevices); // Will check admin in controller
-
-// Specific role/status update endpoints removed - consolidated into generic PUT /:id
-// The generic updateUser now handles role and status updates with proper safeguards
-// router.put('/:id/role', verifyToken, UserController.updateUserRole);
-// router.put('/:id/status', verifyToken, UserController.updateUserStatus);
-
-// Admin routes (existing CRUD operations)
-router.post('/', verifyToken, isAdmin, UserController.createUser);
-router.get('/:id', verifyToken, isAdmin, UserController.getUser);
-router.put('/:id', verifyToken, isAdmin, UserController.updateUser); // Now handles role/status updates
-router.delete('/:id', verifyToken, isAdmin, UserController.deleteUser)
+// ============================================================================
+// ADMIN USER MANAGEMENT ROUTES REMOVED - USE /api/v1/admin/* INSTEAD
+// ============================================================================
+// The following routes have been removed to eliminate duplication with Admin V1 API.
+// All admin operations should use the dedicated /api/v1/admin namespace.
+//
+// REMOVED ROUTES (now available only via /api/v1/admin):
+// - GET    /api/users                → Use GET    /api/v1/admin/users
+// - GET    /api/users/:id            → Use GET    /api/v1/admin/users/:id
+// - POST   /api/users                → Use POST   /api/v1/admin/users
+// - PUT    /api/users/:id            → Use PUT    /api/v1/admin/users/:id
+// - DELETE /api/users/:id            → Use DELETE /api/v1/admin/users/:id
+// - GET    /api/users/:id/devices    → Use GET    /api/v1/admin/users/:id/devices
+// ============================================================================
 
 module.exports = router;

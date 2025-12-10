@@ -90,7 +90,6 @@ const AppContent = () => {
               )}
               
               <Route path="/devices" element={<Devices />} />
-              <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/telemetry" element={<Telemetry />} />
               <Route path="/profile" element={<Profile />} />
               {user?.role === 'admin' && <Route path="/mqtt" element={<Mqtt />} />}

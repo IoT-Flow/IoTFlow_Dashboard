@@ -202,7 +202,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
         });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices')
+        .get('/api/v1/admin/devices')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -223,7 +223,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
         });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices?status=inactive')
+        .get('/api/v1/admin/devices?status=inactive')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -245,7 +245,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
         });
 
       const response = await request(app)
-        .get('/api/devices/admin/devices?device_type=sensor')
+        .get('/api/v1/admin/devices?device_type=sensor')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -316,7 +316,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
         });
 
       const response = await request(app)
-        .delete(`/api/devices/admin/devices/${createRes.body.id}`)
+        .delete(`/api/v1/admin/devices/${createRes.body.id}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -334,7 +334,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
         });
 
       await request(app)
-        .delete(`/api/devices/admin/devices/${createRes.body.id}`)
+        .delete(`/api/v1/admin/devices/${createRes.body.id}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       const device = await Device.findOne({ where: { id: createRes.body.id } });
