@@ -221,6 +221,16 @@ class UserController {
       const { id } = req.params;
       const { username, email, password, is_active, is_admin, role } = req.body;
 
+      // Consolidated safeguards from specific endpoints
+      // Prevent admin from modifying their own role or status via sensitive fields
+      if (parseInt(id) === req.user.id) {
+        if (is_admin !== undefined || is_active !== undefined) {
+          return res.status(400).json({ 
+            message: 'Cannot modify your own admin privileges or account status' 
+          });
+        }
+      }
+
       const updates = { username, email, is_active, is_admin, role, updated_at: new Date() };
       if (password) {
         updates.password_hash = await bcrypt.hash(password, 10);
@@ -232,6 +242,29 @@ class UserController {
         return res.status(404).json({ message: 'User not found' });
       }
       const updatedUser = await User.findByPk(id);
+
+      // Send specific notifications for role/status changes
+      if (is_admin !== undefined) {
+        await notificationService.createNotification(parseInt(id), {
+          type: 'info',
+          title: 'Role Updated',
+          message: `Your role has been updated to ${is_admin ? 'Admin' : 'User'}`,
+          device_id: null,
+          source: 'user_management',
+          metadata: { action: 'role_update', is_admin },
+        });
+      }
+
+      if (is_active !== undefined) {
+        await notificationService.createNotification(parseInt(id), {
+          type: is_active ? 'success' : 'warning',
+          title: `Account ${is_active ? 'Activated' : 'Deactivated'}`,
+          message: `Your account has been ${is_active ? 'activated' : 'deactivated'} by an administrator`,
+          device_id: null,
+          source: 'user_management',
+          metadata: { action: 'status_update', is_active },
+        });
+      }
 
       // Send notification to admin who updated the user
       await notificationService.createNotification(req.user.id, {
@@ -331,93 +364,19 @@ class UserController {
   }
 
   // Admin-only: Update user role
+  // DEPRECATED: Use updateUser instead - kept for backward compatibility
   async updateUserRole(req, res) {
-    try {
-      // Check if user is admin
-      if (!req.user.is_admin) {
-        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-      }
-
-      const { id } = req.params;
-      const { is_admin } = req.body;
-
-      // Prevent admin from modifying their own role
-      if (parseInt(id) === req.user.id) {
-        return res.status(400).json({ message: 'Cannot modify your own admin privileges' });
-      }
-
-      const user = await User.findByPk(id);
-
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      await user.update({ is_admin });
-
-      const { password_hash: _, ...userResponse } = user.toJSON();
-
-      // Send notification
-      await notificationService.createNotification(user.id, {
-        type: 'info',
-        title: 'Role Updated',
-        message: `Your role has been updated to ${is_admin ? 'Admin' : 'User'}`,
-        device_id: null,
-        source: 'user_management',
-        metadata: { action: 'role_update', is_admin },
-      });
-
-      res.status(200).json({
-        message: 'User role updated successfully',
-        user: userResponse,
-      });
-    } catch (error) {
-      res.status(500).json({ message: 'Failed to update user role', error: error.message });
-    }
+    // Delegate to consolidated updateUser method
+    req.body = { is_admin: req.body.is_admin };
+    return this.updateUser(req, res);
   }
 
   // Admin-only: Update user status (active/inactive)
+  // DEPRECATED: Use updateUser instead - kept for backward compatibility
   async updateUserStatus(req, res) {
-    try {
-      // Check if user is admin
-      if (!req.user.is_admin) {
-        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-      }
-
-      const { id } = req.params;
-      const { is_active } = req.body;
-
-      // Prevent admin from modifying their own status
-      if (parseInt(id) === req.user.id) {
-        return res.status(400).json({ message: 'Cannot modify your own account status' });
-      }
-
-      const user = await User.findByPk(id);
-
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      await user.update({ is_active });
-
-      const { password_hash: _, ...userResponse } = user.toJSON();
-
-      // Send notification
-      await notificationService.createNotification(user.id, {
-        type: is_active ? 'success' : 'warning',
-        title: `Account ${is_active ? 'Activated' : 'Deactivated'}`,
-        message: `Your account has been ${is_active ? 'activated' : 'deactivated'} by an administrator`,
-        device_id: null,
-        source: 'user_management',
-        metadata: { action: 'status_update', is_active },
-      });
-
-      res.status(200).json({
-        message: 'User status updated successfully',
-        user: userResponse,
-      });
-    } catch (error) {
-      res.status(500).json({ message: 'Failed to update user status', error: error.message });
-    }
+    // Delegate to consolidated updateUser method
+    req.body = { is_active: req.body.is_active };
+    return this.updateUser(req, res);
   }
 }
 

@@ -8,6 +8,7 @@ const telemetryRoutes = require('./routes/telemetryRoutes');
 const chartRoutes = require('./routes/chartRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const deviceGroupRoutes = require('./routes/deviceGroupRoutes');
+const adminV1Routes = require('./routes/adminV1Routes');
 const { verifyApiKey } = require('./middlewares/authMiddleware');
 
 const app = express();
@@ -50,6 +51,9 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/charts', chartRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+// Admin V1 API routes (dedicated admin namespace)
+app.use('/api/v1/admin', adminV1Routes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

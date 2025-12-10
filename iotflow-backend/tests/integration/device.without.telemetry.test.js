@@ -155,6 +155,10 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
           },
         });
 
+      if (response.status !== 200) {
+        console.log('Configuration error:', response.body);
+      }
+
       expect(response.status).toBe(200);
       expect(response.body.configuration).toBeDefined();
     });
@@ -267,6 +271,10 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
       const response = await request(app)
         .delete(`/api/devices/${createRes.body.id}`)
         .set('Authorization', `Bearer ${userToken}`);
+
+      if (response.status !== 200) {
+        console.log('Delete error:', response.body);
+      }
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Device deleted successfully');
