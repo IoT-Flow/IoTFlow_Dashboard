@@ -1,14 +1,3 @@
-/**
- * UsersManagement Page - Rebuilt with Admin V1 API
- * 
- * User management page that uses Admin V1 API endpoints:
- * - GET /api/v1/admin/users - List all users
- * - GET /api/v1/admin/users/:id/devices - Get user's devices
- * - PUT /api/v1/admin/users/:id - Update user role/status
- * 
- * Preserves the same design and functionality as the original page.
- */
-
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -45,7 +34,7 @@ import {
   ToggleOn as ToggleOnIcon,
   ToggleOff as ToggleOffIcon,
 } from '@mui/icons-material';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import apiService from '../services/apiService';
 
 export default function UsersManagement() {
@@ -71,9 +60,7 @@ export default function UsersManagement() {
     try {
       setLoading(true);
       const data = await apiService.getAllUsers();
-      // Backend returns array directly when no pagination params, or {users: [...]} when paginated
-      const userList = Array.isArray(data) ? data : (data.users || []);
-      setUsers(userList);
+      setUsers(data.users || []);
     } catch (error) {
       console.error('Failed to load users:', error);
       toast.error('Failed to load users');
@@ -184,11 +171,9 @@ export default function UsersManagement() {
         <Typography variant="h4" component="h1">
           User Management
         </Typography>
-        <Tooltip title="Refresh">
-          <IconButton onClick={loadUsers} disabled={loading} aria-label="refresh">
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
+        <IconButton onClick={loadUsers} disabled={loading}>
+          <RefreshIcon />
+        </IconButton>
       </Box>
 
       {/* Filters */}
@@ -286,7 +271,6 @@ export default function UsersManagement() {
                       <IconButton
                         size="small"
                         onClick={() => handleViewDevices(user)}
-                        aria-label="view devices"
                       >
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
@@ -297,7 +281,6 @@ export default function UsersManagement() {
                         size="small"
                         onClick={() => handleToggleRole(user)}
                         color={user.is_admin ? 'primary' : 'default'}
-                        aria-label={user.is_admin ? 'demote to user' : 'promote to admin'}
                       >
                         {user.is_admin ? (
                           <PersonRemoveIcon fontSize="small" />
@@ -312,7 +295,6 @@ export default function UsersManagement() {
                         size="small"
                         onClick={() => handleToggleStatus(user)}
                         color={user.is_active ? 'success' : 'default'}
-                        aria-label={user.is_active ? 'deactivate' : 'activate'}
                       >
                         {user.is_active ? (
                           <ToggleOnIcon fontSize="small" />
