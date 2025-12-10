@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -12,9 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -24,7 +22,7 @@ import {
 } from '@mui/icons-material';
 
 export default function Mqtt() {
-  const [brokerStatus, setBrokerStatus] = useState({
+  const [brokerStatus] = useState({
     status: 'running',
     uptime: '2d 15h 32m',
     version: 'Mosquitto 2.0.15',

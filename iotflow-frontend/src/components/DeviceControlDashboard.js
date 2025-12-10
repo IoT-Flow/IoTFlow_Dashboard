@@ -46,13 +46,10 @@ import {
 import { alpha } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/apiService';
 
 const DeviceControlDashboard = () => {
-  const { user } = useAuth();
-
-  // State management
+  // State management for device control
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +60,6 @@ const DeviceControlDashboard = () => {
   const [command, setCommand] = useState('');
   const [parameters, setParameters] = useState([{ key: '', value: '' }]);
   const [pendingCommands, setPendingCommands] = useState([]);
-  const [commandHistory, setCommandHistory] = useState([]);
 
   // Dialog states
   const [controlDialogOpen, setControlDialogOpen] = useState(false);
@@ -72,6 +68,7 @@ const DeviceControlDashboard = () => {
   // Load user devices on component mount
   useEffect(() => {
     loadDevices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Poll for command status updates

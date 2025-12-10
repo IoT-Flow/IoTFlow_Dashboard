@@ -1870,7 +1870,7 @@ class ApiService {
    * @param {number} deviceId - Device ID
    * @returns {Promise<Object>} Device object with user info
    */
-  async getDevice(deviceId) {
+  async getDeviceAdmin(deviceId) {
     try {
       const response = await this.api.get(`/v1/admin/devices/${deviceId}`);
       return response.data;

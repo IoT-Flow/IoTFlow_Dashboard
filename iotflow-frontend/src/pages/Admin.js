@@ -336,6 +336,7 @@ const Admin = () => {
     if (activeTab === 0) { // Users tab
       fetchAllUsers();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Fetch devices when Devices tab becomes active
@@ -345,6 +346,7 @@ const Admin = () => {
       console.log('🔍 Devices tab active, fetching devices...');
       fetchAllDevices();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const ServiceCard = ({ name, service, icon }) => (
@@ -395,39 +397,6 @@ const Admin = () => {
       </CardContent>
     </Card>
   );
-
-  const systemUsageData = {
-    labels: ['Used', 'Available'],
-    datasets: [
-      {
-        data: [systemStats.storageUsed, 100 - systemStats.storageUsed],
-        backgroundColor: ['#1976d2', '#e0e0e0'],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const memoryUsageData = {
-    labels: ['Used', 'Available'],
-    datasets: [
-      {
-        data: [systemStats.memoryUsed, 100 - systemStats.memoryUsed],
-        backgroundColor: ['#dc004e', '#e0e0e0'],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    cutout: '70%',
-  };
 
   return (
     <Box className="fade-in">

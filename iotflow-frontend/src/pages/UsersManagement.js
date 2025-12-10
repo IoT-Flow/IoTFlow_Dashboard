@@ -65,6 +65,7 @@ export default function UsersManagement() {
 
   useEffect(() => {
     filterUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchQuery, statusFilter]);
 
   const loadUsers = async () => {

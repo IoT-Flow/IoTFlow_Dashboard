@@ -53,9 +53,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const {
     isConnected,
-    realtimeUpdates = [],
     deviceNotifications = [],
-    telemetryData = {},
   } = useWebSocket();
 
   const [dashboardData, setDashboardData] = useState(null);
@@ -68,6 +66,7 @@ const Dashboard = () => {
     loadDashboardData();
     const interval = setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDashboardData = async () => {
@@ -175,12 +174,6 @@ const Dashboard = () => {
       }, [])
     : [];
 
-  const recentUpdatesCount = Array.isArray(realtimeUpdates)
-    ? realtimeUpdates.filter(
-        update =>
-          update && update.timestamp && Date.now() - new Date(update.timestamp).getTime() < 300000 // Last 5 minutes
-      ).length
-    : 0;
   console.log(devices);
   if (loading) {
     return (

@@ -598,6 +598,7 @@ const ChartCustomizationDialog = ({
       setSelectedCategory('Ready Now');
       setAvailableMeasurements([]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingChart, open, devices]); // Add devices as dependency
 
   const handleConfigChange = (field, value) => {
@@ -730,37 +731,6 @@ const ChartCustomizationDialog = ({
     if (!data) {
       return <Alert severity="info">Select devices and data types to see preview</Alert>;
     }
-
-    const options = {
-      responsive: true,
-      aspectRatio: chartConfig.aspectRatio,
-      plugins: {
-        legend: {
-          display: chartConfig.showLegend,
-        },
-        title: {
-          display: !!chartConfig.title,
-          text: chartConfig.title,
-        },
-      },
-      scales: {
-        y: {
-          grid: {
-            display: chartConfig.showGrid,
-          },
-          min: chartConfig.yAxisMin,
-          max: chartConfig.yAxisMax,
-        },
-        x: {
-          grid: {
-            display: chartConfig.showGrid,
-          },
-        },
-      },
-      animation: {
-        duration: chartConfig.animations ? 750 : 0,
-      },
-    };
 
     // Chart preview placeholder - ECharts integration coming soon
     return (

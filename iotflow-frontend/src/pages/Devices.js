@@ -49,6 +49,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/apiService';
+import AddDeviceForm from '../components/AddDeviceForm';
 
 const Devices = () => {
   const { user } = useAuth();
@@ -93,6 +94,7 @@ const Devices = () => {
 
   useEffect(() => {
     loadDevices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   // Filter devices based on search and filters
@@ -139,6 +141,12 @@ const Devices = () => {
       console.error('Failed to delete device:', error);
       toast.error('Failed to delete device');
     }
+  };
+
+  // Handle successful device creation
+  const handleDeviceCreated = (newDevice) => {
+    setCreateDialogOpen(false);
+    loadDevices();
   };
 
   // Render status chip with appropriate color
@@ -380,15 +388,9 @@ const Devices = () => {
       {/* Create Device Dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Create Device</DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Device creation form will be implemented here.
-          </Typography>
+        <DialogContent sx={{ pt: 2 }}>
+          <AddDeviceForm onSuccess={handleDeviceCreated} />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained">Create</Button>
-        </DialogActions>
       </Dialog>
     </Box>
   );

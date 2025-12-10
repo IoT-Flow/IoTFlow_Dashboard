@@ -1,13 +1,10 @@
 import {
   Analytics as AnalyticsIcon,
-  BarChart as BarChartIcon,
-  ControlPoint as ControlPointIcon,
   Dashboard as DashboardIcon,
   DeviceHub as DeviceHubIcon,
   Person as PersonIcon,
   People as PeopleIcon,
   Router as RouterIcon,
-  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import {
   Box,

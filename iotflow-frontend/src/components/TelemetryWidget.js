@@ -7,14 +7,12 @@ import {
   Chip,
   CircularProgress,
   Typography,
-  useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import apiService from '../services/apiService';
 
 const TelemetryWidget = ({ deviceId, compact = false }) => {
-  const theme = useTheme();
   const { telemetryData, isConnected } = useWebSocket();
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +20,7 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
 
   useEffect(() => {
     loadDeviceInfo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
   const loadDeviceInfo = async () => {

@@ -162,8 +162,7 @@ const CustomChart = ({
         endTime: endTime.toISOString(),
       });
 
-      // Import API service
-      const apiService = (await import('../services/apiService')).default;
+      // Import API
       const api = (await import('../services/api')).default;
 
       // Fetch data for each configured device
@@ -267,6 +266,7 @@ const CustomChart = ({
       // For custom charts, fetch their own data
       fetchChartData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isMainChart,
     externalTelemetryData,
@@ -278,6 +278,7 @@ const CustomChart = ({
   useEffect(() => {
     // Load chart visualization when telemetry data changes
     loadChartData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [telemetryData]);
 
   useEffect(() => {
@@ -293,6 +294,7 @@ const CustomChart = ({
         clearInterval(refreshIntervalRef.current);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, chartConfig.refreshInterval, isMainChart]);
 
   const generateEChartsOption = async () => {
@@ -993,7 +995,6 @@ const CustomChart = ({
         position: 'top',
         formatter: function (param) {
           const xIndex = param.data[0];
-          const yIndex = param.data[1];
           const value = param.data[2];
           const timestamp = timeLabels[xIndex];
           let fullDateTime = 'No timestamp';

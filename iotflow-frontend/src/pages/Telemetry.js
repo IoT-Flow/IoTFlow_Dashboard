@@ -146,6 +146,7 @@ const Telemetry = () => {
       }
     };
     loadCharts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token, timeRange]); // Added timeRange dependency
 
   // Custom chart management functions
@@ -301,6 +302,7 @@ const Telemetry = () => {
       }, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDevice, timeRange, autoRefresh, token]);
 
   const handleDeviceChange = event => {
