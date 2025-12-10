@@ -29,6 +29,13 @@ export const AuthProvider = ({ children }) => {
 
           // Validate that the user object has required fields
           if (parsedUser && parsedUser.id && parsedUser.email) {
+            // Ensure role is set (for backward compatibility with existing users)
+            if (!parsedUser.role && parsedUser.is_admin !== undefined) {
+              parsedUser.role = parsedUser.is_admin ? 'admin' : 'user';
+            } else if (!parsedUser.role) {
+              parsedUser.role = 'user';
+            }
+
             apiService.setAuthToken(token);
             setIsAuthenticated(true);
             setUser(parsedUser);
@@ -57,12 +64,18 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         const { token, user } = response.data;
 
+        // Map is_admin to role for easier access
+        const userWithRole = {
+          ...user,
+          role: user.is_admin ? 'admin' : 'user',
+        };
+
         localStorage.setItem('iotflow_token', token);
-        localStorage.setItem('iotflow_user', JSON.stringify(user));
+        localStorage.setItem('iotflow_user', JSON.stringify(userWithRole));
 
         apiService.setAuthToken(token);
         setIsAuthenticated(true);
-        setUser(user);
+        setUser(userWithRole);
 
         toast.success(`Welcome back, ${user.username}!`);
         return { success: true };
@@ -84,12 +97,18 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         const { token, user } = response.data;
 
+        // Map is_admin to role for easier access
+        const userWithRole = {
+          ...user,
+          role: user.is_admin ? 'admin' : 'user',
+        };
+
         localStorage.setItem('iotflow_token', token);
-        localStorage.setItem('iotflow_user', JSON.stringify(user));
+        localStorage.setItem('iotflow_user', JSON.stringify(userWithRole));
 
         apiService.setAuthToken(token);
         setIsAuthenticated(true);
-        setUser(user);
+        setUser(userWithRole);
 
         toast.success(`Welcome to IoTFlow, ${user.username}!`);
         return { success: true };
@@ -122,8 +141,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = updatedUser => {
-    setUser(updatedUser);
-    localStorage.setItem('iotflow_user', JSON.stringify(updatedUser));
+    // Ensure role is set when updating user
+    const userWithRole = {
+      ...updatedUser,
+      role: updatedUser.role || (updatedUser.is_admin ? 'admin' : 'user'),
+    };
+    setUser(userWithRole);
+    localStorage.setItem('iotflow_user', JSON.stringify(userWithRole));
   };
 
   const value = {

@@ -366,15 +366,9 @@ class ApiService {
   }
 
   async logout() {
-    try {
-      await this.api.post('/auth/logout');
-    } catch (error) {
-      // Continue with logout even if API call fails
-      console.error('Logout error:', error);
-    } finally {
-      // Always clear local auth data
-      this.clearAuthData();
-    }
+    // Note: Backend doesn't have a logout endpoint since JWT tokens are stateless
+    // Just clear local auth data (token is validated by expiry on backend)
+    this.clearAuthData();
   }
 
   async getCurrentUser() {
@@ -1774,6 +1768,101 @@ class ApiService {
   }
 
   // ==================== EXISTING DEVICE CONTROL METHODS ====================
+
+  // ==================== ADMIN USER MANAGEMENT METHODS ====================
+
+  /**
+   * Get all users (admin only)
+   * @returns {Promise<Array>} List of all users
+   */
+  async getAllUsers() {
+    try {
+      const response = await this.api.get('/users');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      throw error;
+    }
+  }
+
+  // ==================== ADMIN DEVICE MANAGEMENT METHODS ====================
+
+  /**
+   * Get all devices from all users (admin only)
+   * @param {Object} params - Query parameters (status, device_type, user_id)
+   * @returns {Promise<Object>} Object with devices array and total count
+   */
+  async adminGetAllDevices(params = {}) {
+    try {
+      const response = await this.api.get('/devices/admin/devices', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all devices (admin):', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete any device (admin only)
+   * @param {number} deviceId - Device ID
+   * @returns {Promise<Object>} Deletion result
+   */
+  async adminDeleteDevice(deviceId) {
+    try {
+      const response = await this.api.delete(`/devices/admin/devices/${deviceId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Error deleting device (admin):', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's devices (admin only)
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} User with devices
+   */
+  async getUserDevices(userId) {
+    try {
+      const response = await this.api.get(`/users/${userId}/devices`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user devices:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user role (admin only)
+   * @param {number} userId - User ID
+   * @param {boolean} isAdmin - Whether user should be admin
+   * @returns {Promise<Object>} Updated user
+   */
+  async updateUserRole(userId, isAdmin) {
+    try {
+      const response = await this.api.put(`/users/${userId}/role`, { is_admin: isAdmin });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user status (admin only)
+   * @param {number} userId - User ID
+   * @param {boolean} isActive - Whether user should be active
+   * @returns {Promise<Object>} Updated user
+   */
+  async updateUserStatus(userId, isActive) {
+    try {
+      const response = await this.api.put(`/users/${userId}/status`, { is_active: isActive });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      throw error;
+    }
+  }
 }
 
 const apiService = new ApiService();

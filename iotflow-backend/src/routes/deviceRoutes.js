@@ -1,9 +1,13 @@
 const express = require('express');
 const DeviceController = require('../controllers/deviceController');
 const DeviceGroupController = require('../controllers/deviceGroupController');
-const { verifyToken } = require('../middlewares/authMiddleware'); // Changed to verifyToken for user-based auth
+const { verifyToken, isAdmin } = require('../middlewares/authMiddleware'); // Changed to verifyToken for user-based auth
 
 const router = express.Router();
+
+// Admin routes (must come before generic :id routes)
+router.get('/admin/devices', verifyToken, isAdmin, DeviceController.adminGetAllDevices);
+router.delete('/admin/devices/:id', verifyToken, isAdmin, DeviceController.adminDeleteDevice);
 
 // Device CRUD routes - Protected by user authentication
 router.post('/', verifyToken, DeviceController.createDevice);

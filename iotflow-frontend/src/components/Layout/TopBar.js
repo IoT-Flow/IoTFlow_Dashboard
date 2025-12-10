@@ -33,7 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
-const TopBar = ({ onMenuClick }) => {
+const TopBar = ({ onMenuClick, sidebarOpen = true }) => {
   const { user, logout } = useAuth();
   const {
     connected,
@@ -104,6 +104,12 @@ const TopBar = ({ onMenuClick }) => {
         backgroundColor: '#fff',
         color: '#333',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        marginLeft: { xs: 0, md: sidebarOpen ? '240px' : '70px' },
+        width: { xs: '100%', md: sidebarOpen ? 'calc(100% - 240px)' : 'calc(100% - 70px)' },
+        transition: theme => theme.transitions.create(['margin', 'width'], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
       }}
     >
       <Toolbar>

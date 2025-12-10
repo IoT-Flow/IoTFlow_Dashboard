@@ -5,6 +5,7 @@ import {
   Dashboard as DashboardIcon,
   DeviceHub as DeviceHubIcon,
   Person as PersonIcon,
+  People as PeopleIcon,
   Router as RouterIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
@@ -57,14 +58,14 @@ const Sidebar = ({ open, onToggle }) => {
       path: '/telemetry',
       icon: <AnalyticsIcon />,
       description: 'Data visualization',
-      roles: ['user', 'admin'],
+      roles: ['user'], // Only for regular users
     },
     {
       label: 'Profile',
       path: '/profile',
       icon: <PersonIcon />,
       description: 'User profile & settings',
-      roles: ['user', 'admin'],
+      roles: ['user'], // Only for regular users
     },
     // Admin-only features
     {
@@ -72,6 +73,13 @@ const Sidebar = ({ open, onToggle }) => {
       path: '/mqtt',
       icon: <RouterIcon />,
       description: 'Message broker monitoring',
+      roles: ['admin'],
+    },
+    {
+      label: 'Users',
+      path: '/users',
+      icon: <PeopleIcon />,
+      description: 'User management',
       roles: ['admin'],
     },
     {
@@ -240,15 +248,18 @@ const Sidebar = ({ open, onToggle }) => {
           boxSizing: 'border-box',
           transition: theme.transitions.create('width', {
             easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
+            duration: theme.transitions.duration.leavingScreen,
           }),
           backgroundColor: 'background.paper',
           borderRight: '1px solid',
           borderColor: 'divider',
+          overflowX: 'hidden',
         },
       }}
     >
-      <Box sx={{ mt: '64px' }}>{drawerContent}</Box>
+      <Box sx={{ mt: '64px', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+        {drawerContent}
+      </Box>
     </Drawer>
   );
 };

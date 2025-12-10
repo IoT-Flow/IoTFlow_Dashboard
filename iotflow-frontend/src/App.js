@@ -9,9 +9,11 @@ import Admin from './pages/Admin';
 import DeviceControl from './pages/DeviceControl';
 import Devices from './pages/Devices';
 import Login from './pages/Login';
+import Mqtt from './pages/Mqtt';
 import Overview from './pages/Overview';
 import Profile from './pages/Profile';
 import Telemetry from './pages/Telemetry';
+import UsersManagement from './pages/UsersManagement';
 
 const AppContent = () => {
   const { isAuthenticated, user, loading } = useAuth();
@@ -61,7 +63,7 @@ const AppContent = () => {
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         <Sidebar open={sidebarOpen} onToggle={handleSidebarToggle} />
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-          <TopBar onMenuClick={handleSidebarToggle} />
+          <TopBar onMenuClick={handleSidebarToggle} sidebarOpen={sidebarOpen} />
           <Box
             component="main"
             sx={{
@@ -70,7 +72,6 @@ const AppContent = () => {
               backgroundColor: '#f5f5f5',
               minHeight: 'calc(100vh - 64px)',
               marginTop: '64px',
-              marginLeft: { xs: 0, md: sidebarOpen ? '240px' : '70px' },
               transition: 'margin-left 0.3s ease',
             }}
           >
@@ -81,7 +82,9 @@ const AppContent = () => {
               <Route path="/device-control" element={<DeviceControl />} />
               <Route path="/telemetry" element={<Telemetry />} />
               <Route path="/profile" element={<Profile />} />
+              {user?.role === 'admin' && <Route path="/mqtt" element={<Mqtt />} />}
               {user?.role === 'admin' && <Route path="/admin" element={<Admin />} />}
+              {user?.role === 'admin' && <Route path="/users" element={<UsersManagement />} />}
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>
           </Box>

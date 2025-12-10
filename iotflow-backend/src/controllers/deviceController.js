@@ -1,11 +1,78 @@
 const Device = require('../models/device');
 const DeviceConfiguration = require('../models/deviceConfiguration');
-const DeviceAuth = require('../models/deviceAuth');
-const TelemetryData = require('../models/telemetryData');
+const User = require('../models/user');
 const { sequelize } = require('../utils/db');
 const notificationService = require('../services/notificationService');
 
 class DeviceController {
+  // Admin: get all devices from all users
+  async adminGetAllDevices(req, res) {
+    try {
+      console.log('🔍 [ADMIN] Getting all devices');
+      console.log('👤 [ADMIN] Requested by user:', req.user?.username, '(ID:', req.user?.id, ')');
+      console.log('🔑 [ADMIN] User is_admin:', req.user?.is_admin);
+      
+      const { status, device_type, user_id } = req.query;
+      const whereClause = {};
+      
+      if (status) whereClause.status = status;
+      if (device_type) whereClause.device_type = device_type;
+      if (user_id) whereClause.user_id = user_id;
+
+      console.log('📋 [ADMIN] Query filters:', whereClause);
+
+      const devices = await Device.findAll({
+        where: whereClause,
+        order: [['created_at', 'DESC']],
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'username', 'email'],
+          },
+        ],
+      });
+
+      console.log('✅ [ADMIN] Found devices:', devices.length);
+      console.log('📱 [ADMIN] First device:', devices[0] ? {
+        id: devices[0].id,
+        name: devices[0].name,
+        user_id: devices[0].user_id,
+        owner: devices[0].user?.username
+      } : 'No devices');
+
+      res.status(200).json({ devices, total: devices.length });
+    } catch (error) {
+      console.error('❌ [ADMIN] Admin get all devices error:', error);
+      res.status(500).json({ message: 'Failed to retrieve devices', error: error.message });
+    }
+  }
+
+  // Admin: delete any device
+  async adminDeleteDevice(req, res) {
+    try {
+      const { id } = req.params;
+      // Find device by id (no user_id restriction)
+      const device = await Device.findOne({ where: { id } });
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+      // Delete related records
+      await DeviceConfiguration.destroy({ where: { device_id: id } });
+      await sequelize.query('DELETE FROM chart_devices WHERE device_id = ?', {
+        replacements: [id],
+        type: sequelize.QueryTypes.DELETE,
+      });
+      const deleted = await Device.destroy({ where: { id } });
+      if (!deleted) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+      await notificationService.notifyDeviceDeleted(device.user_id, device.name, device.id);
+      res.json({ success: true, message: 'Device deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete device', error: error.message });
+    }
+  }
   async createDevice(req, res) {
     try {
       const { name, description, device_type, location, firmware_version, hardware_version } =
@@ -163,51 +230,47 @@ class DeviceController {
       });
 
       if (!device) {
+        console.error(`Device not found: id=${id}, user_id=${req.user.id}`);
         return res.status(404).json({ message: 'Device not found' });
       }
 
-      // Temporarily disable foreign key constraints for this operation
-      await sequelize.query('PRAGMA foreign_keys = OFF');
+      // Delete ALL related records first
+      console.log(`Deleting config, chart relationships for device ${id}`);
+      
+      // 1. Delete device configuration
+      const configDeleted = await DeviceConfiguration.destroy({ where: { device_id: id } });
+      console.log(`DeviceConfiguration records deleted: ${configDeleted}`);
 
-      try {
-        // Delete ALL related records first
+      // 2. Delete chart-device relationships (manual table)
+      const chartDeleted = await sequelize.query('DELETE FROM chart_devices WHERE device_id = ?', {
+        replacements: [id],
+        type: sequelize.QueryTypes.DELETE,
+      });
+      console.log(`Chart-device relationships deleted:`, chartDeleted);
 
-        // 1. Delete telemetry data
-        await TelemetryData.destroy({ where: { device_id: id } });
+      // 3. Finally delete the device
+      const deleted = await Device.destroy({
+        where: { id, user_id: req.user.id },
+      });
+      console.log(`Device deleted count: ${deleted}`);
 
-        // 2. Delete device authentication records
-        await DeviceAuth.destroy({ where: { device_id: id } });
-
-        // 3. Delete device configuration
-        await DeviceConfiguration.destroy({ where: { device_id: id } });
-
-        // 4. Delete chart-device relationships (manual table)
-        await sequelize.query('DELETE FROM chart_devices WHERE device_id = ?', {
-          replacements: [id],
-          type: sequelize.QueryTypes.DELETE,
-        });
-
-        // 5. Finally delete the device
-        const deleted = await Device.destroy({
-          where: { id, user_id: req.user.id },
-        });
-
-        if (!deleted) {
-          return res.status(404).json({ message: 'Device not found' });
-        }
-
-        // Send real-time notification for device deletion
-        await notificationService.notifyDeviceDeleted(req.user.id, device.name, device.id);
-
-        console.log(`Device ${id} and all related records deleted successfully`);
-        res.json({ success: true, message: 'Device deleted successfully' });
-      } finally {
-        // Re-enable foreign key constraints
-        await sequelize.query('PRAGMA foreign_keys = ON');
+      if (!deleted) {
+        console.error(`Device destroy returned 0: id=${id}, user_id=${req.user.id}`);
+        return res.status(404).json({ message: 'Device not found' });
       }
+
+      // Send real-time notification for device deletion
+      await notificationService.notifyDeviceDeleted(req.user.id, device.name, device.id);
+
+      console.log(`Device ${id} and all related records deleted successfully`);
+      res.json({ success: true, message: 'Device deleted successfully' });
     } catch (error) {
       console.error('Device deletion error:', error);
-      res.status(500).json({ message: 'Failed to delete device', error: error.message });
+      if (error instanceof Error && error.message) {
+        res.status(500).json({ message: 'Failed to delete device', error: error.message });
+      } else {
+        res.status(500).json({ message: 'Failed to delete device', error });
+      }
     }
   }
 
@@ -449,4 +512,5 @@ class DeviceController {
   }
 }
 
-module.exports = new DeviceController();
+const deviceControllerInstance = new DeviceController();
+module.exports = deviceControllerInstance;

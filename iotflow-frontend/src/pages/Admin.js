@@ -3,6 +3,7 @@ import {
   CheckCircle,
   Computer,
   Delete,
+  Devices as DevicesIcon,
   Download,
   Error,
   Info,
@@ -25,6 +26,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -32,6 +34,7 @@ import {
   Divider,
   FormControlLabel,
   Grid,
+  IconButton,
   LinearProgress,
   List,
   ListItem,
@@ -46,13 +49,35 @@ import {
   TableHead,
   TableRow,
   Tabs,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import apiService from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const Admin = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
+  const [allDevices, setAllDevices] = useState([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deviceToDelete, setDeviceToDelete] = useState(null);
+  
+  // Log user info for debugging
+  useEffect(() => {
+    console.log('👤 Current user:', user);
+    console.log('🔑 Is admin (is_admin):', user?.is_admin);
+    console.log('🔑 Is admin (role):', user?.role);
+    console.log('🔑 Is admin (combined):', user?.is_admin === true || user?.role === 'admin');
+    const token = localStorage.getItem('iotflow_token');
+    console.log('🎫 Token exists:', !!token);
+    if (token) {
+      console.log('🎫 Token preview:', token.substring(0, 20) + '...');
+    }
+  }, [user]);
+  
   const [systemHealth] = useState({
     overall: 'good',
     services: {
@@ -66,7 +91,9 @@ const Admin = () => {
   const [systemStats] = useState({
     totalDevices: 127,
     activeDevices: 98,
-    totalTelemetryPoints: 2847361,
+    totalUsers: 45,
+    activeUsers: 38,
+    adminUsers: 3,
     storageUsed: 73,
     memoryUsed: 68,
     cpuUsage: 34,
@@ -207,6 +234,82 @@ const Admin = () => {
     }
   };
 
+  // Fetch all devices from all users (admin only)
+  const fetchAllDevices = async () => {
+    console.log('🔄 Fetching all devices...');
+    console.log('👤 Current user:', user);
+    console.log('🔐 Is admin:', user?.is_admin || user?.role === 'admin');
+    
+    // Check if user is admin (check both is_admin field and role)
+    const isAdmin = user?.is_admin === true || user?.role === 'admin';
+    if (!isAdmin) {
+      console.warn('⚠️ User is not an admin, cannot fetch all devices');
+      toast.error('Admin privileges required');
+      return;
+    }
+    
+    setLoadingDevices(true);
+    try {
+      console.log('📡 Calling apiService.adminGetAllDevices()...');
+      const response = await apiService.adminGetAllDevices();
+      console.log('✅ Admin devices response:', response);
+      console.log('📊 Total devices:', response.total);
+      console.log('📱 Devices array length:', response.devices?.length);
+      
+      if (response && response.devices) {
+        console.log('📋 Setting devices:', response.devices);
+        setAllDevices(response.devices);
+        toast.success(`Loaded ${response.devices.length} device(s)`);
+      } else {
+        console.warn('⚠️ No devices array in response');
+        setAllDevices([]);
+      }
+      
+      if (response.total === 0 || response.devices?.length === 0) {
+        console.warn('⚠️ Backend returned 0 devices - check database and permissions');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching all devices:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      console.error('Error status:', error.response?.status);
+      console.error('Full error object:', error);
+      
+      if (error.response?.status === 403) {
+        toast.error('Access denied: Admin privileges required');
+      } else {
+        toast.error('Failed to load devices: ' + (error.response?.data?.message || error.message));
+      }
+    } finally {
+      setLoadingDevices(false);
+    }
+  };
+
+  // Delete device (admin)
+  const handleDeleteDevice = async () => {
+    if (!deviceToDelete) return;
+    
+    try {
+      await apiService.adminDeleteDevice(deviceToDelete.id);
+      toast.success(`Device "${deviceToDelete.name}" deleted successfully`);
+      setDeleteDialogOpen(false);
+      setDeviceToDelete(null);
+      // Refresh the devices list
+      fetchAllDevices();
+    } catch (error) {
+      console.error('Error deleting device:', error);
+      toast.error('Failed to delete device');
+    }
+  };
+
+  // Fetch devices when Devices tab becomes active
+  useEffect(() => {
+    console.log('📑 Active tab changed to:', activeTab);
+    if (activeTab === 1) { // Devices tab
+      console.log('🔍 Devices tab active, fetching devices...');
+      fetchAllDevices();
+    }
+  }, [activeTab]);
+
   const ServiceCard = ({ name, service, icon }) => (
     <Card>
       <CardContent>
@@ -332,6 +435,73 @@ const Admin = () => {
       <Alert severity={systemHealth.overall === 'good' ? 'success' : 'warning'} sx={{ mb: 3 }}>
         System Health: {systemHealth.overall.toUpperCase()} - All critical services are operational
       </Alert>
+
+      {/* Quick Stats - Devices & Users */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom color="text.secondary">
+                Total Devices
+              </Typography>
+              <Typography variant="h3" sx={{ fontWeight: 600 }}>
+                {systemStats.totalDevices}
+              </Typography>
+              <Typography variant="body2" color="success.main">
+                {systemStats.activeDevices} active
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom color="text.secondary">
+                Total Users
+              </Typography>
+              <Typography variant="h3" sx={{ fontWeight: 600 }}>
+                {systemStats.totalUsers}
+              </Typography>
+              <Typography variant="body2" color="success.main">
+                {systemStats.activeUsers} active
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom color="text.secondary">
+                Admin Users
+              </Typography>
+              <Typography variant="h3" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                {systemStats.adminUsers}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Administrators
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom color="text.secondary">
+                Storage Used
+              </Typography>
+              <Typography variant="h3" sx={{ fontWeight: 600 }}>
+                {systemStats.storageUsed}%
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={systemStats.storageUsed}
+                sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                color={systemStats.storageUsed > 80 ? 'error' : 'primary'}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* System Overview */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -478,6 +648,8 @@ const Admin = () => {
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+            <Tab label="Users" />
+            <Tab label="All Devices" icon={<DevicesIcon />} iconPosition="start" />
             <Tab label="System Logs" />
             <Tab label="Cache Management" />
             <Tab label="Performance" />
@@ -485,8 +657,225 @@ const Admin = () => {
           </Tabs>
         </Box>
 
-        {/* System Logs Tab */}
+        {/* Users Tab */}
         {activeTab === 0 && (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 3 }}>
+              User Management
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Manage user accounts, roles, and permissions. View user devices and activity.
+            </Typography>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              This section is now available as a separate page in the sidebar navigation.
+              Navigate to <strong>Admin → Users</strong> for the full user management interface.
+            </Alert>
+          </Box>
+        )}
+
+        {/* All Devices Tab */}
+        {activeTab === 1 && (
+          <Box sx={{ p: 3 }}>
+            {/* Admin Check Warning */}
+            {user && !(user.is_admin === true || user.role === 'admin') && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>Access Denied:</strong> You are logged in as <strong>{user.username}</strong>, but this feature requires admin privileges.
+                  <br />
+                  <br />
+                  <strong>Current user details:</strong>
+                  <br />
+                  • is_admin: {String(user.is_admin)}
+                  <br />
+                  • role: {user.role || 'not set'}
+                  <br />
+                  <br />
+                  Please log out and log in with admin credentials:
+                  <br />
+                  <strong>Username:</strong> admin
+                  <br />
+                  <strong>Password:</strong> admin123
+                </Typography>
+              </Alert>
+            )}
+            
+            {/* Debug Info */}
+            {user && (
+              <Alert severity={(user.is_admin === true || user.role === 'admin') ? 'info' : 'warning'} sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>Current User:</strong> {user.username} ({user.email})
+                  <br />
+                  <strong>Admin Status (is_admin):</strong> {user.is_admin === true ? '✅ Yes' : '❌ No'}
+                  <br />
+                  <strong>Role:</strong> {user.role || 'not set'}
+                  <br />
+                  <strong>Token:</strong> {localStorage.getItem('iotflow_token') ? '✅ Present' : '❌ Missing'}
+                  <br />
+                  <strong>Devices loaded:</strong> {allDevices.length}
+                </Typography>
+              </Alert>
+            )}
+            
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+            >
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                All Devices (All Users)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  onClick={() => {
+                    const token = localStorage.getItem('iotflow_token');
+                    const userStr = localStorage.getItem('iotflow_user');
+                    console.log('=== DIAGNOSTIC INFO ===');
+                    console.log('Token:', token ? token.substring(0, 50) + '...' : 'MISSING');
+                    console.log('User from localStorage:', userStr);
+                    console.log('User from context:', user);
+                    console.log('API URL:', process.env.REACT_APP_API_URL);
+                    alert(`Token: ${token ? '✅ Present' : '❌ Missing'}\nUser: ${user?.username || 'not logged in'}\nAdmin: ${user?.is_admin === true || user?.role === 'admin' ? 'Yes' : 'No'}\n\nCheck console for details`);
+                  }}
+                >
+                  🔍 Diagnose
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={loadingDevices ? <CircularProgress size={16} /> : <Refresh />}
+                  onClick={fetchAllDevices}
+                  disabled={loadingDevices}
+                >
+                  Refresh
+                </Button>
+              </Box>
+            </Box>
+
+            {loadingDevices ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  Loading devices...
+                </Typography>
+              </Box>
+            ) : !allDevices || allDevices.length === 0 ? (
+              <Box>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <Typography variant="body2">
+                    <strong>No devices found.</strong>
+                    <br />
+                    <br />
+                    • Check the browser console (F12) for errors
+                    <br />
+                    • Verify you're logged in as admin (see alert above)
+                    <br />
+                    • Click the Refresh button above to try again
+                    <br />
+                    <br />
+                    <strong>Current state:</strong>
+                    <br />
+                    • allDevices is: {allDevices ? `array with ${allDevices.length} items` : 'null/undefined'}
+                    <br />
+                    • loadingDevices: {loadingDevices ? 'true' : 'false'}
+                  </Typography>
+                </Alert>
+              </Box>
+            ) : (
+              <Box>
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  <Typography variant="body2">
+                    <strong>✅ Found {allDevices.length} device(s) in the system</strong>
+                  </Typography>
+                </Alert>
+                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 600, overflow: 'auto' }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Device Name</TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Type</TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Owner</TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Location</TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Last Seen</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {allDevices.map(device => (
+                      <TableRow key={device.id} hover>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {device.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ID: {device.id}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={device.device_type || 'Unknown'} size="small" />
+                        </TableCell>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2">
+                              {device.user?.username || 'Unknown'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {device.user?.email || ''}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={device.status || 'unknown'}
+                            size="small"
+                            color={
+                              device.status === 'online'
+                                ? 'success'
+                                : device.status === 'offline'
+                                ? 'error'
+                                : 'default'
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {device.location || 'Not set'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {device.last_seen
+                              ? new Date(device.last_seen).toLocaleString()
+                              : 'Never'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Delete Device">
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => {
+                                setDeviceToDelete(device);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* System Logs Tab */}
+        {activeTab === 2 && (
           <Box sx={{ p: 3 }}>
             <Box
               sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
@@ -531,7 +920,7 @@ const Admin = () => {
         )}
 
         {/* Cache Management Tab */}
-        {activeTab === 1 && (
+        {activeTab === 3 && (
           <Box sx={{ p: 3 }}>
             <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
               Cache Management
@@ -605,7 +994,7 @@ const Admin = () => {
         )}
 
         {/* Performance Tab */}
-        {activeTab === 2 && (
+        {activeTab === 4 && (
           <Box sx={{ p: 3 }}>
             <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
               Performance Metrics
@@ -672,7 +1061,7 @@ const Admin = () => {
         )}
 
         {/* Maintenance Tab */}
-        {activeTab === 3 && (
+        {activeTab === 5 && (
           <Box sx={{ p: 3 }}>
             <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
               Maintenance Operations
@@ -784,6 +1173,37 @@ const Admin = () => {
           <Button onClick={() => setBackupDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleBackup} variant="contained">
             Create Backup
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Device Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+      >
+        <DialogTitle>Delete Device</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the device <strong>{deviceToDelete?.name}</strong>?
+          </Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            This action cannot be undone. All telemetry data and configurations for this device
+            will be permanently deleted.
+          </Alert>
+          {deviceToDelete?.user && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Device owner: <strong>{deviceToDelete.user.username}</strong> ({deviceToDelete.user.email})
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteDevice} color="error" variant="contained">
+            Delete Device
           </Button>
         </DialogActions>
       </Dialog>

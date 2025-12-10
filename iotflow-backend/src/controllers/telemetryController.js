@@ -1,4 +1,3 @@
-const TelemetryData = require('../models/telemetryData');
 const Device = require('../models/device');
 const { Op, Sequelize } = require('sequelize');
 const iotdbClient = require('../utils/iotdbClient.js'); // You need to implement this IoTDB client wrapper
@@ -206,17 +205,18 @@ class TelemetryController {
         });
       } catch (iotdbError) {
         console.error('❌ IoTDB query failed:', iotdbError.message);
+        console.warn('⚠️  Returning zero count due to IoTDB unavailability');
 
-        res.status(500).json({
-          success: false,
-          message: 'Failed to get message count from IoTDB',
-          error: iotdbError.message,
+        // Return success with zero count instead of error when IoTDB is unavailable
+        res.status(200).json({
+          success: true,
+          message: 'IoTDB unavailable - returning zero count',
           data: {
             user_id: userId,
             date: today.toISOString().split('T')[0],
             message_count: 0,
             period: 'today',
-            source: 'iotdb_error',
+            source: 'iotdb_unavailable',
             timestamp: new Date().toISOString(),
           },
         });

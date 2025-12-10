@@ -77,12 +77,18 @@ class IoTDBClient {
 
       req.on('error', e => {
         console.error('REST API request error:', e);
-        reject(new Error(`Failed to connect to IoTDB REST API: ${e.message}`));
+        if (e.code === 'ECONNRESET') {
+          reject(new Error('IoTDB connection reset - service may be unavailable'));
+        } else if (e.code === 'ETIMEDOUT') {
+          reject(new Error('IoTDB connection timeout - service may be unreachable'));
+        } else {
+          reject(new Error(`Failed to connect to IoTDB REST API: ${e.message}`));
+        }
       });
 
-      req.setTimeout(10000, () => {
+      req.setTimeout(5000, () => {
         req.destroy();
-        reject(new Error('IoTDB request timeout'));
+        reject(new Error('IoTDB request timeout after 5 seconds'));
       });
 
       req.write(postData);

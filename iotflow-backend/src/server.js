@@ -38,9 +38,25 @@ const startServer = async () => {
           const data = JSON.parse(message.toString());
 
           if (data.type === 'auth' && data.token) {
-            // Authenticate user with JWT token
-            const decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'iotflow_secret_key');
-            const userId = decoded.id;
+            let userId;
+
+            // Check if it's a demo token
+            if (data.token.startsWith('demo_token_')) {
+              // Extract user ID from demo token
+              userId = parseInt(data.token.replace('demo_token_', ''));
+              console.log(`[Demo Mode] WebSocket authenticated for user ${userId}`);
+            } else {
+              // Authenticate user with JWT token
+              try {
+                const decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'iotflow_secret_key');
+                userId = decoded.id;
+                console.log(`[JWT Auth] WebSocket authenticated for user ${userId}`);
+              } catch (jwtError) {
+                console.error('[Auth] Invalid or expired token:', data.token);
+                console.error('[Auth] JWT error:', jwtError.message);
+                throw jwtError;
+              }
+            }
 
             // Register this WebSocket for the user
             notificationService.registerConnection(userId, ws);
@@ -52,8 +68,6 @@ const startServer = async () => {
                 message: 'WebSocket authenticated successfully',
               })
             );
-
-            console.log(`WebSocket authenticated for user ${userId}`);
           }
         } catch (error) {
           console.error('WebSocket message error:', error);

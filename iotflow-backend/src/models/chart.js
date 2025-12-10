@@ -7,17 +7,17 @@ class Chart extends Model {
       const charts = await sequelize.query(
         `
         SELECT c.*, 
-               GROUP_CONCAT(DISTINCT cd.device_id) as device_ids,
-               GROUP_CONCAT(DISTINCT cm.measurement_name) as measurement_names
+               STRING_AGG(DISTINCT cd.device_id::text, ',') as device_ids,
+               STRING_AGG(DISTINCT cm.measurement_name, ',') as measurement_names
         FROM charts c
         LEFT JOIN chart_devices cd ON c.id = cd.chart_id
         LEFT JOIN chart_measurements cm ON c.id = cm.chart_id
-        WHERE c.user_id = ? AND c.is_active = true
+        WHERE c.user_id = $1 AND c.is_active = true
         GROUP BY c.id
         ORDER BY c.updated_at DESC
       `,
         {
-          replacements: [userId],
+          bind: [userId],
           type: sequelize.QueryTypes.SELECT,
         }
       );
@@ -42,16 +42,16 @@ class Chart extends Model {
       const charts = await sequelize.query(
         `
         SELECT c.*, 
-               GROUP_CONCAT(DISTINCT cd.device_id) as device_ids,
-               GROUP_CONCAT(DISTINCT cm.measurement_name) as measurement_names
+               STRING_AGG(DISTINCT cd.device_id::text, ',') as device_ids,
+               STRING_AGG(DISTINCT cm.measurement_name, ',') as measurement_names
         FROM charts c
         LEFT JOIN chart_devices cd ON c.id = cd.chart_id
         LEFT JOIN chart_measurements cm ON c.id = cm.chart_id
-        WHERE c.id = ? AND c.user_id = ? AND c.is_active = true
+        WHERE c.id = $1 AND c.user_id = $2 AND c.is_active = true
         GROUP BY c.id
       `,
         {
-          replacements: [id, userId],
+          bind: [id, userId],
           type: sequelize.QueryTypes.SELECT,
         }
       );

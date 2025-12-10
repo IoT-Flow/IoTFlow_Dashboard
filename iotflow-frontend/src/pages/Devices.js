@@ -383,7 +383,14 @@ const Devices = () => {
         throw new Error(result?.message || 'Failed to delete device');
       }
     } catch (error) {
-      toast.error('Failed to delete device');
+      const status = error?.response?.status;
+      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to delete device';
+      const errorDetail = error?.response?.data?.error;
+      let toastMsg = `Failed to delete device`;
+      if (status) toastMsg += ` (status ${status})`;
+      if (errorMsg) toastMsg += `: ${errorMsg}`;
+      if (errorDetail) toastMsg += ` [${errorDetail}]`;
+      toast.error(toastMsg);
     } finally {
       setLoading(false);
     }
@@ -650,9 +657,6 @@ const Devices = () => {
             </Grid>
             <Grid item xs={12} md={2}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                <Button variant="outlined" startIcon={<FilterList />}>
-                  More Filters
-                </Button>
                 <Button variant="outlined" startIcon={<Download />}>
                   Export
                 </Button>
