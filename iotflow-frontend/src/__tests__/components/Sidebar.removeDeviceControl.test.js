@@ -1,6 +1,6 @@
 /**
  * TDD Test Suite for Removing Device Control from Admin Sidebar
- * 
+ *
  * Requirements:
  * - Device Control menu item should NOT appear for admin users
  * - Device Control route should NOT be accessible for admin users
@@ -142,18 +142,18 @@ describe('Sidebar - Remove Device Control (TDD)', () => {
       };
 
       renderSidebar();
-      
+
       // Admin should have: Dashboard (not Overview), Devices, MQTT, Users
       // Should NOT have: Device Control, Telemetry, Profile
       const menuItems = ['Dashboard', 'Devices', 'MQTT', 'Users'];
-      
+
       menuItems.forEach(item => {
         expect(screen.getByText(item)).toBeInTheDocument();
       });
 
       // Verify Device Control is not present
       expect(screen.queryByText('Device Control')).not.toBeInTheDocument();
-      
+
       // Verify regular user items are not present
       expect(screen.queryByText('Telemetry')).not.toBeInTheDocument();
       expect(screen.queryByText('Profile')).not.toBeInTheDocument();
@@ -172,14 +172,14 @@ describe('Sidebar - Remove Device Control (TDD)', () => {
       // Regular user should have: Overview, Devices, Telemetry, Profile
       // Should NOT have: Device Control, MQTT, Admin, Users
       const menuItems = ['Overview', 'Devices', 'Telemetry', 'Profile'];
-      
+
       menuItems.forEach(item => {
         expect(screen.getByText(item)).toBeInTheDocument();
       });
 
       // Verify Device Control is not present
       expect(screen.queryByText('Device Control')).not.toBeInTheDocument();
-      
+
       // Verify admin items are not present
       expect(screen.queryByText('MQTT')).not.toBeInTheDocument();
       expect(screen.queryByText('Admin')).not.toBeInTheDocument();

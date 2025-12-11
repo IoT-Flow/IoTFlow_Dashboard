@@ -105,7 +105,7 @@ describe('UsersManagement - Admin Page', () => {
     // We can't use getByText due to multiple matches, so we verify the table has role badges
     const allAdminText = screen.queryAllByText('Admin');
     const allUserText = screen.queryAllByText('User');
-    
+
     // Should find at least one admin badge and one user badge
     expect(allAdminText.length).toBeGreaterThan(0);
     expect(allUserText.length).toBeGreaterThan(0);

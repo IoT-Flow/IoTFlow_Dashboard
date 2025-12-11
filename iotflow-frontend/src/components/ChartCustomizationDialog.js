@@ -598,7 +598,7 @@ const ChartCustomizationDialog = ({
       setSelectedCategory('Ready Now');
       setAvailableMeasurements([]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingChart, open, devices]); // Add devices as dependency
 
   const handleConfigChange = (field, value) => {

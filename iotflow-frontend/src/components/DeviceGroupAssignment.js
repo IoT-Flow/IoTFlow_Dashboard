@@ -8,7 +8,6 @@ import {
   Box,
   Typography,
   Checkbox,
-  FormControlLabel,
   TextField,
   InputAdornment,
   List,
@@ -20,16 +19,16 @@ import {
   Alert,
   IconButton,
 } from '@mui/material';
-import { Search, Close, Folder } from '@mui/icons-material';
+import { Search, Close } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import apiService from '../services/apiService';
 
 /**
  * DeviceGroupAssignment Component
- * 
+ *
  * Dialog for assigning devices to groups.
  * Supports single device or bulk device assignment.
- * 
+ *
  * @param {boolean} open - Whether the dialog is open
  * @param {Object} device - Single device to assign (optional)
  * @param {Array} devices - Multiple devices to assign (optional)
@@ -37,14 +36,7 @@ import apiService from '../services/apiService';
  * @param {Function} onClose - Callback when dialog is closed
  * @param {Function} onSave - Callback when assignment is saved
  */
-const DeviceGroupAssignment = ({
-  open,
-  device,
-  devices,
-  deviceGroups = [],
-  onClose,
-  onSave,
-}) => {
+const DeviceGroupAssignment = ({ open, device, devices, deviceGroups = [], onClose, onSave }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -93,8 +85,8 @@ const DeviceGroupAssignment = ({
     return false;
   };
 
-  const handleToggleGroup = (groupId) => {
-    setSelectedGroups((prev) => {
+  const handleToggleGroup = groupId => {
+    setSelectedGroups(prev => {
       const newSet = new Set(prev);
       if (newSet.has(groupId)) {
         newSet.delete(groupId);
@@ -186,7 +178,7 @@ const DeviceGroupAssignment = ({
     }
   };
 
-  const filteredGroups = groups.filter((group) =>
+  const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -195,9 +187,7 @@ const DeviceGroupAssignment = ({
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">
-            {isBulk
-              ? `Assign ${deviceCount} devices to groups`
-              : `Assign ${deviceName} to groups`}
+            {isBulk ? `Assign ${deviceCount} devices to groups` : `Assign ${deviceName} to groups`}
           </Typography>
           <IconButton onClick={onClose} size="small">
             <Close />
@@ -219,7 +209,7 @@ const DeviceGroupAssignment = ({
               size="small"
               placeholder="Search groups..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -257,7 +247,7 @@ const DeviceGroupAssignment = ({
               </Box>
             ) : (
               <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                {filteredGroups.map((group) => (
+                {filteredGroups.map(group => (
                   <ListItem
                     key={group.id}
                     dense

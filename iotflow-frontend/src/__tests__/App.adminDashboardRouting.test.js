@@ -1,6 +1,6 @@
 /**
  * TDD Test Suite for Admin Dashboard Routing
- * 
+ *
  * Tests that admin users see the Admin page instead of Overview page
  * as their default dashboard.
  */
@@ -44,7 +44,7 @@ jest.mock('../pages/Admin', () => {
   };
 });
 
-jest.mock('../pages/Devices', () => {
+jest.mock('../pages/Devices.hybrid', () => {
   return function Devices() {
     return <div data-testid="devices-page">Devices Page</div>;
   };

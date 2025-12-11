@@ -32,7 +32,7 @@ class AdminV1Controller {
 
       // Simple array response when no explicit pagination params
       const isPaginated = req.query.page !== undefined || req.query.limit !== undefined;
-      
+
       if (!isPaginated) {
         return res.status(200).json(users);
       }
@@ -259,13 +259,7 @@ class AdminV1Controller {
   // GET /api/v1/admin/stats - System statistics
   async getStats(req, res) {
     try {
-      const [
-        totalUsers,
-        activeUsers,
-        adminUsers,
-        totalDevices,
-        activeDevices,
-      ] = await Promise.all([
+      const [totalUsers, activeUsers, adminUsers, totalDevices, activeDevices] = await Promise.all([
         User.count(),
         User.count({ where: { is_active: true } }),
         User.count({ where: { is_admin: true } }),

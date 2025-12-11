@@ -2,9 +2,9 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 
-// Mock window.matchMedia
+// Mock window.matchMedia for MUI useMediaQuery
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: jest.fn().mockImplementation(query => ({
@@ -19,6 +19,14 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Mock ResizeObserver for MUI components
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+};
+
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}
@@ -30,20 +38,17 @@ global.IntersectionObserver = class IntersectionObserver {
   unobserve() {}
 };
 
-// Suppress console warnings in tests
-const originalError = console.error;
+// Suppress specific console warnings in tests
+const _originalConsoleError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render')
-    ) {
+    if (typeof args[0] === 'string' && args[0].includes('Warning: ReactDOM.render')) {
       return;
     }
-    originalError.call(console, ...args);
+    _originalConsoleError.call(console, ...args);
   };
 });
 
 afterAll(() => {
-  console.error = originalError;
+  console.error = _originalConsoleError;
 });

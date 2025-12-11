@@ -84,20 +84,19 @@ export default function UsersManagement() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         user =>
-          user.username.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query)
+          user.username.toLowerCase().includes(query) || user.email.toLowerCase().includes(query)
       );
     }
 
     setFilteredUsers(filtered);
   };
 
-  const handleViewDevices = async (user) => {
+  const handleViewDevices = async user => {
     try {
       setSelectedUser(user);
       setDevicesDialogOpen(true);
       setLoadingDevices(true);
-      
+
       const data = await apiService.getUserDevices(user.id);
       setUserDevices(data.devices || []);
     } catch (error) {
@@ -109,50 +108,40 @@ export default function UsersManagement() {
     }
   };
 
-  const handleToggleRole = async (user) => {
+  const handleToggleRole = async user => {
     const newAdminStatus = !user.is_admin;
     const actionText = newAdminStatus ? 'promote to admin' : 'demote to user';
-    
+
     try {
-      await toast.promise(
-        apiService.updateUserRole(user.id, newAdminStatus),
-        {
-          loading: `Updating user role...`,
-          success: `User ${actionText} successfully`,
-          error: 'Failed to update user role',
-        }
-      );
-      
+      await toast.promise(apiService.updateUserRole(user.id, newAdminStatus), {
+        loading: `Updating user role...`,
+        success: `User ${actionText} successfully`,
+        error: 'Failed to update user role',
+      });
+
       // Update local state
       setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === user.id ? { ...u, is_admin: newAdminStatus } : u
-        )
+        prevUsers.map(u => (u.id === user.id ? { ...u, is_admin: newAdminStatus } : u))
       );
     } catch (error) {
       console.error('Failed to update user role:', error);
     }
   };
 
-  const handleToggleStatus = async (user) => {
+  const handleToggleStatus = async user => {
     const newActiveStatus = !user.is_active;
     const actionText = newActiveStatus ? 'activate' : 'deactivate';
-    
+
     try {
-      await toast.promise(
-        apiService.updateUserStatus(user.id, newActiveStatus),
-        {
-          loading: `Updating user status...`,
-          success: `User ${actionText}d successfully`,
-          error: 'Failed to update user status',
-        }
-      );
-      
+      await toast.promise(apiService.updateUserStatus(user.id, newActiveStatus), {
+        loading: `Updating user status...`,
+        success: `User ${actionText}d successfully`,
+        error: 'Failed to update user status',
+      });
+
       // Update local state
       setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === user.id ? { ...u, is_active: newActiveStatus } : u
-        )
+        prevUsers.map(u => (u.id === user.id ? { ...u, is_active: newActiveStatus } : u))
       );
     } catch (error) {
       console.error('Failed to update user status:', error);
@@ -182,7 +171,7 @@ export default function UsersManagement() {
           <TextField
             placeholder="Search users..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -192,7 +181,7 @@ export default function UsersManagement() {
             }}
             sx={{ flexGrow: 1, minWidth: 300 }}
           />
-          
+
           <ButtonGroup variant="outlined" size="small">
             <Button
               variant={statusFilter === 'all' ? 'contained' : 'outlined'}
@@ -245,7 +234,7 @@ export default function UsersManagement() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
+              filteredUsers.map(user => (
                 <TableRow key={user.id} hover>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -263,19 +252,14 @@ export default function UsersManagement() {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="View Devices">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewDevices(user)}
-                      >
+                      <IconButton size="small" onClick={() => handleViewDevices(user)}>
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    
+
                     <Tooltip title={user.is_admin ? 'Demote to User' : 'Promote to Admin'}>
                       <IconButton
                         size="small"
@@ -289,7 +273,7 @@ export default function UsersManagement() {
                         )}
                       </IconButton>
                     </Tooltip>
-                    
+
                     <Tooltip title={user.is_active ? 'Deactivate' : 'Activate'}>
                       <IconButton
                         size="small"
@@ -312,15 +296,8 @@ export default function UsersManagement() {
       </TableContainer>
 
       {/* Devices Dialog */}
-      <Dialog
-        open={devicesDialogOpen}
-        onClose={handleCloseDevicesDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {selectedUser?.username}'s Devices
-        </DialogTitle>
+      <Dialog open={devicesDialogOpen} onClose={handleCloseDevicesDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>{selectedUser?.username}'s Devices</DialogTitle>
         <DialogContent>
           {loadingDevices ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -332,7 +309,7 @@ export default function UsersManagement() {
             </Typography>
           ) : (
             <List>
-              {userDevices.map((device) => (
+              {userDevices.map(device => (
                 <ListItem key={device.id} divider>
                   <ListItemText
                     primary={device.name}

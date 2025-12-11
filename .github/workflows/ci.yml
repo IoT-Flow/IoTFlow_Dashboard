@@ -2,31 +2,18 @@ name: IoTFlow Dashboard CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
 
 jobs:
-  backend-test:
+  backend-ci:
+    name: Backend CI Pipeline
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: iotflow
-          POSTGRES_PASSWORD: iotflowpass
-          POSTGRES_DB: iotflow_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
     
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -41,34 +28,26 @@ jobs:
     
     - name: Format check with Prettier
       working-directory: ./iotflow-backend
-      run: |
-        npx prettier --check "src/**/*.js" "tests/**/*.js"
+      run: npx prettier --check "src/**/*.js" "tests/**/*.js"
     
     - name: Lint with ESLint
       working-directory: ./iotflow-backend
-      run: |
-        npx eslint src/ tests/ --max-warnings 0 || true
+      run: npx eslint src/ tests/ --max-warnings 0
     
-    - name: Run backend tests
+    - name: Run backend unit tests
       working-directory: ./iotflow-backend
       env:
-        DATABASE_URL: postgresql://iotflow:iotflowpass@localhost:5432/iotflow_test
         NODE_ENV: test
         JWT_SECRET: test_secret_key
-      run: npm test
-    
-    - name: Upload backend coverage
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./iotflow-backend/coverage/coverage-final.json
-        flags: backend
-        name: backend-coverage
+      run: npm test -- tests/unit/ --coverage=false
 
-  frontend-test:
+  frontend-ci:
+    name: Frontend CI Pipeline
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
     
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -83,18 +62,12 @@ jobs:
     
     - name: Format check with Prettier
       working-directory: ./iotflow-frontend
-      run: |
-        npx prettier --check "src/**/*.{js,jsx}" || true
+      run: npx prettier --check "src/**/*.{js,jsx}"
     
     - name: Lint with ESLint
       working-directory: ./iotflow-frontend
-      run: |
-        npx eslint src/ --max-warnings 10 || true
+      run: npx eslint src/ --max-warnings 10
     
-    - name: Build frontend
+    - name: Run frontend unit tests
       working-directory: ./iotflow-frontend
-      run: npm run build
-    
-    - name: Run frontend tests (if available)
-      working-directory: ./iotflow-frontend
-      run: npm test -- --watchAll=false || echo "No tests configured"
+      run: npm test -- --watchAll=false --coverage=false

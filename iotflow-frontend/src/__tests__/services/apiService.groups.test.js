@@ -28,9 +28,9 @@ import apiService from '../../services/apiService';
 describe('ApiService - Device Group Methods', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock localStorage
-    Storage.prototype.getItem = jest.fn((key) => {
+    Storage.prototype.getItem = jest.fn(key => {
       if (key === 'iotflow_token') return 'mock-token';
       if (key === 'iotflow_user') return JSON.stringify({ id: 1, username: 'testuser' });
       return null;
@@ -49,7 +49,7 @@ describe('ApiService - Device Group Methods', () => {
         data: mockGroups,
         status: 200,
       });
-      
+
       apiService.api.get = mockGet;
 
       const result = await apiService.getGroups();
@@ -60,7 +60,7 @@ describe('ApiService - Device Group Methods', () => {
 
     test('should handle error when fetching groups fails', async () => {
       const mockError = new Error('Network error');
-      
+
       const mockGet = jest.fn().mockRejectedValue(mockError);
       apiService.api.get = mockGet;
 
@@ -73,7 +73,7 @@ describe('ApiService - Device Group Methods', () => {
         data: [],
         status: 200,
       });
-      
+
       apiService.api.get = mockGet;
 
       const result = await apiService.getGroups();
@@ -101,7 +101,7 @@ describe('ApiService - Device Group Methods', () => {
         data: createdGroup,
         status: 201,
       });
-      
+
       apiService.api.post = mockPost;
 
       const result = await apiService.createGroup(newGroup);
@@ -121,7 +121,7 @@ describe('ApiService - Device Group Methods', () => {
           data: { message: 'Name is required' },
         },
       });
-      
+
       apiService.api.post = mockPost;
 
       await expect(apiService.createGroup(invalidGroup)).rejects.toMatchObject({
@@ -151,7 +151,7 @@ describe('ApiService - Device Group Methods', () => {
         data: updatedGroup,
         status: 200,
       });
-      
+
       apiService.api.put = mockPut;
 
       const result = await apiService.updateGroup(groupId, updates);
@@ -170,7 +170,7 @@ describe('ApiService - Device Group Methods', () => {
           data: { message: 'Group not found' },
         },
       });
-      
+
       apiService.api.put = mockPut;
 
       await expect(apiService.updateGroup(groupId, updates)).rejects.toMatchObject({
@@ -189,7 +189,7 @@ describe('ApiService - Device Group Methods', () => {
         data: { message: 'Group deleted successfully' },
         status: 200,
       });
-      
+
       apiService.api.delete = mockDelete;
 
       const result = await apiService.deleteGroup(groupId);
@@ -207,7 +207,7 @@ describe('ApiService - Device Group Methods', () => {
           data: { message: 'Group not found' },
         },
       });
-      
+
       apiService.api.delete = mockDelete;
 
       await expect(apiService.deleteGroup(groupId)).rejects.toMatchObject({
@@ -230,7 +230,7 @@ describe('ApiService - Device Group Methods', () => {
         data: { devices: mockDevices },
         status: 200,
       });
-      
+
       apiService.api.get = mockGet;
 
       const result = await apiService.getDevicesByGroup(groupId);
@@ -246,7 +246,7 @@ describe('ApiService - Device Group Methods', () => {
         data: { devices: [] },
         status: 200,
       });
-      
+
       apiService.api.get = mockGet;
 
       const result = await apiService.getDevicesByGroup(groupId);

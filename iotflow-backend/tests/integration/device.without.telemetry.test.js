@@ -96,7 +96,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
           device_type: 'sensor',
           status: 'active',
         });
-      
+
       const response = await request(app)
         .get(`/api/devices/${createRes.body.id}`)
         .set('Authorization', `Bearer ${userToken}`);
@@ -192,14 +192,11 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
   describe('Admin Device Operations', () => {
     test('should get all devices without telemetry_data table', async () => {
       // Create a test device first
-      await request(app)
-        .post('/api/devices')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'Admin Test Device',
-          device_type: 'sensor',
-          status: 'active',
-        });
+      await request(app).post('/api/devices').set('Authorization', `Bearer ${userToken}`).send({
+        name: 'Admin Test Device',
+        device_type: 'sensor',
+        status: 'active',
+      });
 
       const response = await request(app)
         .get('/api/v1/admin/devices')
@@ -213,14 +210,11 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
 
     test('should filter devices by status', async () => {
       // Create devices with different statuses
-      await request(app)
-        .post('/api/devices')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'Inactive Device',
-          device_type: 'sensor',
-          status: 'inactive',
-        });
+      await request(app).post('/api/devices').set('Authorization', `Bearer ${userToken}`).send({
+        name: 'Inactive Device',
+        device_type: 'sensor',
+        status: 'inactive',
+      });
 
       const response = await request(app)
         .get('/api/v1/admin/devices?status=inactive')
@@ -235,14 +229,11 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
 
     test('should filter devices by device_type', async () => {
       // Create a sensor device
-      await request(app)
-        .post('/api/devices')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'Sensor Device',
-          device_type: 'sensor',
-          status: 'active',
-        });
+      await request(app).post('/api/devices').set('Authorization', `Bearer ${userToken}`).send({
+        name: 'Sensor Device',
+        device_type: 'sensor',
+        status: 'active',
+      });
 
       const response = await request(app)
         .get('/api/v1/admin/devices?device_type=sensor')
@@ -366,7 +357,7 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
       ];
 
       const actualModels = Object.keys(models);
-      
+
       expectedModels.forEach(modelName => {
         expect(actualModels).toContain(modelName);
       });
@@ -379,14 +370,11 @@ describe('Device Operations Without TelemetryData and DeviceAuth Tables', () => 
   describe('Device List Operations', () => {
     test('should list all user devices without telemetry relations', async () => {
       // Create a device first
-      await request(app)
-        .post('/api/devices')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'List Test Device',
-          device_type: 'sensor',
-          status: 'active',
-        });
+      await request(app).post('/api/devices').set('Authorization', `Bearer ${userToken}`).send({
+        name: 'List Test Device',
+        device_type: 'sensor',
+        status: 'active',
+      });
 
       const response = await request(app)
         .get('/api/devices')

@@ -37,7 +37,6 @@ describe('Groups API Integration Tests', () => {
         name: 'Living Room',
         description: 'Devices in the living room',
         color: '#3B82F6',
-        icon: 'home',
       };
 
       const response = await request(app)

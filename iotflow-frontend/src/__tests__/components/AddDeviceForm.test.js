@@ -1,6 +1,6 @@
 /**
  * TDD Test Suite for AddDeviceForm Component
- * 
+ *
  * Requirements:
  * - Display form with device name, type, location, and description fields
  * - Validate required fields (name and type)

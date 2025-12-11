@@ -72,8 +72,7 @@ describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
 
   describe('Authentication & Authorization', () => {
     test('should return 401 when no token is provided', async () => {
-      const response = await request(app)
-        .get('/api/v1/admin/devices');
+      const response = await request(app).get('/api/v1/admin/devices');
 
       expect(response.status).toBe(401);
     });
@@ -154,7 +153,7 @@ describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      
+
       const devices = response.body.devices;
       devices.forEach(device => {
         expect(device).toHaveProperty('user');
@@ -172,7 +171,7 @@ describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      
+
       const devices = response.body.devices;
       for (let i = 0; i < devices.length - 1; i++) {
         const currentDate = new Date(devices[i].created_at);
@@ -304,7 +303,7 @@ describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
 
       expect(response.status).toBe(200);
       const device = response.body.devices[0];
-      
+
       expect(device).toHaveProperty('id');
       expect(device).toHaveProperty('name');
       expect(device).toHaveProperty('description');
@@ -333,7 +332,7 @@ describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
 
       expect(response.status).toBe(200);
       const device = response.body.devices[0];
-      
+
       // API key should be included (admin needs it)
       expect(device).toHaveProperty('api_key');
       expect(device.api_key).toBeTruthy();
@@ -398,7 +397,7 @@ describe('Admin V1 Device Management - GET /api/v1/admin/devices', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.total).toBe(100);
-      
+
       // Should complete within reasonable time (2 seconds)
       const duration = endTime - startTime;
       expect(duration).toBeLessThan(2000);

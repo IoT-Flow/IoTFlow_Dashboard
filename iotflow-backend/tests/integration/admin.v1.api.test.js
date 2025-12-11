@@ -76,7 +76,7 @@ describe('Admin V1 API - TDD Implementation', () => {
       const response = await request(app)
         .get('/api/v1/admin/users')
         .set('Authorization', `Bearer ${userToken}`);
-      
+
       expect(response.status).toBe(403);
       expect(response.body.message).toMatch(/admin/i);
     });
@@ -85,7 +85,7 @@ describe('Admin V1 API - TDD Implementation', () => {
       const response = await request(app)
         .get('/api/v1/admin/users')
         .set('Authorization', `Bearer ${adminToken}`);
-      
+
       expect([200, 404]).toContain(response.status);
     });
   });
@@ -99,7 +99,7 @@ describe('Admin V1 API - TDD Implementation', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeGreaterThanOrEqual(2);
-      
+
       const user = response.body[0];
       expect(user).toHaveProperty('id');
       expect(user).toHaveProperty('username');
@@ -148,7 +148,7 @@ describe('Admin V1 API - TDD Implementation', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const inactiveUsers = Array.isArray(response.body) 
+      const inactiveUsers = Array.isArray(response.body)
         ? response.body.filter(u => !u.is_active)
         : response.body.users.filter(u => !u.is_active);
       expect(inactiveUsers.length).toBeGreaterThan(0);
@@ -333,7 +333,7 @@ describe('Admin V1 API - TDD Implementation', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      
+
       const deletedDevice = await Device.findByPk(testDevice.id);
       expect(deletedDevice).toBeNull();
     });
@@ -380,7 +380,7 @@ describe('Admin V1 API - TDD Implementation', () => {
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
-      
+
       if (response.body.length > 0) {
         expect(response.body[0].user_id).toBe(regularUser.id);
       }

@@ -1,6 +1,6 @@
 /**
  * TDD Test Suite for Admin - All Devices Tab
- * 
+ *
  * Tests the frontend implementation of admin device listing feature
  * Following Test-Driven Development approach
  */
@@ -129,7 +129,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
   describe('1. Component Rendering & Tab Navigation', () => {
     test('should render Admin page with multiple tabs', async () => {
       renderComponent();
-      
+
       // Wait for component to load and check for tabs
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /users/i })).toBeInTheDocument();
@@ -140,10 +140,10 @@ describe('Admin - All Devices Tab (TDD)', () => {
 
     test('should switch to All Devices tab when clicked', async () => {
       renderComponent();
-      
+
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         // Check for refresh button which appears when devices tab is active
         const refreshButtons = screen.getAllByRole('button', { name: /refresh/i });
@@ -153,10 +153,10 @@ describe('Admin - All Devices Tab (TDD)', () => {
 
     test('should automatically fetch devices when All Devices tab becomes active', async () => {
       renderComponent();
-      
+
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(apiService.adminGetAllDevices).toHaveBeenCalledTimes(1);
       });
@@ -168,17 +168,22 @@ describe('Admin - All Devices Tab (TDD)', () => {
   describe('2. Device List Display', () => {
     test('should display loading indicator while fetching devices', async () => {
       // Slow down the API response to see loading state
-      apiService.adminGetAllDevices = jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ devices: mockDevices, total: 3 }), 100))
-      );
-      
+      apiService.adminGetAllDevices = jest
+        .fn()
+        .mockImplementation(
+          () =>
+            new Promise(resolve =>
+              setTimeout(() => resolve({ devices: mockDevices, total: 3 }), 100)
+            )
+        );
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       expect(screen.getByText('Loading devices...')).toBeInTheDocument();
       // Multiple progress bars exist in the admin page, just check loading text
-      
+
       await waitFor(() => {
         expect(screen.queryByText('Loading devices...')).not.toBeInTheDocument();
       });
@@ -188,7 +193,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Temperature Sensor 1')).toBeInTheDocument();
         expect(screen.getByText('Humidity Sensor')).toBeInTheDocument();
@@ -200,7 +205,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Found 3 device\(s\) in the system/i)).toBeInTheDocument();
       });
@@ -211,11 +216,11 @@ describe('Admin - All Devices Tab (TDD)', () => {
         devices: [],
         total: 0,
       });
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/No devices found/i)).toBeInTheDocument();
       });
@@ -229,21 +234,21 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         // Check for device name
         expect(screen.getByText('Temperature Sensor 1')).toBeInTheDocument();
-        
+
         // Check for device type
         expect(screen.getByText('temperature_sensor')).toBeInTheDocument();
-        
+
         // Check for owner info (getAllByText for multiple occurrences)
         expect(screen.getAllByText('john_doe')[0]).toBeInTheDocument();
         expect(screen.getAllByText('john@example.com')[0]).toBeInTheDocument();
-        
+
         // Check for status (multiple devices might have same status)
         expect(screen.getAllByText('online').length).toBeGreaterThan(0);
-        
+
         // Check for location
         expect(screen.getByText('Living Room')).toBeInTheDocument();
       });
@@ -253,12 +258,12 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         // Find online device chip (should be success color)
         const onlineChip = screen.getAllByText('online')[0].closest('.MuiChip-root');
         expect(onlineChip).toHaveClass('MuiChip-colorSuccess');
-        
+
         // Find offline device chip (should be error color)
         const offlineChip = screen.getByText('offline').closest('.MuiChip-root');
         expect(offlineChip).toHaveClass('MuiChip-colorError');
@@ -269,12 +274,12 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         // Check for multiple users (use getAllByText for duplicates)
         expect(screen.getAllByText('john_doe').length).toBeGreaterThan(0);
         expect(screen.getByText('jane_smith')).toBeInTheDocument();
-        
+
         // Check for user emails
         expect(screen.getAllByText('john@example.com').length).toBeGreaterThan(0);
         expect(screen.getByText('jane@example.com')).toBeInTheDocument();
@@ -285,7 +290,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         // Should display formatted date (check for year 2025 which is in mock data)
         const dateElements = screen.getAllByText(/2025|12\/10\/2025|Dec.*2025/i);
@@ -308,16 +313,16 @@ describe('Admin - All Devices Tab (TDD)', () => {
         },
         // Missing: location, last_seen, description, etc.
       };
-      
+
       apiService.adminGetAllDevices = jest.fn().mockResolvedValue({
         devices: [deviceWithMissingFields],
         total: 1,
       });
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Minimal Device')).toBeInTheDocument();
         expect(screen.getByText('Not set')).toBeInTheDocument(); // Location placeholder
@@ -333,7 +338,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const deleteButtons = screen.getAllByRole('button', { name: /delete device/i });
         expect(deleteButtons).toHaveLength(3); // One for each device
@@ -344,12 +349,12 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const deleteButtons = screen.getAllByRole('button', { name: /delete device/i });
         fireEvent.click(deleteButtons[0]);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Are you sure you want to delete the device/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /delete device/i })).toBeInTheDocument();
@@ -361,17 +366,17 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const deleteButtons = screen.getAllByRole('button', { name: /delete device/i });
         fireEvent.click(deleteButtons[0]);
       });
-      
+
       await waitFor(() => {
         const cancelButton = screen.getByRole('button', { name: /cancel/i });
         fireEvent.click(cancelButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.queryByText(/Are you sure you want to delete/i)).not.toBeInTheDocument();
       });
@@ -381,24 +386,24 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(apiService.adminGetAllDevices).toHaveBeenCalledTimes(1);
       });
-      
+
       // Click delete on first device
       await waitFor(() => {
         const deleteButtons = screen.getAllByRole('button', { name: /delete device/i });
         fireEvent.click(deleteButtons[0]);
       });
-      
+
       // Confirm deletion
       await waitFor(() => {
         const dialog = screen.getByRole('dialog');
         const confirmButton = within(dialog).getByRole('button', { name: /delete/i });
         fireEvent.click(confirmButton);
       });
-      
+
       await waitFor(() => {
         expect(apiService.adminDeleteDevice).toHaveBeenCalledWith(1);
         expect(apiService.adminGetAllDevices).toHaveBeenCalledTimes(2); // Initial + refresh
@@ -407,25 +412,23 @@ describe('Admin - All Devices Tab (TDD)', () => {
     });
 
     test('should show error message if delete fails', async () => {
-      apiService.adminDeleteDevice = jest.fn().mockRejectedValue(
-        new Error('Network error')
-      );
-      
+      apiService.adminDeleteDevice = jest.fn().mockRejectedValue(new Error('Network error'));
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const deleteButtons = screen.getAllByRole('button', { name: /delete device/i });
         fireEvent.click(deleteButtons[0]);
       });
-      
+
       await waitFor(() => {
         const dialog = screen.getByRole('dialog');
         const confirmButton = within(dialog).getByRole('button', { name: /delete/i });
         fireEvent.click(confirmButton);
       });
-      
+
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Failed to delete device');
       });
@@ -439,7 +442,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const refreshButtons = screen.getAllByRole('button', { name: /refresh/i });
         expect(refreshButtons.length).toBeGreaterThan(0);
@@ -452,46 +455,54 @@ describe('Admin - All Devices Tab (TDD)', () => {
         callCount++;
         return Promise.resolve({ devices: mockDevices, total: mockDevices.length });
       });
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       // Wait for initial load
       await waitFor(() => {
         expect(screen.getByText('Temperature Sensor 1')).toBeInTheDocument();
       });
-      
+
       const initialCalls = callCount;
       expect(initialCalls).toBe(1);
-      
-      // Find and click refresh button  
+
+      // Find and click refresh button
       await waitFor(() => {
         const refreshButtons = screen.getAllByRole('button', { name: /refresh/i });
         const devicesRefreshButton = refreshButtons[refreshButtons.length - 1];
         expect(devicesRefreshButton).not.toBeDisabled();
         fireEvent.click(devicesRefreshButton);
       });
-      
+
       // Wait for second call
-      await waitFor(() => {
-        expect(callCount).toBe(2);
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(callCount).toBe(2);
+        },
+        { timeout: 3000 }
+      );
     });
 
     test('should disable refresh button while loading', async () => {
-      apiService.adminGetAllDevices = jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ devices: mockDevices, total: 3 }), 100))
-      );
-      
+      apiService.adminGetAllDevices = jest
+        .fn()
+        .mockImplementation(
+          () =>
+            new Promise(resolve =>
+              setTimeout(() => resolve({ devices: mockDevices, total: 3 }), 100)
+            )
+        );
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       const refreshButtons = screen.getAllByRole('button', { name: /refresh/i });
       const refreshButton = refreshButtons[refreshButtons.length - 1];
       expect(refreshButton).toBeDisabled();
-      
+
       await waitFor(() => {
         expect(refreshButton).not.toBeDisabled();
       });
@@ -502,14 +513,12 @@ describe('Admin - All Devices Tab (TDD)', () => {
 
   describe('6. Error Handling', () => {
     test('should show error message when API call fails', async () => {
-      apiService.adminGetAllDevices = jest.fn().mockRejectedValue(
-        new Error('Network error')
-      );
-      
+      apiService.adminGetAllDevices = jest.fn().mockRejectedValue(new Error('Network error'));
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalled();
       });
@@ -520,13 +529,15 @@ describe('Admin - All Devices Tab (TDD)', () => {
         response: { status: 403, data: { message: 'Forbidden: Admins only' } },
         message: 'Request failed with status code 403',
       });
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Admin privileges required'));
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Admin privileges required')
+        );
       });
     });
 
@@ -535,11 +546,11 @@ describe('Admin - All Devices Tab (TDD)', () => {
         devices: null,
         total: 0,
       });
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/No devices found/i)).toBeInTheDocument();
       });
@@ -551,16 +562,16 @@ describe('Admin - All Devices Tab (TDD)', () => {
         name: 'Test Device',
         // Missing required fields
       };
-      
+
       apiService.adminGetAllDevices = jest.fn().mockResolvedValue({
         devices: [malformedDevice],
         total: 1,
       });
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Test Device')).toBeInTheDocument();
         // Should show placeholders for missing data (getAllByText because "Unknown" might appear elsewhere)
@@ -572,30 +583,41 @@ describe('Admin - All Devices Tab (TDD)', () => {
   // ===== 7. AUTHORIZATION & SECURITY =====
 
   describe('7. Authorization & Security', () => {
-    // Note: This test is skipped because the mock setup doesn't support dynamically changing
-    // the is_admin value mid-test. The authorization is properly handled by the backend API.
-    test.skip('should only allow admin users to access device list', async () => {
+    test('should only allow admin users to access device list', async () => {
+      // Save original mock
+      const originalMock = require('../../contexts/AuthContext').useAuth;
+
       // Mock non-admin user
-      mockAuthContext.user.is_admin = false;
-      
+      jest.spyOn(require('../../contexts/AuthContext'), 'useAuth').mockReturnValue({
+        user: {
+          id: 1,
+          username: 'regular_user',
+          email: 'user@test.com',
+          is_admin: false,
+          role: 'user',
+        },
+        isAuthenticated: true,
+        loading: false,
+      });
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Admin privileges required');
         expect(apiService.adminGetAllDevices).not.toHaveBeenCalled();
       });
-      
-      // Reset for other tests
-      mockAuthContext.user.is_admin = true;
+
+      // Restore original mock
+      require('../../contexts/AuthContext').useAuth.mockRestore();
     });
 
     test('should not display API keys in the device list', async () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.queryByText('abc123def456')).not.toBeInTheDocument();
         expect(screen.queryByText('xyz789ghi012')).not.toBeInTheDocument();
@@ -610,7 +632,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Device Name')).toBeInTheDocument();
         expect(screen.getByText('Type')).toBeInTheDocument();
@@ -626,7 +648,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const table = screen.getByRole('table');
         expect(table.querySelector('thead')).toBeInTheDocument();
@@ -637,7 +659,7 @@ describe('Admin - All Devices Tab (TDD)', () => {
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         const rows = screen.getAllByRole('row');
         // 1 header row + 3 device rows
@@ -665,47 +687,47 @@ describe('Admin - All Devices Tab (TDD)', () => {
         },
         last_seen: new Date().toISOString(),
       }));
-      
+
       apiService.adminGetAllDevices = jest.fn().mockResolvedValue({
         devices: largeDeviceList,
         total: 100,
       });
-      
+
       const startTime = Date.now();
-      
+
       renderComponent();
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Found 100 device\(s\)/i)).toBeInTheDocument();
       });
-      
+
       const endTime = Date.now();
       const renderTime = endTime - startTime;
-      
+
       // Should render in less than 3 seconds
       expect(renderTime).toBeLessThan(3000);
     });
 
     test('should not fetch devices unnecessarily', async () => {
       renderComponent();
-      
+
       // Switch to devices tab
       const devicesTab = screen.getByRole('tab', { name: /all devices/i });
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(apiService.adminGetAllDevices).toHaveBeenCalledTimes(1);
       });
-      
+
       // Switch to another tab
       const logsTab = screen.getByRole('tab', { name: /system logs/i });
       fireEvent.click(logsTab);
-      
+
       // Switch back to devices tab (should trigger new fetch)
       fireEvent.click(devicesTab);
-      
+
       await waitFor(() => {
         expect(apiService.adminGetAllDevices).toHaveBeenCalledTimes(2);
       });

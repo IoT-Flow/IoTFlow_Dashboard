@@ -48,7 +48,10 @@ const startServer = async () => {
             } else {
               // Authenticate user with JWT token
               try {
-                const decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'iotflow_secret_key');
+                const decoded = jwt.verify(
+                  data.token,
+                  process.env.JWT_SECRET || 'iotflow_secret_key'
+                );
                 userId = decoded.id;
                 console.log(`[JWT Auth] WebSocket authenticated for user ${userId}`);
               } catch (jwtError) {

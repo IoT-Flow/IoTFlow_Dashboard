@@ -51,10 +51,7 @@ import TelemetryWidget from './TelemetryWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const {
-    isConnected,
-    deviceNotifications = [],
-  } = useWebSocket();
+  const { isConnected, deviceNotifications = [] } = useWebSocket();
 
   const [dashboardData, setDashboardData] = useState(null);
   const [devices, setDevices] = useState([]);
@@ -66,7 +63,7 @@ const Dashboard = () => {
     loadDashboardData();
     const interval = setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDashboardData = async () => {

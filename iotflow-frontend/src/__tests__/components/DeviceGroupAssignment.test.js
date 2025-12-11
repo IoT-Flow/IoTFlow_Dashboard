@@ -139,11 +139,14 @@ describe('DeviceGroupAssignment Component', () => {
       const saveButton = screen.getByRole('button', { name: /Save/i });
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        expect(apiService.addDeviceToGroup).toHaveBeenCalledWith(1, 10);
-        expect(toast.success).toHaveBeenCalled();
-        expect(mockOnSave).toHaveBeenCalled();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(apiService.addDeviceToGroup).toHaveBeenCalledWith(1, 10);
+          expect(toast.success).toHaveBeenCalled();
+          expect(mockOnSave).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
     });
 
     test('should remove device from group when checkbox is unchecked', async () => {
@@ -167,11 +170,14 @@ describe('DeviceGroupAssignment Component', () => {
       const saveButton = screen.getByRole('button', { name: /Save/i });
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        expect(apiService.removeDeviceFromGroup).toHaveBeenCalledWith(1, 10);
-        expect(toast.success).toHaveBeenCalled();
-        expect(mockOnSave).toHaveBeenCalled();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(apiService.removeDeviceFromGroup).toHaveBeenCalledWith(1, 10);
+          expect(toast.success).toHaveBeenCalled();
+          expect(mockOnSave).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -220,11 +226,14 @@ describe('DeviceGroupAssignment Component', () => {
       const saveButton = screen.getByRole('button', { name: /Save/i });
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        // Should call addDeviceToGroup for each device-group combination
-        expect(apiService.addDeviceToGroup).toHaveBeenCalledTimes(6); // 3 devices × 2 groups
-        expect(toast.success).toHaveBeenCalled();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          // Should call addDeviceToGroup for each device-group combination
+          expect(apiService.addDeviceToGroup).toHaveBeenCalledTimes(6); // 3 devices × 2 groups
+          expect(toast.success).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
     });
 
     test('should show progress during bulk assignment', async () => {
@@ -366,9 +375,12 @@ describe('DeviceGroupAssignment Component', () => {
       const saveButton = screen.getByRole('button', { name: /Save/i });
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/2 of 3 devices assigned successfully/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/2 of 3 devices assigned successfully/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -449,6 +461,187 @@ describe('DeviceGroupAssignment Component', () => {
         expect(screen.getByText('Living Room')).toBeInTheDocument();
         expect(screen.queryByText('Bedroom')).not.toBeInTheDocument();
         expect(screen.queryByText('Kitchen')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Checkbox State Persistence (TDD)', () => {
+    test('should maintain checkbox state showing which groups device is assigned to', async () => {
+      // Device is assigned to Living Room (id: 1) and Kitchen (id: 3)
+      const deviceGroups = [1, 3];
+
+      render(
+        <DeviceGroupAssignment
+          open={true}
+          device={mockDevice}
+          deviceGroups={deviceGroups}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />
+      );
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+
+        // Living Room (index 0) should be checked
+        expect(checkboxes[0]).toBeChecked();
+
+        // Bedroom (index 1) should NOT be checked
+        expect(checkboxes[1]).not.toBeChecked();
+
+        // Kitchen (index 2) should be checked
+        expect(checkboxes[2]).toBeChecked();
+      });
+    });
+
+    test('should update checkbox state when user clicks to assign device to new group', async () => {
+      // Device initially has no groups
+      render(
+        <DeviceGroupAssignment
+          open={true}
+          device={mockDevice}
+          deviceGroups={[]}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />
+      );
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+
+        // All checkboxes should initially be unchecked
+        expect(checkboxes[0]).not.toBeChecked();
+        expect(checkboxes[1]).not.toBeChecked();
+        expect(checkboxes[2]).not.toBeChecked();
+      });
+
+      // Click Living Room checkbox to assign device to that group
+      const checkboxes = screen.getAllByRole('checkbox');
+      fireEvent.click(checkboxes[0]);
+
+      await waitFor(() => {
+        // Living Room checkbox should now be checked
+        expect(checkboxes[0]).toBeChecked();
+
+        // Others should remain unchecked
+        expect(checkboxes[1]).not.toBeChecked();
+        expect(checkboxes[2]).not.toBeChecked();
+      });
+    });
+
+    test('should update checkbox state when user clicks to remove device from group', async () => {
+      // Device is initially assigned to Living Room
+      render(
+        <DeviceGroupAssignment
+          open={true}
+          device={mockDevice}
+          deviceGroups={[1]}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />
+      );
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+
+        // Living Room should be initially checked
+        expect(checkboxes[0]).toBeChecked();
+      });
+
+      // Click Living Room checkbox to remove device from that group
+      const checkboxes = screen.getAllByRole('checkbox');
+      fireEvent.click(checkboxes[0]);
+
+      await waitFor(() => {
+        // Living Room checkbox should now be unchecked
+        expect(checkboxes[0]).not.toBeChecked();
+      });
+    });
+
+    test('should toggle checkbox state multiple times when clicking repeatedly', async () => {
+      render(
+        <DeviceGroupAssignment
+          open={true}
+          device={mockDevice}
+          deviceGroups={[]}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Living Room')).toBeInTheDocument();
+      });
+
+      const checkboxes = screen.getAllByRole('checkbox');
+
+      // Initially unchecked
+      expect(checkboxes[0]).not.toBeChecked();
+
+      // Click to check
+      fireEvent.click(checkboxes[0]);
+      await waitFor(() => {
+        expect(checkboxes[0]).toBeChecked();
+      });
+
+      // Click to uncheck
+      fireEvent.click(checkboxes[0]);
+      await waitFor(() => {
+        expect(checkboxes[0]).not.toBeChecked();
+      });
+
+      // Click to check again
+      fireEvent.click(checkboxes[0]);
+      await waitFor(() => {
+        expect(checkboxes[0]).toBeChecked();
+      });
+    });
+
+    test('should persist checkbox state after save and show correct state on reopen', async () => {
+      apiService.addDeviceToGroup.mockResolvedValue({ success: true });
+
+      // First render: no groups assigned
+      const { rerender } = render(
+        <DeviceGroupAssignment
+          open={true}
+          device={mockDevice}
+          deviceGroups={[]}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Living Room')).toBeInTheDocument();
+      });
+
+      // Assign device to Living Room
+      const checkboxes = screen.getAllByRole('checkbox');
+      fireEvent.click(checkboxes[0]);
+
+      const saveButton = screen.getByRole('button', { name: /Save/i });
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(apiService.addDeviceToGroup).toHaveBeenCalledWith(1, 10);
+        expect(mockOnSave).toHaveBeenCalled();
+      });
+
+      // Simulate dialog being reopened with device now in Living Room
+      rerender(
+        <DeviceGroupAssignment
+          open={true}
+          device={mockDevice}
+          deviceGroups={[1]} // Device is now in Living Room
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />
+      );
+
+      await waitFor(() => {
+        const checkboxesAfterReopen = screen.getAllByRole('checkbox');
+        // Living Room should be checked on reopen
+        expect(checkboxesAfterReopen[0]).toBeChecked();
       });
     });
   });

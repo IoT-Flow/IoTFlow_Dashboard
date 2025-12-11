@@ -71,14 +71,18 @@ const mockDevices = [
 describe('Hybrid Devices Page (with old design)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock toast methods
     toast.success = jest.fn();
     toast.error = jest.fn();
     toast.loading = jest.fn();
-    
+
     apiService.getDevices = jest.fn().mockResolvedValue({
       data: mockDevices,
+    });
+
+    apiService.getGroups = jest.fn().mockResolvedValue({
+      data: [],
     });
   });
 
@@ -220,13 +224,7 @@ describe('Hybrid Devices Page (with old design)', () => {
 
   test('should show loading indicator initially', async () => {
     apiService.getDevices = jest.fn(
-      () =>
-        new Promise(resolve =>
-          setTimeout(
-            () => resolve({ data: mockDevices }),
-            1000
-          )
-        )
+      () => new Promise(resolve => setTimeout(() => resolve({ data: mockDevices }), 1000))
     );
 
     const { rerender } = render(

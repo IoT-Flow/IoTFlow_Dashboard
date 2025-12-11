@@ -39,7 +39,7 @@ jest.mock('../pages/Overview', () => {
   };
 });
 
-jest.mock('../pages/Devices', () => {
+jest.mock('../pages/Devices.hybrid', () => {
   return function Devices() {
     return <div data-testid="devices-page">Devices Page</div>;
   };
@@ -107,7 +107,7 @@ describe('Dashboard Routing - User vs Admin', () => {
 
     test('should have access to devices page', async () => {
       window.history.pushState({}, 'Devices', '/devices');
-      
+
       render(
         <BrowserRouter>
           <App />
@@ -121,7 +121,7 @@ describe('Dashboard Routing - User vs Admin', () => {
 
     test('should have access to telemetry page', async () => {
       window.history.pushState({}, 'Telemetry', '/telemetry');
-      
+
       render(
         <BrowserRouter>
           <App />
@@ -135,7 +135,7 @@ describe('Dashboard Routing - User vs Admin', () => {
 
     test('should NOT have access to admin page', async () => {
       window.history.pushState({}, 'Admin', '/admin');
-      
+
       render(
         <BrowserRouter>
           <App />
@@ -184,7 +184,7 @@ describe('Dashboard Routing - User vs Admin', () => {
 
     test('should have access to devices page', async () => {
       window.history.pushState({}, 'Devices', '/devices');
-      
+
       render(
         <BrowserRouter>
           <App />
@@ -198,7 +198,7 @@ describe('Dashboard Routing - User vs Admin', () => {
 
     test('should have access to admin page', async () => {
       window.history.pushState({}, 'Admin', '/admin');
-      
+
       render(
         <BrowserRouter>
           <App />
@@ -212,7 +212,7 @@ describe('Dashboard Routing - User vs Admin', () => {
 
     test('admin should have access to telemetry page', async () => {
       window.history.pushState({}, 'Telemetry', '/telemetry');
-      
+
       render(
         <BrowserRouter>
           <App />

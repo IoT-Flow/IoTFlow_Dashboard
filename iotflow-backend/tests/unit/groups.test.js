@@ -39,14 +39,13 @@ describe('Group Model', () => {
       expect(group.user_id).toBe(testUser.id);
     });
 
-    test('should set default color and icon', async () => {
+    test('should set default color', async () => {
       const group = await Group.create({
         name: 'Test Group',
         user_id: testUser.id,
       });
 
       expect(group.color).toBe('#3B82F6');
-      expect(group.icon).toBe('folder');
     });
 
     test('should require name', async () => {

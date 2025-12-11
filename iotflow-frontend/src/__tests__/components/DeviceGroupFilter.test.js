@@ -16,29 +16,17 @@ describe('DeviceGroupFilter Component', () => {
   });
 
   test('should render the group filter with default "All Groups" option', () => {
-    render(
-      <DeviceGroupFilter
-        groups={mockGroups}
-        selectedGroup="all"
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={mockGroups} selectedGroup="all" onChange={mockOnChange} />);
 
     // Check if the filter label is rendered
     expect(screen.getByLabelText(/Group/i)).toBeInTheDocument();
-    
+
     // Check if "All Groups" is displayed by default
     expect(screen.getByText(/All Groups/i)).toBeInTheDocument();
   });
 
   test('should render all groups in the dropdown', async () => {
-    render(
-      <DeviceGroupFilter
-        groups={mockGroups}
-        selectedGroup="all"
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={mockGroups} selectedGroup="all" onChange={mockOnChange} />);
 
     // Open the dropdown
     const selectElement = screen.getByRole('combobox');
@@ -53,13 +41,7 @@ describe('DeviceGroupFilter Component', () => {
   });
 
   test('should call onChange when a group is selected', async () => {
-    render(
-      <DeviceGroupFilter
-        groups={mockGroups}
-        selectedGroup="all"
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={mockGroups} selectedGroup="all" onChange={mockOnChange} />);
 
     // Open the dropdown
     const selectElement = screen.getByRole('combobox');
@@ -76,13 +58,7 @@ describe('DeviceGroupFilter Component', () => {
   });
 
   test('should call onChange with "all" when "All Groups" is selected', async () => {
-    render(
-      <DeviceGroupFilter
-        groups={mockGroups}
-        selectedGroup={2}
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={mockGroups} selectedGroup={2} onChange={mockOnChange} />);
 
     // Open the dropdown
     const selectElement = screen.getByRole('combobox');
@@ -100,12 +76,7 @@ describe('DeviceGroupFilter Component', () => {
 
   test('should display loading state when groups are empty', () => {
     render(
-      <DeviceGroupFilter
-        groups={[]}
-        selectedGroup="all"
-        onChange={mockOnChange}
-        loading={true}
-      />
+      <DeviceGroupFilter groups={[]} selectedGroup="all" onChange={mockOnChange} loading={true} />
     );
 
     expect(screen.getByText(/Loading groups/i)).toBeInTheDocument();
@@ -126,26 +97,14 @@ describe('DeviceGroupFilter Component', () => {
   });
 
   test('should display selected group correctly', () => {
-    render(
-      <DeviceGroupFilter
-        groups={mockGroups}
-        selectedGroup={2}
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={mockGroups} selectedGroup={2} onChange={mockOnChange} />);
 
     // The selected group should be displayed
     expect(screen.getByText(/Bedroom/i)).toBeInTheDocument();
   });
 
   test('should show group color indicator for each group', async () => {
-    render(
-      <DeviceGroupFilter
-        groups={mockGroups}
-        selectedGroup="all"
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={mockGroups} selectedGroup="all" onChange={mockOnChange} />);
 
     // Open the dropdown
     const selectElement = screen.getByRole('combobox');
@@ -160,13 +119,7 @@ describe('DeviceGroupFilter Component', () => {
   });
 
   test('should handle empty groups array gracefully', () => {
-    render(
-      <DeviceGroupFilter
-        groups={[]}
-        selectedGroup="all"
-        onChange={mockOnChange}
-      />
-    );
+    render(<DeviceGroupFilter groups={[]} selectedGroup="all" onChange={mockOnChange} />);
 
     // Should still render with just "All Groups" option
     expect(screen.getByText(/All Groups/i)).toBeInTheDocument();

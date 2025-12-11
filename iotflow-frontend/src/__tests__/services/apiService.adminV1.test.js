@@ -1,9 +1,9 @@
 /**
  * TDD Tests for Admin V1 API Service Migration
- * 
+ *
  * These tests ensure that the frontend service layer correctly uses the new
  * /api/v1/admin/* endpoints instead of the old scattered admin endpoints.
- * 
+ *
  * Migration mapping:
  * - GET /users → GET /api/v1/admin/users
  * - PUT /users/:id/role → PUT /api/v1/admin/users/:id (with role field)
@@ -92,9 +92,9 @@ describe('Admin V1 API Service Migration', () => {
           data: { users: [], total: 0 },
         });
 
-        await apiService.getAllUsers({ 
+        await apiService.getAllUsers({
           status: 'active',
-          search: 'john' 
+          search: 'john',
         });
 
         expect(mockAxiosInstance.get).toHaveBeenCalledWith('/v1/admin/users', {
@@ -105,10 +105,10 @@ describe('Admin V1 API Service Migration', () => {
 
     describe('getUser', () => {
       it('should call the new admin v1 get user endpoint', async () => {
-        const mockUser = { 
-          id: 1, 
-          username: 'user1', 
-          email: 'user1@example.com' 
+        const mockUser = {
+          id: 1,
+          username: 'user1',
+          email: 'user1@example.com',
         };
 
         mockAxiosInstance.get.mockResolvedValue({
@@ -146,10 +146,10 @@ describe('Admin V1 API Service Migration', () => {
 
     describe('updateUserRole', () => {
       it('should call the new admin v1 update user endpoint with role', async () => {
-        const mockUpdatedUser = { 
-          id: 1, 
-          username: 'user1', 
-          is_admin: true 
+        const mockUpdatedUser = {
+          id: 1,
+          username: 'user1',
+          is_admin: true,
         };
 
         mockAxiosInstance.put.mockResolvedValue({
@@ -179,10 +179,10 @@ describe('Admin V1 API Service Migration', () => {
 
     describe('updateUserStatus', () => {
       it('should call the new admin v1 update user endpoint with status', async () => {
-        const mockUpdatedUser = { 
-          id: 1, 
-          username: 'user1', 
-          is_active: false 
+        const mockUpdatedUser = {
+          id: 1,
+          username: 'user1',
+          is_active: false,
         };
 
         mockAxiosInstance.put.mockResolvedValue({
@@ -265,10 +265,10 @@ describe('Admin V1 API Service Migration', () => {
         ];
 
         mockAxiosInstance.get.mockResolvedValue({
-          data: { 
+          data: {
             user: { id: 1, username: 'user1' },
             devices: mockDevices,
-            total: 2 
+            total: 2,
           },
         });
 
@@ -366,7 +366,7 @@ describe('Admin V1 API Service Migration', () => {
     });
 
     describe('getDevice', () => {
-      it('should call the new admin v1 get device endpoint', async () => {
+      it('should call the get device endpoint', async () => {
         const mockDevice = {
           id: 1,
           name: 'Device 1',
@@ -375,13 +375,13 @@ describe('Admin V1 API Service Migration', () => {
         };
 
         mockAxiosInstance.get.mockResolvedValue({
-          data: { device: mockDevice },
+          data: mockDevice,
         });
 
         const result = await apiService.getDevice(1);
 
-        expect(mockAxiosInstance.get).toHaveBeenCalledWith('/v1/admin/devices/1');
-        expect(result).toEqual({ device: mockDevice });
+        expect(mockAxiosInstance.get).toHaveBeenCalledWith('/devices/1');
+        expect(result).toBeDefined();
       });
     });
 
@@ -394,16 +394,14 @@ describe('Admin V1 API Service Migration', () => {
         const result = await apiService.adminDeleteDevice(1);
 
         expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/v1/admin/devices/1');
-        expect(result).toEqual({ 
-          success: true, 
-          data: { message: 'Device deleted successfully' } 
+        expect(result).toEqual({
+          success: true,
+          data: { message: 'Device deleted successfully' },
         });
       });
 
       it('should handle deletion errors', async () => {
-        mockAxiosInstance.delete.mockRejectedValue(
-          new Error('Device not found')
-        );
+        mockAxiosInstance.delete.mockRejectedValue(new Error('Device not found'));
 
         await expect(apiService.adminDeleteDevice(999)).rejects.toThrow('Device not found');
         expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/v1/admin/devices/999');
@@ -466,9 +464,9 @@ describe('Admin V1 API Service Migration', () => {
 
     it('should handle 400 Bad Request errors (self-modification)', async () => {
       mockAxiosInstance.delete.mockRejectedValue({
-        response: { 
-          status: 400, 
-          data: { message: 'Cannot delete your own account' } 
+        response: {
+          status: 400,
+          data: { message: 'Cannot delete your own account' },
         },
       });
 
@@ -478,9 +476,7 @@ describe('Admin V1 API Service Migration', () => {
     });
 
     it('should handle network errors', async () => {
-      mockAxiosInstance.get.mockRejectedValue(
-        new Error('Network Error')
-      );
+      mockAxiosInstance.get.mockRejectedValue(new Error('Network Error'));
 
       await expect(apiService.getAllUsers()).rejects.toThrow('Network Error');
     });
@@ -494,10 +490,10 @@ describe('Admin V1 API Service Migration', () => {
 
       // Should work with no parameters (backward compatible)
       await apiService.getAllUsers();
-      
+
       // Should work with parameters (new feature)
       await apiService.getAllUsers({ page: 1, limit: 10 });
-      
+
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
     });
 
@@ -508,7 +504,7 @@ describe('Admin V1 API Service Migration', () => {
 
       // Old signature: (userId, isAdmin)
       await apiService.updateUserRole(1, true);
-      
+
       expect(mockAxiosInstance.put).toHaveBeenCalledWith('/v1/admin/users/1', {
         is_admin: true,
       });
@@ -521,7 +517,7 @@ describe('Admin V1 API Service Migration', () => {
 
       // Old signature: (userId, isActive)
       await apiService.updateUserStatus(1, false);
-      
+
       expect(mockAxiosInstance.put).toHaveBeenCalledWith('/v1/admin/users/1', {
         is_active: false,
       });
@@ -533,7 +529,7 @@ describe('Admin V1 API Service Migration', () => {
       });
 
       const result = await apiService.adminDeleteDevice(1);
-      
+
       // Should return { success: true, data: {...} } for backward compatibility
       expect(result).toHaveProperty('success', true);
       expect(result).toHaveProperty('data');

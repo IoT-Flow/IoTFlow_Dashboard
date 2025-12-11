@@ -21,10 +21,6 @@ Group.init(
       type: DataTypes.STRING(7), // Hex color code #RRGGBB
       defaultValue: '#3B82F6',
     },
-    icon: {
-      type: DataTypes.STRING(50),
-      defaultValue: 'folder',
-    },
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,

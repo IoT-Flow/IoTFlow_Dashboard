@@ -68,7 +68,7 @@ const DeviceControlDashboard = () => {
   // Load user devices on component mount
   useEffect(() => {
     loadDevices();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Poll for command status updates

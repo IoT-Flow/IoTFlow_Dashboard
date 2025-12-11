@@ -1,8 +1,8 @@
 /**
  * AddDeviceForm Component
- * 
+ *
  * A form for creating new IoT devices with validation and error handling.
- * 
+ *
  * Features:
  * - Form validation for required fields
  * - Device type selection (Sensor, Actuator, Gateway)
@@ -71,7 +71,7 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -86,7 +86,7 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -105,10 +105,10 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
       const device = response.success ? response.data : response;
 
       toast.success(`Device created successfully: ${device.name}`);
-      
+
       // Store the created device with API key
       setCreatedDevice(device);
-      
+
       // Clear form
       setFormData({
         name: '',
@@ -144,11 +144,7 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
     <Box>
       {/* API Key Display Section */}
       {createdDevice && (
-        <Alert 
-          severity="success" 
-          sx={{ mb: 3 }}
-          onClose={() => setCreatedDevice(null)}
-        >
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setCreatedDevice(null)}>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
             ✅ Device created successfully!
           </Typography>
@@ -158,9 +154,9 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
           <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
             Save your API key somewhere safe. You'll need it to connect your device.
           </Typography>
-          <Paper 
-            sx={{ 
-              p: 2, 
+          <Paper
+            sx={{
+              p: 2,
               bgcolor: 'background.default',
               border: '1px solid',
               borderColor: 'divider',
@@ -170,9 +166,9 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
               gap: 1,
             }}
           >
-            <Typography 
-              variant="body2" 
-              sx={{ 
+            <Typography
+              variant="body2"
+              sx={{
                 fontFamily: 'monospace',
                 fontSize: '0.875rem',
                 wordBreak: 'break-all',
@@ -185,7 +181,7 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
               <IconButton
                 size="small"
                 onClick={handleCopyApiKey}
-                sx={{ 
+                sx={{
                   flexShrink: 0,
                   color: apiKeyCopied ? 'success.main' : 'primary.main',
                 }}
@@ -221,12 +217,7 @@ const AddDeviceForm = ({ onSuccess = () => {} }) => {
               />
 
               {/* Device Type */}
-              <FormControl
-                fullWidth
-                error={!!errors.device_type}
-                disabled={loading}
-                required
-              >
+              <FormControl fullWidth error={!!errors.device_type} disabled={loading} required>
                 <InputLabel id="device-type-label">Device Type</InputLabel>
                 <Select
                   labelId="device-type-label"

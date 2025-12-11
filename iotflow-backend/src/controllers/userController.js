@@ -225,8 +225,8 @@ class UserController {
       // Prevent admin from modifying their own role or status via sensitive fields
       if (parseInt(id) === req.user.id) {
         if (is_admin !== undefined || is_active !== undefined) {
-          return res.status(400).json({ 
-            message: 'Cannot modify your own admin privileges or account status' 
+          return res.status(400).json({
+            message: 'Cannot modify your own admin privileges or account status',
           });
         }
       }

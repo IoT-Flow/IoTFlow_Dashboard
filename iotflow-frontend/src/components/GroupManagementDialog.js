@@ -13,37 +13,36 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import {
-  Delete,
-  Close,
-} from '@mui/icons-material';
+import { Delete, Close } from '@mui/icons-material';
 import { HexColorPicker } from 'react-colorful';
 import toast from 'react-hot-toast';
 import apiService from '../services/apiService';
 
 const DEFAULT_COLORS = [
-  '#FF5733', '#33FF57', '#3357FF', '#FF33F5', '#F5FF33',
-  '#33FFF5', '#F57F33', '#8B33FF', '#FF3333', '#33FF33',
+  '#FF5733',
+  '#33FF57',
+  '#3357FF',
+  '#FF33F5',
+  '#F5FF33',
+  '#33FFF5',
+  '#F57F33',
+  '#8B33FF',
+  '#FF3333',
+  '#33FF33',
 ];
 
 /**
  * GroupManagementDialog Component
- * 
+ *
  * Dialog for creating, editing, and deleting device groups.
- * 
+ *
  * @param {boolean} open - Whether the dialog is open
  * @param {Function} onClose - Callback when dialog is closed
  * @param {Function} onSave - Callback when group is saved/deleted
  * @param {string} mode - 'create' or 'edit'
  * @param {Object} group - Existing group data (for edit mode)
  */
-const GroupManagementDialog = ({
-  open,
-  onClose,
-  onSave,
-  mode = 'create',
-  group = null,
-}) => {
+const GroupManagementDialog = ({ open, onClose, onSave, mode = 'create', group = null }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -84,14 +83,14 @@ const GroupManagementDialog = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (field) => (event) => {
-    setFormData((prev) => ({
+  const handleChange = field => event => {
+    setFormData(prev => ({
       ...prev,
       [field]: event.target.value,
     }));
     // Clear error for this field
     if (errors[field]) {
-      setErrors((prev) => {
+      setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -99,8 +98,8 @@ const GroupManagementDialog = ({
     }
   };
 
-  const handleColorChange = (color) => {
-    setFormData((prev) => ({
+  const handleColorChange = color => {
+    setFormData(prev => ({
       ...prev,
       color,
     }));
@@ -152,12 +151,7 @@ const GroupManagementDialog = ({
 
   return (
     <>
-      <Dialog
-        open={open}
-        onClose={onClose}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="h6">
@@ -203,7 +197,7 @@ const GroupManagementDialog = ({
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                   <IconButton
                     aria-label="Choose color"
-                    onClick={(e) => setColorAnchor(e.currentTarget)}
+                    onClick={e => setColorAnchor(e.currentTarget)}
                     sx={{
                       width: 48,
                       height: 48,
@@ -231,7 +225,7 @@ const GroupManagementDialog = ({
 
                 {/* Predefined colors */}
                 <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
-                  {DEFAULT_COLORS.map((color) => (
+                  {DEFAULT_COLORS.map(color => (
                     <Box
                       key={color}
                       onClick={() => handleColorChange(color)}
@@ -241,7 +235,8 @@ const GroupManagementDialog = ({
                         borderRadius: '50%',
                         backgroundColor: color,
                         cursor: 'pointer',
-                        border: formData.color === color ? '2px solid #000' : '2px solid transparent',
+                        border:
+                          formData.color === color ? '2px solid #000' : '2px solid transparent',
                         '&:hover': {
                           transform: 'scale(1.1)',
                         },
@@ -299,10 +294,7 @@ const GroupManagementDialog = ({
       </Popover>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-      >
+      <Dialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>

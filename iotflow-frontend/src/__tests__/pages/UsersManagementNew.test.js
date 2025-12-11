@@ -1,6 +1,6 @@
 /**
  * TDD Test Suite for New UsersManagement Page
- * 
+ *
  * This test suite defines the requirements for a rebuilt UsersManagement page that:
  * - Uses Admin V1 API endpoints (/api/v1/admin/users/*)
  * - Preserves the same design and functionality as the old page
@@ -90,7 +90,7 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Try to import the component
     try {
       UsersManagementNew = require('../../pages/UsersManagement').default;
@@ -176,9 +176,11 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
     test('should show loading state while fetching users', async () => {
       if (!UsersManagementNew) return;
 
-      apiService.getAllUsers = jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ users: [], total: 0 }), 1000))
-      );
+      apiService.getAllUsers = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise(resolve => setTimeout(() => resolve({ users: [], total: 0 }), 1000))
+        );
 
       renderComponent();
 
@@ -234,7 +236,7 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
       await waitFor(() => {
         const adminChips = screen.getAllByText('Admin');
         const userChips = screen.getAllByText('User');
-        
+
         expect(adminChips.length).toBeGreaterThan(0);
         expect(userChips.length).toBeGreaterThan(0);
       });
@@ -250,7 +252,7 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
         const tableBody = screen.getByRole('table').querySelector('tbody');
         const activeChips = within(tableBody).getAllByText('Active');
         const inactiveChips = within(tableBody).getAllByText('Inactive');
-        
+
         expect(activeChips.length).toBe(2); // admin and user1
         expect(inactiveChips.length).toBe(1); // user2
       });
@@ -648,9 +650,7 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
     test('should handle API error gracefully when loading users', async () => {
       if (!UsersManagementNew) return;
 
-      apiService.getAllUsers = jest.fn().mockRejectedValue(
-        new Error('Network error')
-      );
+      apiService.getAllUsers = jest.fn().mockRejectedValue(new Error('Network error'));
 
       renderComponent();
 
@@ -667,9 +667,7 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
         total: mockUsers.length,
       });
 
-      apiService.getUserDevices = jest.fn().mockRejectedValue(
-        new Error('Failed to load devices')
-      );
+      apiService.getUserDevices = jest.fn().mockRejectedValue(new Error('Failed to load devices'));
 
       renderComponent();
 
@@ -714,9 +712,11 @@ describe('UsersManagement Page - TDD (Rebuilt with Admin V1 API)', () => {
     test('should disable refresh button while loading', async () => {
       if (!UsersManagementNew) return;
 
-      apiService.getAllUsers = jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ users: [], total: 0 }), 1000))
-      );
+      apiService.getAllUsers = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise(resolve => setTimeout(() => resolve({ users: [], total: 0 }), 1000))
+        );
 
       renderComponent();
 

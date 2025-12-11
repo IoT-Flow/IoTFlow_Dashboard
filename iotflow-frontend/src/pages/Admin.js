@@ -66,7 +66,7 @@ const Admin = () => {
   const [deviceToDelete, setDeviceToDelete] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  
+
   // Log user info for debugging
   useEffect(() => {
     console.log('👤 Current user:', user);
@@ -79,7 +79,7 @@ const Admin = () => {
       console.log('🎫 Token preview:', token.substring(0, 20) + '...');
     }
   }, [user]);
-  
+
   const [systemHealth] = useState({
     overall: 'good',
     services: {
@@ -243,12 +243,12 @@ const Admin = () => {
       toast.error('Admin privileges required');
       return;
     }
-    
+
     setLoadingUsers(true);
     try {
       const data = await apiService.getAllUsers();
       // Backend returns array directly when no pagination params, or {users: [...]} when paginated
-      const userList = Array.isArray(data) ? data : (data.users || []);
+      const userList = Array.isArray(data) ? data : data.users || [];
       setAllUsers(userList);
       toast.success(`Loaded ${userList.length} user(s)`);
     } catch (error) {
@@ -269,7 +269,7 @@ const Admin = () => {
     console.log('🔄 Fetching all devices...');
     console.log('👤 Current user:', user);
     console.log('🔐 Is admin:', user?.is_admin || user?.role === 'admin');
-    
+
     // Check if user is admin (check both is_admin field and role)
     const isAdmin = user?.is_admin === true || user?.role === 'admin';
     if (!isAdmin) {
@@ -277,7 +277,7 @@ const Admin = () => {
       toast.error('Admin privileges required');
       return;
     }
-    
+
     setLoadingDevices(true);
     try {
       console.log('📡 Calling apiService.adminGetAllDevices()...');
@@ -285,7 +285,7 @@ const Admin = () => {
       console.log('✅ Admin devices response:', response);
       console.log('📊 Total devices:', response.total);
       console.log('📱 Devices array length:', response.devices?.length);
-      
+
       if (response && response.devices) {
         console.log('📋 Setting devices:', response.devices);
         setAllDevices(response.devices);
@@ -294,7 +294,7 @@ const Admin = () => {
         console.warn('⚠️ No devices array in response');
         setAllDevices([]);
       }
-      
+
       if (response.total === 0 || response.devices?.length === 0) {
         console.warn('⚠️ Backend returned 0 devices - check database and permissions');
       }
@@ -303,7 +303,7 @@ const Admin = () => {
       console.error('Error details:', error.response?.data || error.message);
       console.error('Error status:', error.response?.status);
       console.error('Full error object:', error);
-      
+
       if (error.response?.status === 403) {
         toast.error('Access denied: Admin privileges required');
       } else {
@@ -317,7 +317,7 @@ const Admin = () => {
   // Delete device (admin)
   const handleDeleteDevice = async () => {
     if (!deviceToDelete) return;
-    
+
     try {
       await apiService.adminDeleteDevice(deviceToDelete.id);
       toast.success(`Device "${deviceToDelete.name}" deleted successfully`);
@@ -333,20 +333,22 @@ const Admin = () => {
 
   // Fetch users when Users tab becomes active
   useEffect(() => {
-    if (activeTab === 0) { // Users tab
+    if (activeTab === 0) {
+      // Users tab
       fetchAllUsers();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Fetch devices when Devices tab becomes active
   useEffect(() => {
     console.log('📑 Active tab changed to:', activeTab);
-    if (activeTab === 1) { // Devices tab
+    if (activeTab === 1) {
+      // Devices tab
       console.log('🔍 Devices tab active, fetching devices...');
       fetchAllDevices();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const ServiceCard = ({ name, service, icon }) => (
@@ -666,7 +668,9 @@ const Admin = () => {
         {/* Users Tab */}
         {activeTab === 0 && (
           <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+            >
               <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
                 All Users ({allUsers.length})
               </Typography>
@@ -685,15 +689,14 @@ const Admin = () => {
                 <CircularProgress />
               </Box>
             ) : allUsers.length === 0 ? (
-              <Alert severity="info">
-                No users found in the system.
-              </Alert>
+              <Alert severity="info">No users found in the system.</Alert>
             ) : (
               <>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  For full user management (edit roles, status, view devices), navigate to <strong>Admin → Users</strong> in the sidebar.
+                  For full user management (edit roles, status, view devices), navigate to{' '}
+                  <strong>Admin → Users</strong> in the sidebar.
                 </Alert>
-                
+
                 <TableContainer component={Paper}>
                   <Table>
                     <TableHead>
@@ -707,12 +710,18 @@ const Admin = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {allUsers.map((usr) => (
+                      {allUsers.map(usr => (
                         <TableRow key={usr.id} hover>
                           <TableCell>{usr.id}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Avatar sx={{ width: 32, height: 32, bgcolor: usr.is_admin ? 'primary.main' : 'grey.400' }}>
+                              <Avatar
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  bgcolor: usr.is_admin ? 'primary.main' : 'grey.400',
+                                }}
+                              >
                                 {usr.username.charAt(0).toUpperCase()}
                               </Avatar>
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -735,9 +744,7 @@ const Admin = () => {
                               size="small"
                             />
                           </TableCell>
-                          <TableCell>
-                            {new Date(usr.created_at).toLocaleDateString()}
-                          </TableCell>
+                          <TableCell>{new Date(usr.created_at).toLocaleDateString()}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -755,14 +762,13 @@ const Admin = () => {
             {user && !(user.is_admin === true || user.role === 'admin') && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  <strong>Access Denied:</strong> You are logged in as <strong>{user.username}</strong>, but this feature requires admin privileges.
+                  <strong>Access Denied:</strong> You are logged in as{' '}
+                  <strong>{user.username}</strong>, but this feature requires admin privileges.
                   <br />
                   <br />
                   <strong>Current user details:</strong>
-                  <br />
-                  • is_admin: {String(user.is_admin)}
-                  <br />
-                  • role: {user.role || 'not set'}
+                  <br />• is_admin: {String(user.is_admin)}
+                  <br />• role: {user.role || 'not set'}
                   <br />
                   <br />
                   Please log out and log in with admin credentials:
@@ -773,24 +779,29 @@ const Admin = () => {
                 </Typography>
               </Alert>
             )}
-            
+
             {/* Debug Info */}
             {user && (
-              <Alert severity={(user.is_admin === true || user.role === 'admin') ? 'info' : 'warning'} sx={{ mb: 2 }}>
+              <Alert
+                severity={user.is_admin === true || user.role === 'admin' ? 'info' : 'warning'}
+                sx={{ mb: 2 }}
+              >
                 <Typography variant="body2">
                   <strong>Current User:</strong> {user.username} ({user.email})
                   <br />
-                  <strong>Admin Status (is_admin):</strong> {user.is_admin === true ? '✅ Yes' : '❌ No'}
+                  <strong>Admin Status (is_admin):</strong>{' '}
+                  {user.is_admin === true ? '✅ Yes' : '❌ No'}
                   <br />
                   <strong>Role:</strong> {user.role || 'not set'}
                   <br />
-                  <strong>Token:</strong> {localStorage.getItem('iotflow_token') ? '✅ Present' : '❌ Missing'}
+                  <strong>Token:</strong>{' '}
+                  {localStorage.getItem('iotflow_token') ? '✅ Present' : '❌ Missing'}
                   <br />
                   <strong>Devices loaded:</strong> {allDevices.length}
                 </Typography>
               </Alert>
             )}
-            
+
             <Box
               sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
             >
@@ -809,7 +820,9 @@ const Admin = () => {
                     console.log('User from localStorage:', userStr);
                     console.log('User from context:', user);
                     console.log('API URL:', process.env.REACT_APP_API_URL);
-                    alert(`Token: ${token ? '✅ Present' : '❌ Missing'}\nUser: ${user?.username || 'not logged in'}\nAdmin: ${user?.is_admin === true || user?.role === 'admin' ? 'Yes' : 'No'}\n\nCheck console for details`);
+                    alert(
+                      `Token: ${token ? '✅ Present' : '❌ Missing'}\nUser: ${user?.username || 'not logged in'}\nAdmin: ${user?.is_admin === true || user?.role === 'admin' ? 'Yes' : 'No'}\n\nCheck console for details`
+                    );
                   }}
                 >
                   🔍 Diagnose
@@ -847,10 +860,9 @@ const Admin = () => {
                     <br />
                     <br />
                     <strong>Current state:</strong>
-                    <br />
-                    • allDevices is: {allDevices ? `array with ${allDevices.length} items` : 'null/undefined'}
-                    <br />
-                    • loadingDevices: {loadingDevices ? 'true' : 'false'}
+                    <br />• allDevices is:{' '}
+                    {allDevices ? `array with ${allDevices.length} items` : 'null/undefined'}
+                    <br />• loadingDevices: {loadingDevices ? 'true' : 'false'}
                   </Typography>
                 </Alert>
               </Box>
@@ -861,89 +873,108 @@ const Admin = () => {
                     <strong>✅ Found {allDevices.length} device(s) in the system</strong>
                   </Typography>
                 </Alert>
-                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 600, overflow: 'auto' }}>
+                <TableContainer
+                  component={Paper}
+                  variant="outlined"
+                  sx={{ maxHeight: 600, overflow: 'auto' }}
+                >
                   <Table stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Device Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Type</TableCell>
-                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Owner</TableCell>
-                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Location</TableCell>
-                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Last Seen</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>Actions</TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>
+                          Device Name
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>
+                          Type
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>
+                          Owner
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>
+                          Status
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>
+                          Location
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, bgcolor: 'background.paper' }}>
+                          Last Seen
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontWeight: 600, bgcolor: 'background.paper' }}
+                        >
+                          Actions
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {allDevices.map(device => (
-                      <TableRow key={device.id} hover>
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {device.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ID: {device.id}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={device.device_type || 'Unknown'} size="small" />
-                        </TableCell>
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2">
-                              {device.user?.username || 'Unknown'}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {device.user?.email || ''}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={device.status || 'unknown'}
-                            size="small"
-                            color={
-                              device.status === 'online'
-                                ? 'success'
-                                : device.status === 'offline'
-                                ? 'error'
-                                : 'default'
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {device.location || 'Not set'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {device.last_seen
-                              ? new Date(device.last_seen).toLocaleString()
-                              : 'Never'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title="Delete Device">
-                            <IconButton
-                              color="error"
+                        <TableRow key={device.id} hover>
+                          <TableCell>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {device.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                ID: {device.id}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={device.device_type || 'Unknown'} size="small" />
+                          </TableCell>
+                          <TableCell>
+                            <Box>
+                              <Typography variant="body2">
+                                {device.user?.username || 'Unknown'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {device.user?.email || ''}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={device.status || 'unknown'}
                               size="small"
-                              onClick={() => {
-                                setDeviceToDelete(device);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Delete />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                              color={
+                                device.status === 'online'
+                                  ? 'success'
+                                  : device.status === 'offline'
+                                    ? 'error'
+                                    : 'default'
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">{device.location || 'Not set'}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {device.last_seen
+                                ? new Date(device.last_seen).toLocaleString()
+                                : 'Never'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Delete Device">
+                              <IconButton
+                                color="error"
+                                size="small"
+                                onClick={() => {
+                                  setDeviceToDelete(device);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Box>
             )}
           </Box>
@@ -1253,24 +1284,21 @@ const Admin = () => {
       </Dialog>
 
       {/* Delete Device Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        maxWidth="sm"
-      >
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="sm">
         <DialogTitle>Delete Device</DialogTitle>
         <DialogContent>
           <Typography>
             Are you sure you want to delete the device <strong>{deviceToDelete?.name}</strong>?
           </Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>
-            This action cannot be undone. All telemetry data and configurations for this device
-            will be permanently deleted.
+            This action cannot be undone. All telemetry data and configurations for this device will
+            be permanently deleted.
           </Alert>
           {deviceToDelete?.user && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Device owner: <strong>{deviceToDelete.user.username}</strong> ({deviceToDelete.user.email})
+                Device owner: <strong>{deviceToDelete.user.username}</strong> (
+                {deviceToDelete.user.email})
               </Typography>
             </Box>
           )}

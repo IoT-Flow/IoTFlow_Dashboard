@@ -11,10 +11,10 @@ class DeviceController {
       console.log('🔍 [ADMIN] Getting all devices');
       console.log('👤 [ADMIN] Requested by user:', req.user?.username, '(ID:', req.user?.id, ')');
       console.log('🔑 [ADMIN] User is_admin:', req.user?.is_admin);
-      
+
       const { status, device_type, user_id } = req.query;
       const whereClause = {};
-      
+
       if (status) whereClause.status = status;
       if (device_type) whereClause.device_type = device_type;
       if (user_id) whereClause.user_id = user_id;
@@ -34,12 +34,17 @@ class DeviceController {
       });
 
       console.log('✅ [ADMIN] Found devices:', devices.length);
-      console.log('📱 [ADMIN] First device:', devices[0] ? {
-        id: devices[0].id,
-        name: devices[0].name,
-        user_id: devices[0].user_id,
-        owner: devices[0].user?.username
-      } : 'No devices');
+      console.log(
+        '📱 [ADMIN] First device:',
+        devices[0]
+          ? {
+              id: devices[0].id,
+              name: devices[0].name,
+              user_id: devices[0].user_id,
+              owner: devices[0].user?.username,
+            }
+          : 'No devices'
+      );
 
       res.status(200).json({ devices, total: devices.length });
     } catch (error) {
@@ -51,7 +56,7 @@ class DeviceController {
   // Admin: delete any device
   // adminDeleteDevice removed - consolidated into deleteDevice method
   // The standard deleteDevice now checks if user is admin and allows deletion accordingly
-  
+
   async createDevice(req, res) {
     try {
       const { name, description, device_type, location, firmware_version, hardware_version } =
@@ -204,31 +209,36 @@ class DeviceController {
       console.log(`Deleting device ${id} and all related records...`);
 
       // Consolidated logic: Admin can delete any device, regular user only their own
-      const whereClause = req.user.is_admin 
-        ? { id }  // Admin: no user_id restriction
-        : { id, user_id: req.user.id };  // Regular user: must own the device
+      const whereClause = req.user.is_admin
+        ? { id } // Admin: no user_id restriction
+        : { id, user_id: req.user.id }; // Regular user: must own the device
 
       // First, get the device details for notification
       const device = await Device.findOne({ where: whereClause });
 
       if (!device) {
-        console.error(`Device not found: id=${id}, user_id=${req.user.id}, is_admin=${req.user.is_admin}`);
+        console.error(
+          `Device not found: id=${id}, user_id=${req.user.id}, is_admin=${req.user.is_admin}`
+        );
         return res.status(404).json({ message: 'Device not found' });
       }
 
       // Delete ALL related records first
       console.log(`Deleting config, chart relationships for device ${id}`);
-      
+
       // 1. Delete device configuration
       const configDeleted = await DeviceConfiguration.destroy({ where: { device_id: id } });
       console.log(`DeviceConfiguration records deleted: ${configDeleted}`);
 
       // 2. Delete chart-device relationships (manual table) - handle if table doesn't exist
       try {
-        const chartDeleted = await sequelize.query('DELETE FROM chart_devices WHERE device_id = ?', {
-          replacements: [id],
-          type: sequelize.QueryTypes.DELETE,
-        });
+        const chartDeleted = await sequelize.query(
+          'DELETE FROM chart_devices WHERE device_id = ?',
+          {
+            replacements: [id],
+            type: sequelize.QueryTypes.DELETE,
+          }
+        );
         console.log(`Chart-device relationships deleted:`, chartDeleted);
       } catch (chartError) {
         // Table might not exist in test environment

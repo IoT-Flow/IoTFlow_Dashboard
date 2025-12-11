@@ -5,7 +5,7 @@ class DeviceGroupController {
   // Create a new group
   async createGroup(req, res) {
     try {
-      const { name, description, color, icon } = req.body;
+      const { name, description, color } = req.body;
 
       if (!name) {
         return res.status(400).json({ message: 'Name is required' });
@@ -15,7 +15,6 @@ class DeviceGroupController {
         name,
         description,
         color,
-        icon,
         user_id: req.user.id,
       });
 
@@ -86,7 +85,7 @@ class DeviceGroupController {
   async updateGroup(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, color, icon } = req.body;
+      const { name, description, color } = req.body;
 
       const group = await Group.findOne({
         where: { id, user_id: req.user.id },
@@ -100,7 +99,6 @@ class DeviceGroupController {
         name,
         description,
         color,
-        icon,
         updated_at: new Date(),
       });
 

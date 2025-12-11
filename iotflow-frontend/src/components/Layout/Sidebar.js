@@ -34,7 +34,8 @@ const Sidebar = ({ open, onToggle }) => {
       label: user?.role === 'admin' ? 'Dashboard' : 'Overview',
       path: user?.role === 'admin' ? '/admin' : '/overview',
       icon: <DashboardIcon />,
-      description: user?.role === 'admin' ? 'Admin dashboard & system overview' : 'Dashboard & device summary',
+      description:
+        user?.role === 'admin' ? 'Admin dashboard & system overview' : 'Dashboard & device summary',
       roles: ['user', 'admin'],
     },
     {
@@ -241,7 +242,9 @@ const Sidebar = ({ open, onToggle }) => {
         },
       }}
     >
-      <Box sx={{ mt: '64px', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{ mt: '64px', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}
+      >
         {drawerContent}
       </Box>
     </Drawer>

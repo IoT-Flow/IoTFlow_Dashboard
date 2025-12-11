@@ -174,12 +174,8 @@ export default function Mqtt() {
               <Typography variant="h6" gutterBottom>
                 Data Transfer
               </Typography>
-              <Typography variant="body1">
-                ↓ {brokerStatus.bytesReceived}
-              </Typography>
-              <Typography variant="body1">
-                ↑ {brokerStatus.bytesSent}
-              </Typography>
+              <Typography variant="body1">↓ {brokerStatus.bytesReceived}</Typography>
+              <Typography variant="body1">↑ {brokerStatus.bytesSent}</Typography>
               <Typography variant="caption" color="text.secondary">
                 Received / Sent
               </Typography>
@@ -219,9 +215,7 @@ export default function Mqtt() {
                     <TableCell align="center">
                       <Chip label={topic.publishers} size="small" color="secondary" />
                     </TableCell>
-                    <TableCell align="right">
-                      {topic.messages.toLocaleString()}
-                    </TableCell>
+                    <TableCell align="right">{topic.messages.toLocaleString()}</TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
                         {topic.lastActivity}

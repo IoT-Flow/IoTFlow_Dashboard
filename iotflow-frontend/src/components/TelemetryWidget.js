@@ -1,13 +1,5 @@
 import { DeviceHub, SignalWifi4Bar, Speed, Thermostat, TrendingUp } from '@mui/icons-material';
-import {
-  Avatar,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Typography,
-} from '@mui/material';
+import { Avatar, Box, Card, CardContent, Chip, CircularProgress, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import apiService from '../services/apiService';
@@ -20,7 +12,7 @@ const TelemetryWidget = ({ deviceId, compact = false }) => {
 
   useEffect(() => {
     loadDeviceInfo();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
   const loadDeviceInfo = async () => {

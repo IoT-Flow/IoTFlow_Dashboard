@@ -43,20 +43,6 @@ async function createAdditionalTables() {
   if (isPostgreSQL) {
     console.log('Using PostgreSQL syntax for table creation...');
 
-    // Create telemetry_data table (PostgreSQL format)
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS telemetry_data (
-        id SERIAL PRIMARY KEY,
-        device_id INTEGER NOT NULL,
-        timestamp TIMESTAMP NOT NULL,
-        data_type VARCHAR(50) NOT NULL,
-        value REAL NOT NULL,
-        unit VARCHAR(20),
-        metadata JSONB,
-        FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE CASCADE ON UPDATE CASCADE
-      )
-    `);
-
     // Create device_control table
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS device_control (
@@ -92,20 +78,6 @@ async function createAdditionalTables() {
     `);
   } else {
     console.log('Using SQLite syntax for table creation...');
-
-    // Create telemetry_data table (SQLite format)
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS telemetry_data (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        device_id INTEGER NOT NULL,
-        timestamp DATETIME NOT NULL,
-        data_type VARCHAR(50) NOT NULL,
-        value FLOAT NOT NULL,
-        unit VARCHAR(20),
-        metadata JSON,
-        FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE CASCADE ON UPDATE CASCADE
-      )
-    `);
 
     // Create device_control table
     await sequelize.query(`
@@ -177,17 +149,6 @@ async function createIndexes() {
     if (isPostgreSQL) {
       console.log('Creating PostgreSQL indexes...');
 
-      // Telemetry data indexes
-      await sequelize.query(`
-        CREATE INDEX IF NOT EXISTS telemetry_data_device_id_timestamp 
-        ON telemetry_data (device_id, timestamp)
-      `);
-
-      await sequelize.query(`
-        CREATE INDEX IF NOT EXISTS telemetry_data_data_type 
-        ON telemetry_data (data_type)
-      `);
-
       // User indexes (checking if column exists first)
       try {
         await sequelize.query(`
@@ -242,17 +203,6 @@ async function createIndexes() {
     } else {
       // SQLite indexes
       console.log('Creating SQLite indexes...');
-
-      // Telemetry data indexes
-      await sequelize.query(`
-        CREATE INDEX IF NOT EXISTS telemetry_data_device_id_timestamp 
-        ON telemetry_data (device_id, timestamp)
-      `);
-
-      await sequelize.query(`
-        CREATE INDEX IF NOT EXISTS telemetry_data_data_type 
-        ON telemetry_data (data_type)
-      `);
 
       // User indexes
       await sequelize.query(`

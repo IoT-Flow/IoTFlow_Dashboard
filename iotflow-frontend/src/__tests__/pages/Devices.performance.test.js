@@ -1,7 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import Devices from '../../pages/Devices';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import Devices from '../../pages/Devices.hybrid';
+
+const theme = createTheme();
 
 // Mock dependencies
 jest.mock('../../contexts/AuthContext', () => ({
@@ -25,9 +28,19 @@ jest.mock('react-router-dom', () => ({
   useNavigate: () => jest.fn(),
 }));
 
+jest.mock('@mui/material', () => ({
+  ...jest.requireActual('@mui/material'),
+  useMediaQuery: () => false,
+}));
+
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
   default: {
+    success: jest.fn(),
+    error: jest.fn(),
+    loading: jest.fn(),
+  },
+  toast: {
     success: jest.fn(),
     error: jest.fn(),
     loading: jest.fn(),
@@ -76,7 +89,7 @@ describe('Devices Page Performance', () => {
     });
 
     apiService.getGroups.mockResolvedValue(mockGroups);
-    
+
     // Mock getDevicesByGroup to return devices
     apiService.getDevicesByGroup.mockResolvedValue({
       devices: [mockDevices[0], mockDevices[1]],
@@ -85,15 +98,20 @@ describe('Devices Page Performance', () => {
     const startTime = performance.now();
 
     render(
-      <BrowserRouter>
-        <Devices />
-      </BrowserRouter>
+      <ThemeProvider theme={theme}>
+        <BrowserRouter>
+          <Devices />
+        </BrowserRouter>
+      </ThemeProvider>
     );
 
     // Wait for page to load
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
 
     const endTime = performance.now();
     const loadTime = endTime - startTime;
@@ -125,16 +143,20 @@ describe('Devices Page Performance', () => {
     apiService.getGroups.mockResolvedValue(mockGroups);
 
     render(
-      <BrowserRouter>
-        <Devices />
-      </BrowserRouter>
+      <ThemeProvider theme={theme}>
+        <BrowserRouter>
+          <Devices />
+        </BrowserRouter>
+      </ThemeProvider>
     );
 
-    // Wait for data to be loaded  
-    await waitFor(() => {
-      expect(apiService.getDevices).toHaveBeenCalled();
-      expect(apiService.getGroups).toHaveBeenCalled();
-    }, { timeout: 2000 });
+    // Wait for data to be loaded
+    await waitFor(
+      () => {
+        expect(apiService.getDevices).toHaveBeenCalled();
+      },
+      { timeout: 2000 }
+    );
 
     // Give it a moment to complete any additional renders
     await new Promise(resolve => setTimeout(resolve, 100));

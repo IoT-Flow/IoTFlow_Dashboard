@@ -1,6 +1,6 @@
 /**
  * TDD Test Suite for New Devices Page
- * 
+ *
  * This test suite defines the requirements for a rebuilt Devices page that:
  * - Works correctly for both admin and regular users
  * - Shows all devices for admins, only user's devices for regular users
@@ -110,7 +110,7 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Try to import the component
     try {
       DevicesNew = require('../../pages/Devices').default;
@@ -282,7 +282,7 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
       });
     });
 
-      test('should filter devices by status', async () => {
+    test('should filter devices by status', async () => {
       if (!DevicesNew) return;
 
       renderComponent();
@@ -293,10 +293,13 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
 
       // Find all comboboxes and get the Status one (first one after search)
       const comboboxes = screen.getAllByRole('combobox');
-      const statusFilter = comboboxes.find(box => box.closest('[class*="MuiFormControl"]')?.querySelector('label')?.textContent === 'Status');
-      
+      const statusFilter = comboboxes.find(
+        box =>
+          box.closest('[class*="MuiFormControl"]')?.querySelector('label')?.textContent === 'Status'
+      );
+
       fireEvent.mouseDown(statusFilter); // Open the select
-      
+
       const onlineOption = await screen.findByRole('option', { name: /^online$/i });
       fireEvent.click(onlineOption);
 
@@ -305,7 +308,8 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
         expect(screen.getByText('Motion Detector')).toBeInTheDocument();
         expect(screen.queryByText('Humidity Sensor')).not.toBeInTheDocument();
       });
-    });    test('should filter devices by type', async () => {
+    });
+    test('should filter devices by type', async () => {
       if (!DevicesNew) return;
 
       renderComponent();
@@ -316,10 +320,13 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
 
       // Find all comboboxes and get the Type one
       const comboboxes = screen.getAllByRole('combobox');
-      const typeFilter = comboboxes.find(box => box.closest('[class*="MuiFormControl"]')?.querySelector('label')?.textContent === 'Type');
-      
+      const typeFilter = comboboxes.find(
+        box =>
+          box.closest('[class*="MuiFormControl"]')?.querySelector('label')?.textContent === 'Type'
+      );
+
       fireEvent.mouseDown(typeFilter); // Open the select
-      
+
       const tempOption = await screen.findByRole('option', { name: /temperature_sensor/i });
       fireEvent.click(tempOption);
 
@@ -379,7 +386,7 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
       fireEvent.click(addButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/create.*device/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /create.*device/i })).toBeInTheDocument();
       });
     });
 
@@ -461,9 +468,11 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
     test('should show loading state', async () => {
       if (!DevicesNew) return;
 
-      apiService.adminGetAllDevices = jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ devices: [], total: 0 }), 1000))
-      );
+      apiService.adminGetAllDevices = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise(resolve => setTimeout(() => resolve({ devices: [], total: 0 }), 1000))
+        );
 
       renderComponent();
 
@@ -514,16 +523,12 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
     test('should handle API error gracefully', async () => {
       if (!DevicesNew) return;
 
-      apiService.adminGetAllDevices = jest.fn().mockRejectedValue(
-        new Error('Network error')
-      );
+      apiService.adminGetAllDevices = jest.fn().mockRejectedValue(new Error('Network error'));
 
       renderComponent();
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Failed to load devices')
-        );
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to load devices'));
       });
     });
 
@@ -535,9 +540,7 @@ describe('Devices Page - TDD (Rebuilt from Scratch)', () => {
         total: mockAdminDevices.length,
       });
 
-      apiService.adminDeleteDevice = jest.fn().mockRejectedValue(
-        new Error('Delete failed')
-      );
+      apiService.adminDeleteDevice = jest.fn().mockRejectedValue(new Error('Delete failed'));
 
       renderComponent();
 
