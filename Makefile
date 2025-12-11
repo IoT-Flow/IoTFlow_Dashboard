@@ -48,21 +48,21 @@ test-frontend:
 # Lint code
 lint:
 	@echo "🔍 Linting backend code..."
-	cd iotflow-backend && npx eslint src/ tests/ --max-warnings 0 || true
+	cd iotflow-backend && npx eslint src/ tests/ --max-warnings 50
 	@echo "🔍 Linting frontend code..."
-	cd iotflow-frontend && npx eslint src/ --max-warnings 10 || true
+	cd iotflow-frontend && npx eslint src/ --max-warnings 750
 	@echo "✅ Linting completed!"
 
 # Lint backend only
 lint-backend:
 	@echo "🔍 Linting backend code..."
-	cd iotflow-backend && npx eslint src/ tests/ --max-warnings 0 || true
+	cd iotflow-backend && npx eslint src/ tests/ --max-warnings 50
 	@echo "✅ Backend linting completed!"
 
 # Lint frontend only
 lint-frontend:
 	@echo "🔍 Linting frontend code..."
-	cd iotflow-frontend && npx eslint src/ --max-warnings 10 || true
+	cd iotflow-frontend && npx eslint src/ --max-warnings 750
 	@echo "✅ Frontend linting completed!"
 
 # Format code with Prettier

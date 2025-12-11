@@ -32,8 +32,7 @@ jobs:
     
     - name: Lint with ESLint
       working-directory: ./iotflow-backend
-      run: npx eslint src/ tests/ --max-warnings 0 || echo "ESLint config needs migration to v9 format"
-      continue-on-error: true
+      run: npx eslint src/ tests/ --max-warnings 50
     
     - name: Run backend unit tests
       working-directory: ./iotflow-backend
@@ -67,8 +66,7 @@ jobs:
     
     - name: Lint with ESLint
       working-directory: ./iotflow-frontend
-      run: npx eslint src/ --max-warnings 10 || echo "ESLint config needs migration to v9 format"
-      continue-on-error: true
+      run: npx eslint src/ --max-warnings 750
     
     - name: Run frontend unit tests
       working-directory: ./iotflow-frontend
