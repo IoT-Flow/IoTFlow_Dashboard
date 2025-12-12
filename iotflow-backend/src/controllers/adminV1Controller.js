@@ -84,8 +84,8 @@ class AdminV1Controller {
         return res.status(400).json({ message: 'Username, email, and password are required' });
       }
 
-      const bcrypt = require('bcrypt');
-      const password_hash = await bcrypt.hash(password, 10);
+      const { hashPassword } = require('../utils/password');
+      const password_hash = await hashPassword(password);
 
       const newUser = await User.create({
         user_id: `user_${Date.now()}`,
@@ -128,8 +128,8 @@ class AdminV1Controller {
 
       const updates = { username, email, is_active, is_admin };
       if (password) {
-        const bcrypt = require('bcrypt');
-        updates.password_hash = await bcrypt.hash(password, 10);
+        const { hashPassword } = require('../utils/password');
+        updates.password_hash = await hashPassword(password);
       }
 
       await user.update(updates);

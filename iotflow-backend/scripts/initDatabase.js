@@ -1,5 +1,5 @@
 const { sequelize } = require('../src/utils/db');
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../src/utils/password');
 require('../src/models'); // Import all models
 
 // Import User model after loading all models
@@ -123,7 +123,7 @@ async function createDefaultUser() {
   const adminExists = await User.findOne({ where: { username: 'admin' } });
   if (!adminExists) {
     console.log('👤 Creating default admin user...');
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await hashPassword('admin123');
 
     await User.create({
       username: 'admin',

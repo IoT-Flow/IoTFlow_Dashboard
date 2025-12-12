@@ -1,0 +1,77 @@
+
+> iotflow-dashboard@1.0.0 test
+> react-scripts test --watchAll=false --testPathPattern=flask|telemetry --verbose
+
+PASS src/__tests__/services/flaskMetricsService.test.js
+  Flask Metrics Service - TDD
+    getSystemStats
+      ✓ should fetch system statistics from Flask backend (3 ms)
+      ✓ should handle errors when fetching system stats (1 ms)
+      ✓ should throw error if admin token is missing (13 ms)
+    getDeviceStats
+      ✓ should fetch detailed device statistics (1 ms)
+      ✓ should handle errors when fetching device stats
+    getTelemetryMetrics
+      ✓ should fetch telemetry service metrics (1 ms)
+      ✓ should handle errors when fetching telemetry metrics
+    Integration scenarios
+      ✓ should combine stats from multiple endpoints for admin dashboard (1 ms)
+
+PASS src/__tests__/pages/Admin.flaskIntegration.test.js
+  Admin Component - Flask Integration (TDD)
+    Flask stats loading
+      ✓ should call getCombinedAdminStats with admin token (2 ms)
+      ✓ should return Flask backend device statistics (1 ms)
+      ✓ should handle Flask API errors gracefully (15 ms)
+    IoTDB connection status
+      ✓ should return IoTDB connection status from telemetry metrics (1 ms)
+      ✓ should handle disconnected IoTDB status (1 ms)
+    Stats aggregation
+      ✓ should provide both Flask backend and telemetry stats (1 ms)
+      ✓ should include authentication statistics
+    Device stats synchronization
+      ✓ should provide device counts for dashboard display
+      ✓ should handle missing device stats gracefully (1 ms)
+    Configuration stats
+      ✓ should return config statistics from Flask backend
+    Error handling
+      ✓ should propagate error when Flask backend is unreachable
+      ✓ should handle authentication errors
+      ✓ should recover from temporary failure (1 ms)
+
+PASS src/__tests__/services/telemetryService.test.js
+  Telemetry Service - TDD
+    checkTelemetryStatus
+      ✓ should fetch telemetry service health status (7 ms)
+      ✓ should handle errors when checking telemetry status (16 ms)
+    storeTelemetry
+      ✓ should store telemetry data with valid API key (1 ms)
+      ✓ should throw error if API key is missing (3 ms)
+      ✓ should throw error if data is missing (1 ms)
+      ✓ should handle authentication errors (1 ms)
+    getDeviceTelemetry
+      ✓ should fetch device telemetry with pagination
+      ✓ should fetch telemetry with date range filter
+      ✓ should throw error if device ID is missing (1 ms)
+    getLatestTelemetry
+      ✓ should fetch latest telemetry for a device (1 ms)
+      ✓ should handle 404 when no telemetry exists (1 ms)
+    queryTelemetryByTime
+      ✓ should query telemetry within time range (1 ms)
+      ✓ should throw error if time range is invalid (1 ms)
+    deleteTelemetry
+      ✓ should delete telemetry data for a device (1 ms)
+      ✓ should throw error if admin token is missing
+      ✓ should handle unauthorized deletion attempts (1 ms)
+    getDeviceTimeSeries
+      ✓ should fetch time series data for specific metrics
+      ✓ should throw error if metrics array is empty (1 ms)
+    Integration scenarios
+      ✓ should handle complete telemetry workflow
+      ✓ should handle error recovery in telemetry operations (1 ms)
+
+Test Suites: 3 passed, 3 total
+Tests:       41 passed, 41 total
+Snapshots:   0 total
+Time:        1.207 s, estimated 2 s
+Ran all test suites matching /flask|telemetry/i.

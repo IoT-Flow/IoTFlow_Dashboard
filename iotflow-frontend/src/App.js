@@ -1,8 +1,10 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import FlaskAdminStats from './components/FlaskAdminStats';
 import Sidebar from './components/Layout/Sidebar';
 import TopBar from './components/Layout/TopBar';
+import TelemetryTest from './components/TelemetryTest';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import Admin from './pages/Admin';
@@ -90,9 +92,13 @@ const AppContent = () => {
 
               <Route path="/devices" element={<Devices />} />
               <Route path="/telemetry" element={<Telemetry />} />
+              <Route path="/telemetry-test" element={<TelemetryTest />} />
               <Route path="/profile" element={<Profile />} />
               {user?.role === 'admin' && <Route path="/mqtt" element={<Mqtt />} />}
               {user?.role === 'admin' && <Route path="/admin" element={<Admin />} />}
+              {user?.role === 'admin' && (
+                <Route path="/flask-stats" element={<FlaskAdminStats />} />
+              )}
               {user?.role === 'admin' && <Route path="/users" element={<UsersManagement />} />}
 
               {/* Redirect unknown routes */}

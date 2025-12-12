@@ -1,6 +1,6 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const { hashPassword, verifyPassword, needsRehash } = require('../utils/password');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const notificationService = require('../services/notificationService');
@@ -19,8 +19,8 @@ class UserController {
         return res.status(409).json({ message: 'User already exists' });
       }
 
-      // Hash password
-      const password_hash = await bcrypt.hash(password, 10);
+      // Hash password using PBKDF2-SHA256
+      const password_hash = await hashPassword(password);
 
       const newUser = await User.create({
         username,
@@ -69,8 +69,15 @@ class UserController {
         },
       });
 
-      if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      if (!user || !(await verifyPassword(password, user.password_hash))) {
         return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      // Automatic password migration: rehash if using old algorithm (bcrypt or old PBKDF2)
+      if (needsRehash(user.password_hash)) {
+        user.password_hash = await hashPassword(password);
+        await user.save();
+        console.log(`Migrated password hash for user: ${user.username} (ID: ${user.id})`);
       }
 
       // Update last login
@@ -233,7 +240,7 @@ class UserController {
 
       const updates = { username, email, is_active, is_admin, role, updated_at: new Date() };
       if (password) {
-        updates.password_hash = await bcrypt.hash(password, 10);
+        updates.password_hash = await hashPassword(password);
       }
 
       const [updated] = await User.update(updates, { where: { id } });

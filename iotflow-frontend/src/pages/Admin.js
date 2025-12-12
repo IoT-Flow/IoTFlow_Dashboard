@@ -55,6 +55,7 @@ import {
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import apiService from '../services/apiService';
+import { getCombinedAdminStats, getTelemetryMetrics } from '../services/flaskMetricsService';
 import { useAuth } from '../contexts/AuthContext';
 
 const Admin = () => {
@@ -66,6 +67,12 @@ const Admin = () => {
   const [deviceToDelete, setDeviceToDelete] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // Flask API states
+  const [flaskStats, setFlaskStats] = useState(null);
+  const [telemetryStatus, setTelemetryStatus] = useState(null);
+  const [loadingFlaskStats, setLoadingFlaskStats] = useState(true);
+  const [flaskError, setFlaskError] = useState(null);
 
   // Log user info for debugging
   useEffect(() => {
@@ -80,7 +87,7 @@ const Admin = () => {
     }
   }, [user]);
 
-  const [systemHealth] = useState({
+  const [systemHealth, setSystemHealth] = useState({
     overall: 'good',
     services: {
       iotdb: { status: 'running', uptime: '2d 14h', cpu: 15, memory: 68 },
@@ -90,12 +97,12 @@ const Admin = () => {
     },
   });
 
-  const [systemStats] = useState({
-    totalDevices: 127,
-    activeDevices: 98,
-    totalUsers: 45,
-    activeUsers: 38,
-    adminUsers: 3,
+  const [systemStats, setSystemStats] = useState({
+    totalDevices: 0,
+    activeDevices: 0,
+    totalUsers: 0,
+    activeUsers: 0,
+    adminUsers: 0,
     storageUsed: 73,
     memoryUsed: 68,
     cpuUsage: 34,
@@ -235,6 +242,62 @@ const Admin = () => {
       toast.error('Backup failed');
     }
   };
+
+  // Fetch Flask backend stats
+  const fetchFlaskStats = async () => {
+    setLoadingFlaskStats(true);
+    setFlaskError(null);
+
+    try {
+      const adminToken = process.env.REACT_APP_ADMIN_TOKEN || 'test';
+      const combinedStats = await getCombinedAdminStats(adminToken);
+
+      setFlaskStats(combinedStats.flask_backend);
+      setTelemetryStatus(combinedStats.telemetry);
+
+      // Update systemStats with Flask data
+      if (combinedStats.flask_backend?.device_stats) {
+        setSystemStats(prev => ({
+          ...prev,
+          totalDevices: combinedStats.flask_backend.device_stats.total || 0,
+          activeDevices: combinedStats.flask_backend.device_stats.active || 0,
+          onlineDevices: combinedStats.flask_backend.device_stats.online || 0,
+          offlineDevices: combinedStats.flask_backend.device_stats.offline || 0,
+        }));
+      }
+
+      // Update systemHealth with IoTDB status
+      if (combinedStats.telemetry) {
+        setSystemHealth(prev => ({
+          ...prev,
+          services: {
+            ...prev.services,
+            iotdb: {
+              ...prev.services.iotdb,
+              status: combinedStats.telemetry.iotdb_available ? 'running' : 'error',
+            },
+          },
+        }));
+      }
+
+      console.log('✅ Flask stats loaded:', combinedStats);
+    } catch (error) {
+      console.error('❌ Failed to fetch Flask stats:', error);
+      setFlaskError(error.response?.data?.error || error.message);
+      // Don't show toast on first load to avoid spam
+    } finally {
+      setLoadingFlaskStats(false);
+    }
+  };
+
+  // Load Flask stats on mount and refresh periodically
+  useEffect(() => {
+    fetchFlaskStats();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchFlaskStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch all users (admin only)
   const fetchAllUsers = async () => {
@@ -442,22 +505,41 @@ const Admin = () => {
       {/* System Health Alert */}
       <Alert severity={systemHealth.overall === 'good' ? 'success' : 'warning'} sx={{ mb: 3 }}>
         System Health: {systemHealth.overall.toUpperCase()} - All critical services are operational
+        {telemetryStatus && (
+          <Chip
+            label={`IoTDB: ${telemetryStatus.iotdb_available ? 'Connected' : 'Disconnected'}`}
+            color={telemetryStatus.iotdb_available ? 'success' : 'error'}
+            size="small"
+            sx={{ ml: 2 }}
+          />
+        )}
       </Alert>
+
+      {/* Flask Stats Error */}
+      {flaskError && (
+        <Alert severity="warning" sx={{ mb: 3 }} onClose={() => setFlaskError(null)}>
+          Flask Backend: {flaskError} (Using fallback data)
+        </Alert>
+      )}
 
       {/* Quick Stats - Devices & Users */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom color="text.secondary">
-                Total Devices
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h6" gutterBottom color="text.secondary">
+                  Total Devices
+                </Typography>
+                {loadingFlaskStats && <CircularProgress size={16} />}
+              </Box>
               <Typography variant="h3" sx={{ fontWeight: 600 }}>
                 {systemStats.totalDevices}
               </Typography>
               <Typography variant="body2" color="success.main">
                 {systemStats.activeDevices} active
               </Typography>
+              {flaskStats && <Chip label="Flask" size="small" color="info" sx={{ mt: 1 }} />}
             </CardContent>
           </Card>
         </Grid>
