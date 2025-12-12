@@ -50,6 +50,8 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import api from '../services/api'; // Import your API service
 import apiService from '../services/apiService';
 import chartService from '../services/chartService';
+import { getDeviceTelemetry } from '../services/telemetryService';
+import { parseTelemetryData, getMeasurementMetadata } from '../utils/telemetryParser';
 
 const Telemetry = () => {
   const { subscribeToDevice, unsubscribeFromDevice } = useWebSocket();
@@ -72,6 +74,7 @@ const Telemetry = () => {
   const [devices, setDevices] = useState([]);
   const [telemetryHistory, setTelemetryHistory] = useState({}); // For selected device
   const [allDevicesTelemetry, setAllDevicesTelemetry] = useState({}); // For all devices (custom charts)
+  const [measurementMetadata, setMeasurementMetadata] = useState({}); // Units and display names
 
   // Telemetry measurement filter
   const [measurementFilter, setMeasurementFilter] = useState('all');
@@ -239,49 +242,41 @@ const Telemetry = () => {
       if (!selectedDevice) return;
       setLoading(true);
       try {
+        // Find the device to get its API key
+        const device = devices.find(d => d.id === parseInt(selectedDevice));
+        if (!device || !device.apiKey) {
+          console.error(`Device ${selectedDevice} not found or missing API key`);
+          setLoading(false);
+          return;
+        }
+
         const now = new Date();
         const { startTime } = getTimeRangeDates(timeRange);
 
-        // Use the correct API endpoint that matches your backend
-        const telemetryResponse = await api.get(`/telemetry/${selectedDevice}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            start_date: startTime.toISOString(),
-            end_date: now.toISOString(),
-            limit: 1000,
-          },
+        // Use Flask backend's telemetry service
+        const telemetryResponse = await getDeviceTelemetry(device.apiKey, selectedDevice, {
+          start_date: startTime.toISOString(),
+          end_date: now.toISOString(),
+          limit: 1000,
         });
 
-        // Process the telemetry data from IoTDB format
-        const telemetryData = telemetryResponse.data.telemetry || [];
+        // Process the telemetry data from Flask API format
+        const telemetryData = telemetryResponse.data || [];
 
-        const newTelemetryHistory = {};
-        if (!newTelemetryHistory[selectedDevice]) {
-          newTelemetryHistory[selectedDevice] = {};
-        }
+        // Parse telemetry data with enhanced format support
+        const parsedData = parseTelemetryData(telemetryData, selectedDevice);
 
-        // Group data by measurement type
-        telemetryData.forEach(record => {
-          // Extract measurements from the record (excluding Time and timestamp fields)
-          Object.keys(record).forEach(key => {
-            if (key !== 'Time' && key !== 'timestamp') {
-              const measurement = key;
-              const value = record[key];
+        // Extract measurement metadata (units)
+        const metadata = getMeasurementMetadata(parsedData);
+        setMeasurementMetadata(prev => ({ ...prev, [selectedDevice]: metadata }));
 
-              if (value !== null && value !== undefined) {
-                if (!newTelemetryHistory[selectedDevice][measurement]) {
-                  newTelemetryHistory[selectedDevice][measurement] = [];
-                }
+        // Convert to telemetry history format
+        const newTelemetryHistory = {
+          [selectedDevice]: {},
+        };
 
-                newTelemetryHistory[selectedDevice][measurement].push({
-                  timestamp: new Date(record.Time),
-                  value: parseFloat(value),
-                  device_id: selectedDevice,
-                  measurement: measurement,
-                });
-              }
-            }
-          });
+        Object.keys(parsedData).forEach(measurementType => {
+          newTelemetryHistory[selectedDevice][measurementType] = parsedData[measurementType].values;
         });
 
         setTelemetryHistory(prev => ({ ...prev, ...newTelemetryHistory }));
@@ -495,42 +490,37 @@ const Telemetry = () => {
   // Helper function to fetch telemetry data for a specific device
   const fetchTelemetryForDevice = async (deviceId, timeRangeParam = timeRange) => {
     try {
+      // Find the device to get its API key
+      const device = devices.find(d => d.id === parseInt(deviceId));
+      if (!device || !device.apiKey) {
+        console.error(`Device ${deviceId} not found or missing API key`);
+        return {};
+      }
+
       const now = new Date();
       const { startTime } = getTimeRangeDates(timeRangeParam);
 
-      const telemetryResponse = await api.get(`/telemetry/${deviceId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          start_date: startTime.toISOString(),
-          end_date: now.toISOString(),
-          limit: 1000,
-        },
+      // Use Flask backend's telemetry service
+      const telemetryResponse = await getDeviceTelemetry(device.apiKey, deviceId, {
+        start_date: startTime.toISOString(),
+        end_date: now.toISOString(),
+        limit: 1000,
       });
 
-      const telemetryData = telemetryResponse.data.telemetry || [];
+      // Flask API returns data in { data: [...], count, device_id, ... } format
+      const telemetryData = telemetryResponse.data || [];
+
+      // Parse telemetry data with enhanced format support
+      const parsedData = parseTelemetryData(telemetryData, deviceId);
+
+      // Extract measurement metadata (units)
+      const metadata = getMeasurementMetadata(parsedData);
+      setMeasurementMetadata(prev => ({ ...prev, [deviceId]: metadata }));
+
+      // Convert to device telemetry history format
       const deviceTelemetryHistory = {};
-
-      // Group data by measurement type
-      telemetryData.forEach(record => {
-        Object.keys(record).forEach(key => {
-          if (key !== 'Time' && key !== 'timestamp') {
-            const measurement = key;
-            const value = record[key];
-
-            if (value !== null && value !== undefined) {
-              if (!deviceTelemetryHistory[measurement]) {
-                deviceTelemetryHistory[measurement] = [];
-              }
-
-              deviceTelemetryHistory[measurement].push({
-                timestamp: new Date(record.Time),
-                value: parseFloat(value),
-                device_id: deviceId,
-                measurement: measurement,
-              });
-            }
-          }
-        });
+      Object.keys(parsedData).forEach(measurementType => {
+        deviceTelemetryHistory[measurementType] = parsedData[measurementType].values;
       });
 
       return deviceTelemetryHistory;
