@@ -5,9 +5,9 @@
 **Last Updated:** December 10, 2025
 
 > **📢 Important Update (December 10, 2025):**
-> 
+>
 > - **Admin operations consolidated** to `/api/v1/admin/*` namespace
-> - **Duplicate admin routes removed** from `/api/users` and `/api/devices` 
+> - **Duplicate admin routes removed** from `/api/users` and `/api/devices`
 > - See [Admin V1 API](#admin-v1-api) section below for all admin endpoints
 > - Complete admin documentation: [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md)
 
@@ -46,6 +46,7 @@
 **Available Endpoints:**
 
 ### User Management (6 endpoints)
+
 - `GET /api/v1/admin/users` - Get all users
 - `GET /api/v1/admin/users/:id` - Get single user
 - `POST /api/v1/admin/users` - Create user
@@ -54,22 +55,25 @@
 - `GET /api/v1/admin/users/:id/devices` - Get user's devices
 
 ### Device Management (3 endpoints)
+
 - `GET /api/v1/admin/devices` - Get all devices (with pagination)
 - `GET /api/v1/admin/devices/:id` - Get single device
 - `DELETE /api/v1/admin/devices/:id` - Delete device
 
 ### Statistics (1 endpoint)
+
 - `GET /api/v1/admin/stats` - System statistics
 
 **Authentication:** All Admin V1 routes require JWT Token + Admin Role
 
 **Quick Example:**
+
 ```javascript
 // Get all users
 const response = await fetch('http://localhost:5000/api/v1/admin/users', {
   headers: {
-    'Authorization': `Bearer ${token}`
-  }
+    Authorization: `Bearer ${token}`,
+  },
 });
 ```
 
@@ -78,12 +82,15 @@ const response = await fetch('http://localhost:5000/api/v1/admin/users', {
 ## System Routes
 
 ### Health Check
+
 ```
 GET /health
 ```
+
 **Authentication:** None required
 
 **Response:**
+
 ```json
 {
   "status": "OK",
@@ -100,12 +107,15 @@ GET /health
 ### Public Routes
 
 #### Register User
+
 ```
 POST /api/auth/register
 ```
+
 **Authentication:** None required
 
 **Request Body:**
+
 ```json
 {
   "username": "string",
@@ -115,12 +125,15 @@ POST /api/auth/register
 ```
 
 #### Login User
+
 ```
 POST /api/auth/login
 ```
+
 **Authentication:** None required
 
 **Request Body:**
+
 ```json
 {
   "username": "string",
@@ -129,6 +142,7 @@ POST /api/auth/login
 ```
 
 **Response:**
+
 ```json
 {
   "token": "string",
@@ -145,12 +159,15 @@ POST /api/auth/login
 ### User Self-Service Routes
 
 #### Get Current User Profile
+
 ```
 GET /api/users/profile
 ```
+
 **Authentication:** JWT Token required
 
 **Response:**
+
 ```json
 {
   "id": "number",
@@ -162,12 +179,15 @@ GET /api/users/profile
 ```
 
 #### Update Current User Profile
+
 ```
 PUT /api/users/profile
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "email": "string",
@@ -176,12 +196,15 @@ PUT /api/users/profile
 ```
 
 #### Refresh API Key
+
 ```
 POST /api/users/refresh-api-key
 ```
+
 **Authentication:** JWT Token required
 
 **Response:**
+
 ```json
 {
   "api_key": "string"
@@ -191,13 +214,14 @@ POST /api/users/refresh-api-key
 ### ~~Admin User Management Routes~~ ❌ REMOVED
 
 > **⚠️ DEPRECATED - Removed December 10, 2025**
-> 
+>
 > The following admin routes have been removed to eliminate duplication.
 > **Use the Admin V1 API instead:** `/api/v1/admin/*`
-> 
+>
 > See [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md) for complete documentation.
 
 **Removed Routes:**
+
 - ~~`GET /api/users/`~~ → Use `GET /api/v1/admin/users`
 - ~~`GET /api/users/:id`~~ → Use `GET /api/v1/admin/users/:id`
 - ~~`POST /api/users/`~~ → Use `POST /api/v1/admin/users`
@@ -214,10 +238,11 @@ POST /api/users/refresh-api-key
 ### ~~Admin Device Route~~ ❌ REMOVED
 
 > **⚠️ DEPRECATED - Removed December 10, 2025**
-> 
+>
 > **Removed Route:**
+>
 > - ~~`GET /api/devices/admin/devices`~~ → Use `GET /api/v1/admin/devices`
-> 
+>
 > See [ADMIN_API_ENDPOINTS.md](./ADMIN_API_ENDPOINTS.md) for admin device management.
 
 ### User Device Routes
@@ -227,12 +252,15 @@ All device routes below are for managing the authenticated user's own devices.
 ### Device Management
 
 #### Create Device
+
 ```
 POST /api/devices/
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -242,30 +270,39 @@ POST /api/devices/
 ```
 
 #### Get User's Devices
+
 ```
 GET /api/devices/
 ```
+
 **Authentication:** JWT Token required
 
 #### Get Specific Device
+
 ```
 GET /api/devices/:id
 ```
+
 **Authentication:** JWT Token required
 
 #### Get Device Groups
+
 ```
 GET /api/devices/:id/groups
 ```
+
 **Authentication:** JWT Token required
 
 #### Update Device
+
 ```
 PUT /api/devices/:id
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -276,26 +313,33 @@ PUT /api/devices/:id
 ```
 
 #### Delete Device
+
 ```
 DELETE /api/devices/:id
 ```
+
 **Authentication:** JWT Token required
 
 ### Device Configuration
 
 #### Get Device Configuration
+
 ```
 GET /api/devices/:id/configuration
 ```
+
 **Authentication:** JWT Token required
 
 #### Update Device Configuration
+
 ```
 PUT /api/devices/:id/configuration
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "configuration": "object"
@@ -310,21 +354,27 @@ PUT /api/devices/:id/configuration
 > The Device Control page has also been removed from the frontend navigation.
 
 #### ~~Send Control Command~~ ❌ REMOVED
+
 ```
 POST /api/devices/:id/control (REMOVED)
 ```
+
 ~~**Authentication:** JWT Token required~~
 
 #### ~~Get Control Status~~ ❌ REMOVED
+
 ```
 GET /api/devices/:id/control/:controlId/status (REMOVED)
 ```
+
 ~~**Authentication:** JWT Token required~~
 
 #### ~~Get Pending Controls~~ ❌ REMOVED
+
 ```
 GET /api/devices/:id/control/pending (REMOVED)
 ```
+
 ~~**Authentication:** JWT Token required~~
 
 ---
@@ -334,12 +384,15 @@ GET /api/devices/:id/control/pending (REMOVED)
 **Base Path:** `/api/groups`
 
 ### Create Device Group
+
 ```
 POST /api/groups/
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -349,24 +402,31 @@ POST /api/groups/
 ```
 
 ### Get All Groups
+
 ```
 GET /api/groups/
 ```
+
 **Authentication:** JWT Token required
 
 ### Get Specific Group
+
 ```
 GET /api/groups/:id
 ```
+
 **Authentication:** JWT Token required
 
 ### Update Group
+
 ```
 PUT /api/groups/:id
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -376,9 +436,11 @@ PUT /api/groups/:id
 ```
 
 ### Delete Group
+
 ```
 DELETE /api/groups/:id
 ```
+
 **Authentication:** JWT Token required
 
 ---
@@ -388,18 +450,23 @@ DELETE /api/groups/:id
 **Base Path:** `/api/telemetry`
 
 ### Health Check
+
 ```
 GET /api/telemetry/health
 ```
+
 **Authentication:** None required
 
 ### Submit Telemetry Data
+
 ```
 POST /api/telemetry/
 ```
+
 **Authentication:** API Key required
 
 **Request Body:**
+
 ```json
 {
   "device_id": "number",
@@ -409,40 +476,51 @@ POST /api/telemetry/
 ```
 
 ### Get Telemetry Data
+
 ```
 GET /api/telemetry/:device_id
 ```
+
 **Authentication:** None required (public)
 
 **Query Parameters:**
+
 - `start` (optional): Start timestamp
 - `end` (optional): End timestamp
 - `limit` (optional): Number of records to return
 
 ### Get Aggregated Telemetry Data
+
 ```
 GET /api/telemetry/device/:device_id/aggregated
 ```
+
 **Authentication:** None required (public)
 
 **Query Parameters:**
+
 - `start` (optional): Start timestamp
 - `end` (optional): End timestamp
 - `aggregation` (optional): Aggregation type (avg, sum, min, max)
 
 ### Get Today's Message Count
+
 ```
 GET /api/telemetry/today/count
 ```
+
 **Authentication:** JWT Token required
 
 ### Generate Test Notification
+
 ```
 POST /api/telemetry/test-notification
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "message": "string",
@@ -459,12 +537,15 @@ POST /api/telemetry/test-notification
 All dashboard routes require API Key authentication.
 
 ### Get Dashboard Overview
+
 ```
 GET /api/dashboard/overview
 ```
+
 **Authentication:** API Key required
 
 **Response:**
+
 ```json
 {
   "total_devices": "number",
@@ -475,32 +556,41 @@ GET /api/dashboard/overview
 ```
 
 ### Get Device Activity
+
 ```
 GET /api/dashboard/activity
 ```
+
 **Authentication:** API Key required
 
 **Query Parameters:**
+
 - `limit` (optional): Number of records to return
 - `device_id` (optional): Filter by device ID
 
 ### Get Alerts
+
 ```
 GET /api/dashboard/alerts
 ```
+
 **Authentication:** API Key required
 
 **Query Parameters:**
+
 - `severity` (optional): Filter by severity level
 - `limit` (optional): Number of records to return
 
 ### Get System Health
+
 ```
 GET /api/dashboard/health
 ```
+
 **Authentication:** API Key required
 
 **Response:**
+
 ```json
 {
   "status": "string",
@@ -519,24 +609,31 @@ GET /api/dashboard/health
 All chart routes require JWT Token authentication.
 
 ### Get All Charts
+
 ```
 GET /api/charts/
 ```
+
 **Authentication:** JWT Token required
 
 ### Get Specific Chart
+
 ```
 GET /api/charts/:id
 ```
+
 **Authentication:** JWT Token required
 
 ### Create Chart
+
 ```
 POST /api/charts/
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -547,12 +644,15 @@ POST /api/charts/
 ```
 
 ### Update Chart
+
 ```
 PUT /api/charts/:id
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -563,18 +663,23 @@ PUT /api/charts/:id
 ```
 
 ### Delete Chart
+
 ```
 DELETE /api/charts/:id
 ```
+
 **Authentication:** JWT Token required
 
 ### Duplicate Chart
+
 ```
 POST /api/charts/:id/duplicate
 ```
+
 **Authentication:** JWT Token required
 
 **Request Body:**
+
 ```json
 {
   "name": "string"
@@ -590,23 +695,29 @@ POST /api/charts/:id/duplicate
 All notification routes require JWT Token authentication.
 
 ### Get All Notifications
+
 ```
 GET /api/notifications/
 ```
+
 **Authentication:** JWT Token required
 
 **Query Parameters:**
+
 - `limit` (optional): Number of records to return
 - `offset` (optional): Pagination offset
 - `read` (optional): Filter by read status (true/false)
 
 ### Get Unread Count
+
 ```
 GET /api/notifications/unread-count
 ```
+
 **Authentication:** JWT Token required
 
 **Response:**
+
 ```json
 {
   "count": "number"
@@ -614,12 +725,15 @@ GET /api/notifications/unread-count
 ```
 
 ### Get Notification Statistics
+
 ```
 GET /api/notifications/stats
 ```
+
 **Authentication:** JWT Token required
 
 **Response:**
+
 ```json
 {
   "total": "number",
@@ -629,27 +743,35 @@ GET /api/notifications/stats
 ```
 
 ### Mark Notification as Read
+
 ```
 PUT /api/notifications/:id/read
 ```
+
 **Authentication:** JWT Token required
 
 ### Mark All Notifications as Read
+
 ```
 PUT /api/notifications/mark-all-read
 ```
+
 **Authentication:** JWT Token required
 
 ### Delete Specific Notification
+
 ```
 DELETE /api/notifications/:id
 ```
+
 **Authentication:** JWT Token required
 
 ### Delete All Notifications
+
 ```
 DELETE /api/notifications/
 ```
+
 **Authentication:** JWT Token required
 
 ---
@@ -659,6 +781,7 @@ DELETE /api/notifications/
 All endpoints may return the following error responses:
 
 ### 400 Bad Request
+
 ```json
 {
   "message": "Invalid request parameters"
@@ -666,6 +789,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "message": "Authentication required"
@@ -673,6 +797,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "message": "Admin access required"
@@ -680,6 +805,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "message": "Resource not found"
@@ -687,6 +813,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "message": "Something went wrong!"

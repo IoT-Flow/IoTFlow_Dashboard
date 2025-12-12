@@ -183,8 +183,8 @@ User Selects Group
   React re-renders
         ↓
 filteredDevices = devices.filter(device => {
-  const matchesGroup = 
-    groupFilter === 'all' || 
+  const matchesGroup =
+    groupFilter === 'all' ||
     deviceGroups[device.id]?.includes(groupFilter)
   return matchesGroup && otherFilters
 })
@@ -345,6 +345,7 @@ Component State:
 ---
 
 **Legend:**
+
 - ◄── NEW: Newly added functionality
 - ↓: Data/Control flow
 - ◄─►: Bidirectional relationship

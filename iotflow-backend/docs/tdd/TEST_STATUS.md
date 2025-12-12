@@ -14,16 +14,16 @@
 
 ## Test Distribution
 
-| Category | Tests | Status | Coverage |
-|----------|-------|--------|----------|
-| **User Model** | 10 | ✅ 100% | 100% |
-| **Device Model** | 11 | ✅ 100% | 100% |
-| **Groups Model (Many-to-Many)** | 13 | ✅ 100% | 100% |
-| **Notification Service** | 7 | ✅ 100% | 26.76% |
-| **Device API** | 18 | ✅ 100% | 38.34% |
-| **User API** | 18 | ✅ 100% | 50.49% |
-| **Groups API (Many-to-Many)** | 19 | ✅ 100% | 20% |
-| **TOTAL** | **92** | **✅ 100%** | **35.21%** |
+| Category                        | Tests  | Status      | Coverage   |
+| ------------------------------- | ------ | ----------- | ---------- |
+| **User Model**                  | 10     | ✅ 100%     | 100%       |
+| **Device Model**                | 11     | ✅ 100%     | 100%       |
+| **Groups Model (Many-to-Many)** | 13     | ✅ 100%     | 100%       |
+| **Notification Service**        | 7      | ✅ 100%     | 26.76%     |
+| **Device API**                  | 18     | ✅ 100%     | 38.34%     |
+| **User API**                    | 18     | ✅ 100%     | 50.49%     |
+| **Groups API (Many-to-Many)**   | 19     | ✅ 100%     | 20%        |
+| **TOTAL**                       | **92** | **✅ 100%** | **35.21%** |
 
 ## Quick Commands
 
@@ -60,18 +60,22 @@ open coverage/lcov-report/index.html
 ## Coverage Highlights
 
 **Excellent (100%):**
+
 - ✅ User Model: 100%
 - ✅ Device Model: 100%
 - ✅ All Routes: 100%
 
 **Good (50-70%):**
+
 - ✅ Auth Middleware: 58.33%
 - ✅ User Controller: 50.49%
 
 **Fair (30-50%):**
+
 - ⚠️ Device Controller: 38.34%
 
 **Needs Work (<30%):**
+
 - ⚠️ Notification Service: 26.76%
 - ⚠️ Dashboard Controller: 13.88%
 - ⚠️ Utils: 10.25%
@@ -90,6 +94,7 @@ open coverage/lcov-report/index.html
 ---
 
 **For detailed information, see:**
+
 - `TDD_IMPLEMENTATION_SUMMARY.md` - Complete implementation report
 - `package.json` - Test scripts and dependencies
 - `jest.config.js` - Test configuration

@@ -15,6 +15,7 @@ Time:        6.801 s
 ## Test Coverage
 
 ### 1. Authentication & Authorization (3 tests)
+
 ✅ `should return 401 when no token is provided`
 ✅ `should return 403 when regular user tries to access admin endpoint`
 ✅ `should return 200 when admin user accesses endpoint`
@@ -24,6 +25,7 @@ Time:        6.801 s
 ---
 
 ### 2. Fetching All Devices (4 tests)
+
 ✅ `should return all devices from all users`
 ✅ `should include user information for each device`
 ✅ `should return devices ordered by created_at DESC`
@@ -34,6 +36,7 @@ Time:        6.801 s
 ---
 
 ### 3. Filtering Devices (5 tests)
+
 ✅ `should filter devices by status`
 ✅ `should filter devices by device_type`
 ✅ `should filter devices by user_id`
@@ -45,6 +48,7 @@ Time:        6.801 s
 ---
 
 ### 4. Device Properties (2 tests)
+
 ✅ `should include all expected device properties`
 ✅ `should not expose sensitive internal fields`
 
@@ -53,6 +57,7 @@ Time:        6.801 s
 ---
 
 ### 5. Error Handling (2 tests)
+
 ✅ `should handle database errors gracefully`
 ✅ `should return valid JSON even with special characters in device names`
 
@@ -61,6 +66,7 @@ Time:        6.801 s
 ---
 
 ### 6. Performance (1 test)
+
 ✅ `should handle large number of devices efficiently`
 
 **Coverage**: Scalability with 100+ devices, completes in <2 seconds.
@@ -70,25 +76,29 @@ Time:        6.801 s
 ## Implementation Details
 
 ### Endpoint
+
 ```
 GET /api/devices/admin/devices
 ```
 
 ### Authentication & Authorization
+
 - **Method**: JWT Bearer Token
 - **Required**: Admin privileges (`is_admin: true`)
-- **Middleware Chain**: 
+- **Middleware Chain**:
   1. `verifyToken` - Validates JWT
   2. `isAdmin` - Checks admin status
 
 ### Query Parameters (Optional Filters)
-| Parameter    | Type    | Description                    | Example                |
-|-------------|---------|--------------------------------|------------------------|
-| `status`    | string  | Filter by device status        | `?status=online`       |
-| `device_type` | string | Filter by device type          | `?device_type=sensor`  |
-| `user_id`   | integer | Filter by device owner         | `?user_id=5`          |
+
+| Parameter     | Type    | Description             | Example               |
+| ------------- | ------- | ----------------------- | --------------------- |
+| `status`      | string  | Filter by device status | `?status=online`      |
+| `device_type` | string  | Filter by device type   | `?device_type=sensor` |
+| `user_id`     | integer | Filter by device owner  | `?user_id=5`          |
 
 ### Response Format
+
 ```json
 {
   "devices": [
@@ -120,6 +130,7 @@ GET /api/devices/admin/devices
 ### Error Responses
 
 #### 401 Unauthorized
+
 ```json
 {
   "message": "No token provided"
@@ -127,6 +138,7 @@ GET /api/devices/admin/devices
 ```
 
 #### 403 Forbidden
+
 ```json
 {
   "message": "Forbidden: Admins only"
@@ -134,6 +146,7 @@ GET /api/devices/admin/devices
 ```
 
 #### 500 Internal Server Error
+
 ```json
 {
   "message": "Failed to retrieve devices",
@@ -146,13 +159,14 @@ GET /api/devices/admin/devices
 ## Code Implementation
 
 ### Controller Method
+
 ```javascript
 async adminGetAllDevices(req, res) {
   try {
     // Extract query parameters for filtering
     const { status, device_type, user_id } = req.query;
     const whereClause = {};
-    
+
     // Build filter clause
     if (status) whereClause.status = status;
     if (device_type) whereClause.device_type = device_type;
@@ -174,15 +188,16 @@ async adminGetAllDevices(req, res) {
     res.status(200).json({ devices, total: devices.length });
   } catch (error) {
     console.error('Admin get all devices error:', error);
-    res.status(500).json({ 
-      message: 'Failed to retrieve devices', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to retrieve devices',
+      error: error.message
     });
   }
 }
 ```
 
 ### Route Registration
+
 ```javascript
 router.get('/admin/devices', verifyToken, isAdmin, DeviceController.adminGetAllDevices);
 ```
@@ -192,6 +207,7 @@ router.get('/admin/devices', verifyToken, isAdmin, DeviceController.adminGetAllD
 ## Database Schema
 
 ### Devices Table
+
 ```sql
 CREATE TABLE devices (
   id SERIAL PRIMARY KEY,
@@ -211,6 +227,7 @@ CREATE TABLE devices (
 ```
 
 ### Users Table
+
 ```sql
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -251,11 +268,13 @@ CREATE TABLE users (
 ## Performance Characteristics
 
 ### Benchmarks
+
 - **100 devices**: < 2 seconds response time
 - **Database queries**: Single optimized query with JOIN
 - **Pagination**: Not implemented (consider for 1000+ devices)
 
 ### Optimization Opportunities
+
 1. Add pagination for large device counts
 2. Implement caching for frequently accessed data
 3. Add database indexing on commonly filtered columns
@@ -266,6 +285,7 @@ CREATE TABLE users (
 ## Frontend Integration
 
 ### API Service Method
+
 ```javascript
 async adminGetAllDevices(params = {}) {
   try {
@@ -279,6 +299,7 @@ async adminGetAllDevices(params = {}) {
 ```
 
 ### React Component Usage
+
 ```javascript
 const fetchAllDevices = async () => {
   setLoadingDevices(true);
@@ -299,22 +320,24 @@ const fetchAllDevices = async () => {
 ## Testing Strategy
 
 ### Test Environment
+
 - **Database**: PostgreSQL (same as production)
 - **Test Framework**: Jest with Supertest
 - **Isolation**: Each test uses clean database state
 - **Mock Users**: Admin and regular users created per test
 
 ### Test Data Setup
+
 ```javascript
 beforeEach(async () => {
   // Clean database
   await Device.destroy({ where: {}, force: true });
   await User.destroy({ where: {}, force: true });
-  
+
   // Create test users
   adminUser = await User.create({ is_admin: true, ... });
   regularUser = await User.create({ is_admin: false, ... });
-  
+
   // Login to get tokens
   adminToken = await loginAsAdmin();
   regularUserToken = await loginAsRegularUser();
@@ -326,6 +349,7 @@ beforeEach(async () => {
 ## Future Enhancements
 
 ### Potential Improvements
+
 1. **Pagination**: Add `limit` and `offset` query parameters
 2. **Sorting**: Allow custom sort fields
 3. **Search**: Full-text search on device name/description
@@ -336,6 +360,7 @@ beforeEach(async () => {
 8. **Advanced Filters**: Date ranges, location search
 
 ### Example: Pagination
+
 ```javascript
 GET /api/devices/admin/devices?page=1&limit=20
 ```
@@ -358,21 +383,25 @@ The admin device listing feature has been successfully implemented following TDD
 ## Commands to Run Tests
 
 ### Run all tests
+
 ```bash
 npm test
 ```
 
 ### Run admin device tests only
+
 ```bash
 npm test -- tests/integration/admin.devices.test.js
 ```
 
 ### Run tests with coverage
+
 ```bash
 npm test -- --coverage
 ```
 
 ### Run tests in watch mode
+
 ```bash
 npm test -- --watch tests/integration/admin.devices.test.js
 ```

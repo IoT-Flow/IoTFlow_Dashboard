@@ -5,15 +5,18 @@ This folder contains general documentation for the IoTFlow Dashboard project.
 ## 📂 Documentation Structure
 
 ### 🏗️ [Architecture Documentation](architecture/)
+
 - Backend comparison and technology choices
 - Backend functionality overview
 - Deployment guides
 
 ### ✨ [Feature Documentation](features/)
+
 - Device control features
 - Feature specifications
 
 ### 🧪 [TDD Documentation](tdd/)
+
 - Test-Driven Development approach for the dashboard
 
 ## Component-Specific Documentation

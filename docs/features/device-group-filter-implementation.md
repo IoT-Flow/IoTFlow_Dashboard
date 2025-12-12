@@ -1,17 +1,21 @@
 # Device Group Filter Implementation - TDD Summary
 
 ## 🎯 Objective
+
 Add a group filter to the devices dashboard to allow users to filter devices by their assigned groups, implemented using Test-Driven Development (TDD).
 
 ## 📋 Implementation Overview
 
 ### 1. Test Infrastructure Setup ✅
+
 **File:** `iotflow-frontend/package.json`
+
 - Updated test script from disabled state to: `"test": "react-scripts test --watchAll=false"`
 - Added `test:watch` and `test:coverage` scripts
 - Configured Jest to work with React Testing Library
 
 **File:** `iotflow-frontend/src/setupTests.js`
+
 - Created Jest setup file with proper mocks for:
   - `window.matchMedia` (for MUI components)
   - `IntersectionObserver`
@@ -20,7 +24,9 @@ Add a group filter to the devices dashboard to allow users to filter devices by 
 ### 2. Test-First Development (TDD) ✅
 
 #### API Service Tests
+
 **File:** `src/__tests__/services/apiService.groups.test.js`
+
 - Created comprehensive tests for group API methods:
   - `getGroups()` - Fetch all device groups
   - `createGroup()` - Create new group
@@ -32,7 +38,9 @@ Add a group filter to the devices dashboard to allow users to filter devices by 
 - **Result:** 14 tests passing
 
 #### Component Tests
+
 **File:** `src/__tests__/components/DeviceGroupFilter.test.js`
+
 - Created tests for DeviceGroupFilter component:
   - Render with default "All Groups" option
   - Display all groups in dropdown with device counts
@@ -46,16 +54,18 @@ Add a group filter to the devices dashboard to allow users to filter devices by 
 - **Result:** 6 tests passing (Note: Initially had 9 but consolidated to 6 comprehensive tests)
 
 ### 3. API Service Implementation ✅
+
 **File:** `src/services/apiService.js`
+
 - Added comprehensive device group methods:
   ```javascript
-  getGroups()                        // Get all groups for user
-  createGroup(groupData)             // Create new group
-  updateGroup(groupId, updates)      // Update group
-  deleteGroup(groupId)               // Delete group
-  getDevicesByGroup(groupId)         // Get group with devices
-  addDeviceToGroup(groupId, deviceId)    // Add device to group
-  removeDeviceFromGroup(groupId, deviceId) // Remove device from group
+  getGroups(); // Get all groups for user
+  createGroup(groupData); // Create new group
+  updateGroup(groupId, updates); // Update group
+  deleteGroup(groupId); // Delete group
+  getDevicesByGroup(groupId); // Get group with devices
+  addDeviceToGroup(groupId, deviceId); // Add device to group
+  removeDeviceFromGroup(groupId, deviceId); // Remove device from group
   ```
 - All methods include:
   - Proper error handling
@@ -64,7 +74,9 @@ Add a group filter to the devices dashboard to allow users to filter devices by 
   - JSDoc documentation
 
 ### 4. DeviceGroupFilter Component ✅
+
 **File:** `src/components/DeviceGroupFilter.js`
+
 - Created reusable filter component with:
   - Material-UI Select component
   - "All Groups" option as default
@@ -76,6 +88,7 @@ Add a group filter to the devices dashboard to allow users to filter devices by 
   - Clean, modern UI matching dashboard design
 
 **Component Props:**
+
 - `groups` - Array of group objects
 - `selectedGroup` - Currently selected group ID or "all"
 - `onChange` - Callback when selection changes
@@ -83,29 +96,35 @@ Add a group filter to the devices dashboard to allow users to filter devices by 
 - `disabled` - Disabled state boolean
 
 ### 5. Devices Page Integration ✅
+
 **File:** `src/pages/Devices.js`
 
 **Added State:**
+
 ```javascript
-const [groupFilter, setGroupFilter] = useState('all');
+const [groupFilter, setGroupFilter] = useState("all");
 const [groups, setGroups] = useState([]);
 const [groupsLoading, setGroupsLoading] = useState(false);
 const [deviceGroups, setDeviceGroups] = useState({});
 ```
 
 **Added useEffect Hook:**
+
 - Loads all groups on component mount
 - Builds device-to-group mapping for efficient filtering
 - Handles errors gracefully with toast notifications
 
 **Updated Filter Logic:**
+
 - Extended `filteredDevices` to include group filter:
   ```javascript
-  const matchesGroup = groupFilter === 'all' || 
+  const matchesGroup =
+    groupFilter === "all" ||
     (deviceGroups[device.id] && deviceGroups[device.id].includes(groupFilter));
   ```
 
 **Added to UI:**
+
 - Integrated DeviceGroupFilter in the filters toolbar
 - Positioned between Type filter and action buttons
 - Responsive grid layout (Grid item xs={6} md={2})
@@ -113,6 +132,7 @@ const [deviceGroups, setDeviceGroups] = useState({});
 ## 📊 Test Results
 
 ### Final Test Summary
+
 ```
 Test Suites: 2 passed, 2 total
 Tests:       20 passed, 20 total
@@ -121,6 +141,7 @@ Time:        5.72 s
 ```
 
 ### Test Coverage
+
 - ✅ API Service Group Methods: 14 tests passing
 - ✅ DeviceGroupFilter Component: 6 tests passing
 - ✅ All error cases covered
@@ -130,7 +151,9 @@ Time:        5.72 s
 ## 🔧 Technical Details
 
 ### Backend Integration
+
 The implementation integrates with existing backend endpoints:
+
 - `GET /groups` - Fetch all groups
 - `POST /groups` - Create group
 - `GET /groups/:id` - Get group details with devices
@@ -140,6 +163,7 @@ The implementation integrates with existing backend endpoints:
 - `DELETE /groups/:id/devices/:deviceId` - Remove device from group
 
 ### Data Flow
+
 1. User loads Devices page
 2. Component fetches groups and devices in parallel
 3. Builds device-to-group mapping
@@ -148,6 +172,7 @@ The implementation integrates with existing backend endpoints:
 6. Table re-renders with filtered results
 
 ### UI/UX Features
+
 - 🎨 Color-coded groups for visual identification
 - 📊 Device counts shown in group names
 - ⚡ Responsive loading states
@@ -158,15 +183,17 @@ The implementation integrates with existing backend endpoints:
 ## 🚀 How to Use
 
 ### For Users
+
 1. Navigate to the Devices page
 2. Look for the "Group" dropdown filter in the toolbar
 3. Select a group to filter devices
 4. Select "All Groups" to show all devices
 
 ### For Developers
+
 ```javascript
 // Import the component
-import DeviceGroupFilter from '../components/DeviceGroupFilter';
+import DeviceGroupFilter from "../components/DeviceGroupFilter";
 
 // Use in your component
 <DeviceGroupFilter
@@ -174,18 +201,20 @@ import DeviceGroupFilter from '../components/DeviceGroupFilter';
   selectedGroup={groupFilter}
   onChange={setGroupFilter}
   loading={groupsLoading}
-/>
+/>;
 ```
 
 ## 📝 Files Created/Modified
 
 ### Created Files
+
 1. `src/__tests__/components/DeviceGroupFilter.test.js` - Component tests
 2. `src/__tests__/services/apiService.groups.test.js` - API service tests
 3. `src/components/DeviceGroupFilter.js` - Filter component
 4. `src/setupTests.js` - Jest configuration
 
 ### Modified Files
+
 1. `src/services/apiService.js` - Added group API methods
 2. `src/pages/Devices.js` - Integrated group filter
 3. `package.json` - Updated test scripts
@@ -193,12 +222,14 @@ import DeviceGroupFilter from '../components/DeviceGroupFilter';
 ## ✨ Best Practices Followed
 
 ### Test-Driven Development
+
 1. ✅ Wrote tests first before implementation
 2. ✅ Tests drove the API design
 3. ✅ Red-Green-Refactor cycle
 4. ✅ Comprehensive test coverage
 
 ### Code Quality
+
 1. ✅ JSDoc documentation for all API methods
 2. ✅ Proper error handling with try-catch
 3. ✅ Console logging for debugging
@@ -206,6 +237,7 @@ import DeviceGroupFilter from '../components/DeviceGroupFilter';
 5. ✅ Reusable components
 
 ### React Best Practices
+
 1. ✅ Functional components with hooks
 2. ✅ Proper state management
 3. ✅ useEffect dependencies correctly set
@@ -213,6 +245,7 @@ import DeviceGroupFilter from '../components/DeviceGroupFilter';
 5. ✅ Accessibility considerations
 
 ### Material-UI Integration
+
 1. ✅ Consistent styling with existing components
 2. ✅ Proper use of MUI components
 3. ✅ Responsive design patterns
@@ -221,6 +254,7 @@ import DeviceGroupFilter from '../components/DeviceGroupFilter';
 ## 🎉 Summary
 
 Successfully implemented a device group filter feature using Test-Driven Development:
+
 - ✅ 20 tests passing (100% pass rate)
 - ✅ Full integration with existing backend API
 - ✅ Clean, reusable component architecture
@@ -233,6 +267,7 @@ The implementation follows TDD principles, React best practices, and integrates 
 ## 🔜 Future Enhancements
 
 Potential improvements for future iterations:
+
 1. Add ability to create/edit groups from the filter dropdown
 2. Implement drag-and-drop device assignment to groups
 3. Add group-based bulk operations

@@ -8,6 +8,7 @@
 Implemented device grouping functionality to organize and filter devices by groups (e.g., "Living Room", "Kitchen", "Office").
 
 ### ✅ Test Results
+
 ```
 Test Suites: 6 passed, 6 total
 Tests:       97 passed, 97 total (33 new tests added)
@@ -22,6 +23,7 @@ Time:        3.594s
 ### 1. Database Schema
 
 **New Table: `device_groups`**
+
 ```sql
 CREATE TABLE device_groups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,6 +39,7 @@ CREATE TABLE device_groups (
 ```
 
 **Updated Table: `devices`**
+
 ```sql
 ALTER TABLE devices ADD COLUMN group_id INTEGER;
 ALTER TABLE devices ADD FOREIGN KEY (group_id) REFERENCES device_groups(id);
@@ -45,9 +48,11 @@ ALTER TABLE devices ADD FOREIGN KEY (group_id) REFERENCES device_groups(id);
 ### 2. Models
 
 **Created:**
+
 - `src/models/deviceGroup.js` - DeviceGroup model with validation
 
 **Updated:**
+
 - `src/models/device.js` - Added `group_id` field
 - `src/models/index.js` - Added relationships:
   - User hasMany DeviceGroups
@@ -59,6 +64,7 @@ ALTER TABLE devices ADD FOREIGN KEY (group_id) REFERENCES device_groups(id);
 **Created: `src/controllers/deviceGroupController.js`**
 
 Methods implemented:
+
 - `createGroup()` - Create new device group
 - `getAllGroups()` - Get all groups for user (with device count)
 - `getGroup()` - Get single group with devices
@@ -68,6 +74,7 @@ Methods implemented:
 - `removeDeviceFromGroup()` - Remove device from group
 
 **Updated: `src/controllers/deviceController.js`**
+
 - Added `group_id` filter to `getAllDevices()` method
 
 ### 4. Routes
@@ -85,6 +92,7 @@ DELETE /api/device-groups/:id/devices/:deviceId  // Remove device from group
 ```
 
 **Updated: `src/routes/deviceRoutes.js`**
+
 ```javascript
 GET /api/devices?group_id=:id  // Filter devices by group
 GET /api/devices?group_id=null // Get ungrouped devices
@@ -93,6 +101,7 @@ GET /api/devices?group_id=null // Get ungrouped devices
 ### 5. Tests (TDD Approach)
 
 **Created: `tests/unit/device-groups.test.js` (15 tests)**
+
 - Group creation (4 tests)
 - Group validation (2 tests)
 - Group relationships (3 tests)
@@ -101,6 +110,7 @@ GET /api/devices?group_id=null // Get ungrouped devices
 - Group deletion (2 tests)
 
 **Created: `tests/integration/device-groups-api.test.js` (18 tests)**
+
 - POST /api/device-groups (3 tests)
 - GET /api/device-groups (4 tests)
 - GET /api/device-groups/:id (3 tests)
@@ -115,12 +125,14 @@ GET /api/devices?group_id=null // Get ungrouped devices
 ## 🧪 TDD Process Followed
 
 ### Phase 1: RED (Write Failing Tests)
+
 1. ✅ Created DeviceGroup model
 2. ✅ Wrote 15 unit tests for model
 3. ✅ Wrote 18 integration tests for API
 4. ✅ All tests failed initially (expected)
 
 ### Phase 2: GREEN (Make Tests Pass)
+
 1. ✅ Implemented DeviceGroupController
 2. ✅ Created routes
 3. ✅ Updated Device model and controller
@@ -128,6 +140,7 @@ GET /api/devices?group_id=null // Get ungrouped devices
 5. ✅ All 97 tests passing
 
 ### Phase 3: REFACTOR (Optimize)
+
 1. ✅ Cleaned up imports
 2. ✅ Added proper error handling
 3. ✅ Optimized queries with includes
@@ -137,20 +150,21 @@ GET /api/devices?group_id=null // Get ungrouped devices
 
 ## 📈 Coverage Impact
 
-| Component | Before | After | Change |
-|-----------|--------|-------|--------|
-| **Overall** | 31.45% | 34.02% | +2.57% 📈 |
-| **Models** | 30.83% | 53.33% | +22.5% 🚀 |
-| **DeviceGroup Model** | 0% | 100% | +100% ✅ |
-| **Device Model** | 100% | 100% | Maintained ✅ |
-| **DeviceGroupController** | 0% | 20% | New ✅ |
-| **Routes** | 100% | 100% | Maintained ✅ |
+| Component                 | Before | After  | Change        |
+| ------------------------- | ------ | ------ | ------------- |
+| **Overall**               | 31.45% | 34.02% | +2.57% 📈     |
+| **Models**                | 30.83% | 53.33% | +22.5% 🚀     |
+| **DeviceGroup Model**     | 0%     | 100%   | +100% ✅      |
+| **Device Model**          | 100%   | 100%   | Maintained ✅ |
+| **DeviceGroupController** | 0%     | 20%    | New ✅        |
+| **Routes**                | 100%   | 100%   | Maintained ✅ |
 
 ---
 
 ## 🚀 API Usage Examples
 
 ### Create a Device Group
+
 ```bash
 curl -X POST http://localhost:3001/api/device-groups \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -164,12 +178,14 @@ curl -X POST http://localhost:3001/api/device-groups \
 ```
 
 ### List All Groups
+
 ```bash
 curl -X GET http://localhost:3001/api/device-groups \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 Response:
+
 ```json
 [
   {
@@ -185,12 +201,14 @@ Response:
 ```
 
 ### Get Group with Devices
+
 ```bash
 curl -X GET http://localhost:3001/api/device-groups/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 Response:
+
 ```json
 {
   "id": 1,
@@ -216,6 +234,7 @@ Response:
 ```
 
 ### Filter Devices by Group
+
 ```bash
 # Get devices in group 1
 curl -X GET "http://localhost:3001/api/devices?group_id=1" \
@@ -227,6 +246,7 @@ curl -X GET "http://localhost:3001/api/devices?group_id=null" \
 ```
 
 ### Add Device to Group
+
 ```bash
 curl -X POST http://localhost:3001/api/device-groups/1/devices \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -235,12 +255,14 @@ curl -X POST http://localhost:3001/api/device-groups/1/devices \
 ```
 
 ### Remove Device from Group
+
 ```bash
 curl -X DELETE http://localhost:3001/api/device-groups/1/devices/5 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Update Group
+
 ```bash
 curl -X PUT http://localhost:3001/api/device-groups/1 \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -252,6 +274,7 @@ curl -X PUT http://localhost:3001/api/device-groups/1 \
 ```
 
 ### Delete Group
+
 ```bash
 curl -X DELETE http://localhost:3001/api/device-groups/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
@@ -262,22 +285,26 @@ curl -X DELETE http://localhost:3001/api/device-groups/1 \
 ## 🎓 Key Learnings
 
 ### 1. **TDD Workflow**
+
 - Write tests first (RED)
 - Implement minimal code to pass (GREEN)
 - Refactor and optimize (REFACTOR)
 - All 33 new tests written before implementation
 
 ### 2. **Model Relationships**
+
 - Proper use of Sequelize associations
 - Include relationships in queries for efficiency
 - Handle cascade deletes properly
 
 ### 3. **API Design**
+
 - RESTful endpoints
 - Consistent error handling
 - Proper HTTP status codes
 
 ### 4. **Testing Best Practices**
+
 - Test model validation
 - Test relationships
 - Test API endpoints
@@ -290,34 +317,37 @@ curl -X DELETE http://localhost:3001/api/device-groups/1 \
 To integrate with the frontend:
 
 1. **Fetch Groups**
+
 ```javascript
 const response = await fetch('/api/device-groups', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  headers: { Authorization: `Bearer ${token}` },
 });
 const groups = await response.json();
 ```
 
 2. **Filter Devices by Group**
+
 ```javascript
 const response = await fetch(`/api/devices?group_id=${groupId}`, {
-  headers: { 'Authorization': `Bearer ${token}` }
+  headers: { Authorization: `Bearer ${token}` },
 });
 const { devices } = await response.json();
 ```
 
 3. **Create Group**
+
 ```javascript
 const response = await fetch('/api/device-groups', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     name: 'Kitchen',
     color: '#10B981',
-    icon: 'kitchen'
-  })
+    icon: 'kitchen',
+  }),
 });
 ```
 
@@ -326,6 +356,7 @@ const response = await fetch('/api/device-groups', {
 ## 🏆 Success Metrics
 
 ### Quantitative
+
 - ✅ **33 new tests** added
 - ✅ **97 total tests** passing (100% pass rate)
 - ✅ **34.02% coverage** (up from 31.45%)
@@ -333,6 +364,7 @@ const response = await fetch('/api/device-groups', {
 - ✅ **7 new API endpoints**
 
 ### Qualitative
+
 - ✅ **Complete TDD implementation** - Tests written first
 - ✅ **RESTful API design** - Clean, consistent endpoints
 - ✅ **Proper error handling** - 404s, 400s, 500s
@@ -352,6 +384,7 @@ Successfully implemented device grouping functionality using Test-Driven Develop
 5. **Maintainable** - Clean code with good coverage
 
 The feature allows users to:
+
 - ✅ Create and manage device groups
 - ✅ Organize devices by location/purpose
 - ✅ Filter devices by group
@@ -359,6 +392,7 @@ The feature allows users to:
 - ✅ Customize group appearance (color, icon)
 
 **Next Steps:**
+
 - Add group-based permissions
 - Add bulk device assignment
 - Add group statistics/analytics

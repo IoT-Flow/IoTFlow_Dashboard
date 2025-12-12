@@ -13,6 +13,7 @@ Time:        17.798 s
 ## Test Coverage
 
 ### 1. Component Rendering & Tab Navigation (3 tests) ✅
+
 - ✅ `should render Admin page with multiple tabs`
 - ✅ `should switch to All Devices tab when clicked`
 - ✅ `should automatically fetch devices when All Devices tab becomes active`
@@ -22,6 +23,7 @@ Time:        17.798 s
 ---
 
 ### 2. Device List Display (4 tests) ✅
+
 - ✅ `should display loading indicator while fetching devices`
 - ✅ `should display all devices in a table`
 - ✅ `should display device count correctly`
@@ -32,6 +34,7 @@ Time:        17.798 s
 ---
 
 ### 3. Device Information Display (5 tests) ✅
+
 - ✅ `should display all required device properties`
 - ✅ `should display device status with correct color coding`
 - ✅ `should display user information for each device`
@@ -43,6 +46,7 @@ Time:        17.798 s
 ---
 
 ### 4. Delete Functionality (5 tests) ✅
+
 - ✅ `should show delete button for each device`
 - ✅ `should open confirmation dialog when delete button clicked`
 - ✅ `should close dialog when cancel is clicked`
@@ -54,6 +58,7 @@ Time:        17.798 s
 ---
 
 ### 5. Refresh Functionality (3 tests) ✅
+
 - ✅ `should display refresh button`
 - ✅ `should reload devices when refresh button is clicked`
 - ✅ `should disable refresh button while loading`
@@ -63,6 +68,7 @@ Time:        17.798 s
 ---
 
 ### 6. Error Handling (4 tests) ✅
+
 - ✅ `should show error message when API call fails`
 - ✅ `should show specific error message for 403 Forbidden`
 - ✅ `should handle devices array being null or undefined`
@@ -73,6 +79,7 @@ Time:        17.798 s
 ---
 
 ### 7. Authorization & Security (2 tests) ✅
+
 - ✅ `should only allow admin users to access device list`
 - ✅ `should not display API keys in the device list`
 
@@ -81,6 +88,7 @@ Time:        17.798 s
 ---
 
 ### 8. Table Functionality (3 tests) ✅
+
 - ✅ `should display table headers correctly`
 - ✅ `should have sticky header for scrolling`
 - ✅ `should display devices in table rows`
@@ -90,6 +98,7 @@ Time:        17.798 s
 ---
 
 ### 9. Performance & Optimization (2 tests) ✅
+
 - ✅ `should handle large number of devices efficiently`
 - ✅ `should not fetch devices unnecessarily`
 
@@ -100,6 +109,7 @@ Time:        17.798 s
 ## Implementation Details
 
 ### Component Structure
+
 ```
 Admin.js
 ├── Tab Navigation (Tabs component)
@@ -128,6 +138,7 @@ Admin.js
 ```
 
 ### API Integration
+
 ```javascript
 // apiService.js methods used:
 - adminGetAllDevices(params) → GET /api/devices/admin/devices
@@ -135,15 +146,17 @@ Admin.js
 ```
 
 ### State Management
+
 ```javascript
-const [activeTab, setActiveTab] = useState(0);           // Tab navigation
-const [allDevices, setAllDevices] = useState([]);        // Device list
-const [loadingDevices, setLoadingDevices] = useState(false);  // Loading state
-const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);  // Dialog state
-const [deviceToDelete, setDeviceToDelete] = useState(null);       // Delete target
+const [activeTab, setActiveTab] = useState(0); // Tab navigation
+const [allDevices, setAllDevices] = useState([]); // Device list
+const [loadingDevices, setLoadingDevices] = useState(false); // Loading state
+const [deleteDialogOpen, setDeleteDialogOpen] = useState(false); // Dialog state
+const [deviceToDelete, setDeviceToDelete] = useState(null); // Delete target
 ```
 
 ### Key Functions
+
 ```javascript
 // Fetch all devices from all users (admin only)
 const fetchAllDevices = async () => {
@@ -166,6 +179,7 @@ const handleDeleteDevice = async () => {
 ## Testing Framework Configuration
 
 ### Jest Configuration
+
 ```javascript
 // package.json
 "jest": {
@@ -176,6 +190,7 @@ const handleDeleteDevice = async () => {
 ```
 
 ### Test Setup
+
 ```javascript
 // Mock API service
 jest.mock('../../services/apiService');
@@ -190,6 +205,7 @@ jest.mock('../../contexts/AuthContext', () => ({
 ```
 
 ### Test Utilities
+
 ```javascript
 // React Testing Library
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
@@ -209,6 +225,7 @@ const renderComponent = () => {
 ## Mock Data Structure
 
 ### Mock Devices
+
 ```javascript
 const mockDevices = [
   {
@@ -216,7 +233,7 @@ const mockDevices = [
     name: 'Temperature Sensor 1',
     description: 'Living room temperature sensor',
     device_type: 'temperature_sensor',
-    api_key: 'abc123def456',  // Not displayed to user
+    api_key: 'abc123def456', // Not displayed to user
     status: 'online',
     location: 'Living Room',
     firmware_version: '1.0.0',
@@ -236,6 +253,7 @@ const mockDevices = [
 ```
 
 ### Mock Admin User
+
 ```javascript
 const mockAuthContext = {
   user: {
@@ -255,6 +273,7 @@ const mockAuthContext = {
 ## UI/UX Features Tested
 
 ### Visual Feedback
+
 - ✅ Loading spinner during data fetch
 - ✅ Disabled refresh button while loading
 - ✅ Success alert with device count
@@ -262,6 +281,7 @@ const mockAuthContext = {
 - ✅ Color-coded status chips (green=online, red=offline)
 
 ### User Interactions
+
 - ✅ Tab navigation
 - ✅ Click refresh button
 - ✅ Click delete button → Opens dialog
@@ -269,6 +289,7 @@ const mockAuthContext = {
 - ✅ Cancel delete → Closes dialog
 
 ### Data Display
+
 - ✅ Device name with ID
 - ✅ Device type as chip
 - ✅ Owner username and email
@@ -281,6 +302,7 @@ const mockAuthContext = {
 ## Error Handling Coverage
 
 ### Network Errors
+
 ```javascript
 ✅ Generic network error → "Failed to load devices"
 ✅ 403 Forbidden → "Admin privileges required"
@@ -288,6 +310,7 @@ const mockAuthContext = {
 ```
 
 ### Data Validation
+
 ```javascript
 ✅ Null/undefined devices array → Shows empty state
 ✅ Missing optional fields → Shows placeholders
@@ -295,6 +318,7 @@ const mockAuthContext = {
 ```
 
 ### Authorization
+
 ```javascript
 ✅ Non-admin user → Prevents API call, shows error toast
 ✅ API keys → Never displayed in UI
@@ -305,6 +329,7 @@ const mockAuthContext = {
 ## Performance Benchmarks
 
 ### Large Dataset Handling
+
 ```javascript
 ✅ 100 devices render in < 3 seconds
 ✅ No unnecessary re-fetches
@@ -312,6 +337,7 @@ const mockAuthContext = {
 ```
 
 ### Optimization Strategies
+
 - Use React.memo for device rows (future enhancement)
 - Pagination for 1000+ devices (future enhancement)
 - Virtual scrolling for massive lists (future enhancement)
@@ -321,17 +347,20 @@ const mockAuthContext = {
 ## Accessibility Features
 
 ### Semantic HTML
+
 - ✅ Proper heading hierarchy
 - ✅ Tab roles for navigation
 - ✅ Button roles with descriptive names
 - ✅ Dialog roles for modals
 
 ### ARIA Labels
+
 - ✅ "Delete Device" tooltip
 - ✅ "Refresh" button label
 - ✅ Table headers properly labeled
 
 ### Keyboard Navigation
+
 - ✅ Tab through interactive elements
 - ✅ Enter/Space to activate buttons
 - ✅ Esc to close dialogs
@@ -341,16 +370,19 @@ const mockAuthContext = {
 ## Test Execution
 
 ### Run All Tests
+
 ```bash
 npm test -- src/__tests__/pages/Admin.allDevices.test.js --watchAll=false
 ```
 
 ### Run Tests in Watch Mode
+
 ```bash
 npm test -- src/__tests__/pages/Admin.allDevices.test.js
 ```
 
 ### Run with Coverage
+
 ```bash
 npm test -- src/__tests__/pages/Admin.allDevices.test.js --coverage --watchAll=false
 ```
@@ -360,10 +392,12 @@ npm test -- src/__tests__/pages/Admin.allDevices.test.js --coverage --watchAll=f
 ## Files Created/Modified
 
 ### New Files
+
 - ✅ `/src/__tests__/pages/Admin.allDevices.test.js` (650+ lines)
 - ✅ `/jest.config.js` (Jest configuration)
 
 ### Modified Files
+
 - ✅ `/package.json` (Added Jest transformIgnorePatterns)
 
 ---
@@ -371,15 +405,17 @@ npm test -- src/__tests__/pages/Admin.allDevices.test.js --coverage --watchAll=f
 ## Integration with Backend
 
 ### Backend Endpoints Used
+
 ```
 GET  /api/devices/admin/devices       ← Fetch all devices
      Query params: status, device_type, user_id
-     
+
 DELETE /api/devices/admin/devices/:id ← Delete device
        Requires: Admin JWT token
 ```
 
 ### Authentication Flow
+
 ```
 1. User logs in with admin credentials
 2. JWT token stored in localStorage
@@ -393,10 +429,12 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 ## TDD Process Summary
 
 ### Red Phase ✅
+
 1. Created 31 failing tests covering all requirements
 2. Tests defined expected behavior before implementation
 
 ### Green Phase ✅
+
 1. Fixed axios import issues with Jest configuration
 2. Updated test assertions to match actual implementation
 3. Handled multiple refresh buttons in admin page
@@ -404,9 +442,11 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 5. All 31 tests passing
 
 ### Refactor Phase 🔄
+
 **Current State**: All tests passing, code is clean
 
 **Future Refactoring Opportunities**:
+
 - Remove debug console.log statements
 - Extract device table into separate component
 - Add PropTypes or TypeScript for type safety
@@ -419,18 +459,21 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 ## Comparison: Backend vs Frontend Tests
 
 ### Backend Tests (17 tests) ✅
+
 - Focus: API endpoints, database queries, authentication
 - Framework: Jest + Supertest
 - Scope: Integration tests with real database
 - Key Areas: Auth, filtering, data integrity, performance
 
 ### Frontend Tests (31 tests) ✅
+
 - Focus: UI rendering, user interactions, state management
 - Framework: Jest + React Testing Library
 - Scope: Component tests with mocked API
 - Key Areas: Display, navigation, error handling, UX
 
 ### Coverage Overlap
+
 ✅ Both test authentication/authorization
 ✅ Both test error handling
 ✅ Both test data validation
@@ -441,11 +484,13 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 ## Best Practices Demonstrated
 
 ### TDD Principles
+
 - ✅ Write tests first (red phase)
 - ✅ Make tests pass (green phase)
 - ✅ Refactor when needed (refactor phase)
 
 ### Testing Best Practices
+
 - ✅ Descriptive test names
 - ✅ Arrange-Act-Assert pattern
 - ✅ Independent tests (no shared state)
@@ -453,6 +498,7 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 - ✅ Test user behavior, not implementation
 
 ### React Testing Library Guidelines
+
 - ✅ Query by role/label (accessibility-focused)
 - ✅ Use waitFor for async operations
 - ✅ Avoid implementation details
@@ -463,6 +509,7 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 ## Known Issues & Limitations
 
 ### Current Limitations
+
 1. No pagination (all devices loaded at once)
 2. No sorting functionality
 3. No filtering UI (only via API params)
@@ -470,6 +517,7 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 5. Console.log debugging statements still present
 
 ### Future Enhancements
+
 1. Add pagination controls
 2. Add column sorting
 3. Add search/filter UI
@@ -487,6 +535,7 @@ DELETE /api/devices/admin/devices/:id ← Delete device
 ✅ **Ready for production**
 
 The frontend admin device listing feature has been successfully implemented and validated using Test-Driven Development. The implementation is:
+
 - **Functional**: All core features working correctly
 - **Tested**: Comprehensive test coverage
 - **Secure**: Admin-only access with proper authorization

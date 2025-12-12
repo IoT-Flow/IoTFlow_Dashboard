@@ -11,23 +11,24 @@ The IoTFlow project consists of **two distinct backend systems** serving differe
 
 ## Quick Comparison Table
 
-| Aspect | Connectivity Layer | Dashboard Backend |
-|--------|-------------------|-------------------|
-| **Language** | Python 3.10+ | Node.js 18+ |
-| **Framework** | Flask | Express.js |
+| Aspect              | Connectivity Layer                    | Dashboard Backend           |
+| ------------------- | ------------------------------------- | --------------------------- |
+| **Language**        | Python 3.10+                          | Node.js 18+                 |
+| **Framework**       | Flask                                 | Express.js                  |
 | **Primary Purpose** | Device connectivity & data collection | User interface & management |
-| **Port** | 5000 | 3001 |
-| **Database** | SQLite/PostgreSQL + IoTDB | SQLite/PostgreSQL + IoTDB |
-| **Authentication** | API Key (device-level) | JWT (user-level) |
-| **Real-time** | MQTT (Mosquitto) | WebSocket (ws) |
-| **Target Users** | IoT Devices | Human Users (Web UI) |
-| **Version** | 0.2 | 2.0.0 |
+| **Port**            | 5000                                  | 3001                        |
+| **Database**        | SQLite/PostgreSQL + IoTDB             | SQLite/PostgreSQL + IoTDB   |
+| **Authentication**  | API Key (device-level)                | JWT (user-level)            |
+| **Real-time**       | MQTT (Mosquitto)                      | WebSocket (ws)              |
+| **Target Users**    | IoT Devices                           | Human Users (Web UI)        |
+| **Version**         | 0.2                                   | 2.0.0                       |
 
 ---
 
 ## Architecture Comparison
 
 ### Connectivity Layer Architecture
+
 ```
 IoT Devices (HTTP/MQTT)
         ↓
@@ -49,6 +50,7 @@ IoT Devices (HTTP/MQTT)
 ```
 
 ### Dashboard Backend Architecture
+
 ```
 React Frontend (Port 3000)
         ↓
@@ -77,6 +79,7 @@ React Frontend (Port 3000)
 #### Connectivity Layer (Python)
 
 **Authentication Methods:**
+
 - API Key authentication (32-byte hex)
 - Admin token authentication
 - Device-specific API keys
@@ -85,12 +88,14 @@ React Frontend (Port 3000)
 **Use Case:** Device-to-server authentication
 
 **Headers:**
+
 ```
 X-API-Key: <device_api_key>
 Authorization: admin <admin_token>
 ```
 
 **Security:**
+
 - API keys auto-generated on device registration
 - Rate limiting per device
 - Redis-based session management
@@ -99,6 +104,7 @@ Authorization: admin <admin_token>
 #### Dashboard Backend (Node.js)
 
 **Authentication Methods:**
+
 - JWT token authentication (24h expiration)
 - User login with email/password
 - bcrypt password hashing (10 rounds)
@@ -107,11 +113,13 @@ Authorization: admin <admin_token>
 **Use Case:** Human user authentication
 
 **Headers:**
+
 ```
 x-api-key: <jwt_token>
 ```
 
 **Security:**
+
 - JWT with configurable secret
 - Password hashing with bcrypt
 - User roles (admin/user)
@@ -129,6 +137,7 @@ x-api-key: <jwt_token>
 **Focus:** Device connectivity and operational status
 
 **Features:**
+
 - Device registration with user_id
 - Device status tracking (active/inactive/maintenance)
 - Heartbeat monitoring
@@ -139,11 +148,13 @@ x-api-key: <jwt_token>
 - Device-to-device isolation
 
 **Endpoints:** 12 device-related endpoints
+
 - Registration, status, heartbeat, telemetry submission
 - MQTT credentials, configuration management
 - Bulk status queries with Redis caching
 
 **Special Features:**
+
 - Redis cache for fast status lookups
 - Background sync between Redis and database
 - MQTT topic management per device
@@ -154,6 +165,7 @@ x-api-key: <jwt_token>
 **Focus:** User-friendly device management interface
 
 **Features:**
+
 - Device CRUD operations
 - User-based device ownership
 - Device grouping by type/status
@@ -162,12 +174,14 @@ x-api-key: <jwt_token>
 - Cascade deletion of related records
 
 **Endpoints:** 8 device-related endpoints
+
 - Create, read, update, delete devices
 - Configuration management
 - Control command system
 - Pending commands queue
 
 **Special Features:**
+
 - User-scoped device access
 - Device control with status tracking
 - Simulated async command execution
@@ -184,6 +198,7 @@ x-api-key: <jwt_token>
 **Focus:** High-throughput data ingestion
 
 **Features:**
+
 - Direct IoTDB integration
 - Multiple submission protocols (HTTP, MQTT)
 - Flexible timestamp handling
@@ -193,11 +208,13 @@ x-api-key: <jwt_token>
 - Real-time MQTT telemetry
 
 **IoTDB Path:**
+
 ```
 root.iotflow.devices.device_{device_id}
 ```
 
 **Endpoints:**
+
 - `POST /api/v1/devices/telemetry` - Device endpoint
 - `POST /api/v1/telemetry` - General endpoint
 - `POST /api/v1/mqtt/telemetry/{device_id}` - MQTT proxy
@@ -207,6 +224,7 @@ root.iotflow.devices.device_{device_id}
 - `DELETE /api/v1/telemetry/{device_id}` - Delete data
 
 **Performance:**
+
 - Optimized for high-frequency data
 - MQTT for real-time streaming
 - Redis caching for device status
@@ -217,6 +235,7 @@ root.iotflow.devices.device_{device_id}
 **Focus:** User-friendly data visualization
 
 **Features:**
+
 - IoTDB integration via custom client
 - User-scoped data access
 - Aggregated queries for charts
@@ -225,11 +244,13 @@ root.iotflow.devices.device_{device_id}
 - Automatic notifications on anomalies
 
 **IoTDB Path:**
+
 ```
 root.iotflow.users.user_{user_id}.devices.device_{device_id}
 ```
 
 **Endpoints:**
+
 - `POST /api/telemetry` - Submit data
 - `GET /api/telemetry/device/:device_id` - Query data
 - `GET /api/telemetry/device/:device_id/aggregated` - Aggregations
@@ -238,6 +259,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}
 - `GET /api/telemetry/today-count` - Today's message count
 
 **Performance:**
+
 - Optimized for dashboard queries
 - User-based data isolation
 - Notification triggers on data receipt
@@ -254,6 +276,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}
 **Protocol:** MQTT (Mosquitto broker)
 
 **Features:**
+
 - MQTT broker integration (port 1883)
 - Device pub/sub messaging
 - Topic-based routing
@@ -263,6 +286,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}
 - WebSocket MQTT (port 9001)
 
 **Topics Structure:**
+
 ```
 iotflow/devices/{device_id}/telemetry
 iotflow/devices/{device_id}/status
@@ -271,6 +295,7 @@ iotflow/fleet/{group_id}/commands
 ```
 
 **Use Cases:**
+
 - Real-time telemetry streaming
 - Device command delivery
 - Fleet management
@@ -281,6 +306,7 @@ iotflow/fleet/{group_id}/commands
 **Protocol:** WebSocket (ws library)
 
 **Features:**
+
 - WebSocket server (path: /ws)
 - JWT-based authentication
 - User-specific connections
@@ -288,6 +314,7 @@ iotflow/fleet/{group_id}/commands
 - Bidirectional communication
 
 **Message Format:**
+
 ```javascript
 {
   type: 'notification',
@@ -302,6 +329,7 @@ iotflow/fleet/{group_id}/commands
 ```
 
 **Use Cases:**
+
 - Real-time UI notifications
 - Dashboard updates
 - User alerts
@@ -314,9 +342,11 @@ iotflow/fleet/{group_id}/commands
 ### 5. API Endpoints Count
 
 #### Connectivity Layer (Python)
+
 **Total:** 49 endpoints
 
 **Breakdown:**
+
 - Device Management: 12 endpoints
 - Telemetry Data: 7 endpoints
 - MQTT Management: 10 endpoints
@@ -327,9 +357,11 @@ iotflow/fleet/{group_id}/commands
 **Focus:** Comprehensive device and data management
 
 #### Dashboard Backend (Node.js)
+
 **Total:** ~30 endpoints
 
 **Breakdown:**
+
 - User Management: 8 endpoints
 - Device Management: 8 endpoints
 - Telemetry: 6 endpoints
@@ -347,12 +379,14 @@ iotflow/fleet/{group_id}/commands
 #### Connectivity Layer (Python)
 
 **Models:**
+
 - `Device` - Device registry
 - `DeviceAuth` - Authentication records
 - `DeviceConfiguration` - Device config
 - `User` - User accounts (for device ownership)
 
 **Key Fields:**
+
 - Devices have `api_key` for authentication
 - Devices have `user_id` for ownership
 - Focus on device operational data
@@ -360,6 +394,7 @@ iotflow/fleet/{group_id}/commands
 #### Dashboard Backend (Node.js)
 
 **Models:**
+
 - `User` - User accounts (primary focus)
 - `Device` - Device registry
 - `DeviceAuth` - Authentication records
@@ -369,6 +404,7 @@ iotflow/fleet/{group_id}/commands
 - `Notification` - User notifications
 
 **Key Fields:**
+
 - Users have `user_id` (UUID)
 - Users have `password_hash` for login
 - Devices linked to users
@@ -385,6 +421,7 @@ iotflow/fleet/{group_id}/commands
 **Cache:** Redis
 
 **Purpose:**
+
 - Device status caching (5-minute TTL)
 - Fast online/offline lookups
 - Background sync to database
@@ -392,6 +429,7 @@ iotflow/fleet/{group_id}/commands
 - Session management
 
 **Implementation:**
+
 - `DeviceStatusCache` service
 - `StatusSyncService` for background sync
 - Redis keys: `device_status:{device_id}`
@@ -401,10 +439,12 @@ iotflow/fleet/{group_id}/commands
 **Cache:** In-memory (global objects)
 
 **Purpose:**
+
 - Device control commands (temporary)
 - WebSocket connections
 
 **Implementation:**
+
 - `global.deviceControls` for command tracking
 - No persistent caching layer
 
@@ -417,6 +457,7 @@ iotflow/fleet/{group_id}/commands
 #### Connectivity Layer (Python)
 
 **Features:**
+
 - Prometheus metrics endpoint (`/metrics`)
 - Structured logging
 - Health checks with detailed status
@@ -425,6 +466,7 @@ iotflow/fleet/{group_id}/commands
 - System resource monitoring
 
 **Metrics:**
+
 ```python
 HTTP_REQUEST_COUNT
 HTTP_REQUEST_LATENCY
@@ -432,6 +474,7 @@ TELEMETRY_MESSAGES
 ```
 
 **Health Check:**
+
 ```
 GET /health?detailed=true
 ```
@@ -439,12 +482,14 @@ GET /health?detailed=true
 #### Dashboard Backend (Node.js)
 
 **Features:**
+
 - Basic health check (`/health`)
 - Console logging
 - Error handling middleware
 - Request logging for charts
 
 **Health Check:**
+
 ```
 GET /health
 ```
@@ -460,6 +505,7 @@ GET /health
 **Admin Endpoints:** 13 endpoints
 
 **Features:**
+
 - List all devices (cross-user)
 - Device details with auth records
 - Update device status
@@ -476,6 +522,7 @@ GET /health
 **Admin Features:** Limited
 
 **Features:**
+
 - User CRUD (admin role check)
 - System-wide device queries
 - Dashboard analytics
@@ -491,12 +538,14 @@ GET /health
 #### Connectivity Layer (Python)
 
 **Deployment:**
+
 - Docker Compose setup
 - Gunicorn for production
 - Poetry for dependency management
 - Multiple management scripts
 
 **Configuration:**
+
 - `.env` file with 30+ variables
 - Database URL configuration
 - MQTT broker settings
@@ -505,6 +554,7 @@ GET /health
 - Timestamp format options
 
 **Scripts:**
+
 - `docker-manage.sh` - Docker operations
 - `manage.py` - Python management
 - `mqtt_manage.sh` - MQTT operations
@@ -512,12 +562,14 @@ GET /health
 #### Dashboard Backend (Node.js)
 
 **Deployment:**
+
 - Docker support
 - Node.js native
 - npm for dependencies
 - Simple startup scripts
 
 **Configuration:**
+
 - `.env` file with 10+ variables
 - Database path
 - JWT secret
@@ -525,6 +577,7 @@ GET /health
 - IoTDB settings
 
 **Scripts:**
+
 - `npm start` - Production
 - `npm run dev` - Development
 - `npm run init-db` - Database init
@@ -591,21 +644,21 @@ GET /health
 
 ## Technology Stack Comparison
 
-| Component | Connectivity Layer | Dashboard Backend |
-|-----------|-------------------|-------------------|
-| **Language** | Python 3.10+ | Node.js 18+ |
-| **Framework** | Flask 2.3+ | Express.js 4.21+ |
-| **ORM** | SQLAlchemy | Sequelize |
-| **Database** | SQLite/PostgreSQL | SQLite/PostgreSQL |
-| **Time-Series** | IoTDB (apache-iotdb) | IoTDB (custom client) |
-| **Caching** | Redis | In-memory |
-| **Real-time** | MQTT (paho-mqtt) | WebSocket (ws) |
-| **Auth** | API Key | JWT (jsonwebtoken) |
-| **Password** | bcrypt | bcrypt/bcryptjs |
-| **Monitoring** | Prometheus | Basic logging |
-| **Testing** | pytest | jest (disabled) |
-| **Process Manager** | Gunicorn | Node native |
-| **Dependency Mgmt** | Poetry | npm |
+| Component           | Connectivity Layer   | Dashboard Backend     |
+| ------------------- | -------------------- | --------------------- |
+| **Language**        | Python 3.10+         | Node.js 18+           |
+| **Framework**       | Flask 2.3+           | Express.js 4.21+      |
+| **ORM**             | SQLAlchemy           | Sequelize             |
+| **Database**        | SQLite/PostgreSQL    | SQLite/PostgreSQL     |
+| **Time-Series**     | IoTDB (apache-iotdb) | IoTDB (custom client) |
+| **Caching**         | Redis                | In-memory             |
+| **Real-time**       | MQTT (paho-mqtt)     | WebSocket (ws)        |
+| **Auth**            | API Key              | JWT (jsonwebtoken)    |
+| **Password**        | bcrypt               | bcrypt/bcryptjs       |
+| **Monitoring**      | Prometheus           | Basic logging         |
+| **Testing**         | pytest               | jest (disabled)       |
+| **Process Manager** | Gunicorn             | Node native           |
+| **Dependency Mgmt** | Poetry               | npm                   |
 
 ---
 
@@ -614,6 +667,7 @@ GET /health
 ### Connectivity Layer (Python)
 
 **Strengths:**
+
 - High-throughput telemetry ingestion
 - MQTT for efficient device communication
 - Redis caching for fast lookups
@@ -621,6 +675,7 @@ GET /health
 - Prometheus metrics for monitoring
 
 **Benchmarks:**
+
 - 100+ requests/second
 - 10,000+ telemetry points/second (IoTDB)
 - Sub-millisecond Redis cache responses
@@ -628,12 +683,14 @@ GET /health
 ### Dashboard Backend (Node.js)
 
 **Strengths:**
+
 - Fast API responses for UI
 - Efficient WebSocket connections
 - Good for I/O-bound operations
 - Quick dashboard queries
 
 **Considerations:**
+
 - In-memory storage not persistent
 - No caching layer
 - Single-instance WebSocket
@@ -645,6 +702,7 @@ GET /health
 ### Connectivity Layer (Python)
 
 **Security Features:**
+
 - API key authentication (32-byte)
 - Admin token authentication
 - Rate limiting per device/IP
@@ -654,6 +712,7 @@ GET /health
 - TLS support for MQTT
 
 **Rate Limits:**
+
 - Device registration: 10/5min per IP
 - Telemetry: 100/min per device
 - Heartbeat: 30/min per device
@@ -661,6 +720,7 @@ GET /health
 ### Dashboard Backend (Node.js)
 
 **Security Features:**
+
 - JWT authentication (24h expiration)
 - bcrypt password hashing (10 rounds)
 - User roles (admin/user)
@@ -669,6 +729,7 @@ GET /health
 - Error sanitization
 
 **Rate Limits:**
+
 - Not explicitly implemented
 
 **Key Difference:** Connectivity Layer has **comprehensive rate limiting**, Dashboard relies on **JWT expiration**.
@@ -680,12 +741,14 @@ GET /health
 ### Connectivity Layer (Python)
 
 **Horizontal Scaling:**
+
 - Multiple Flask instances behind load balancer
 - Shared Redis for caching
 - Shared PostgreSQL database
 - MQTT broker clustering
 
 **Vertical Scaling:**
+
 - Gunicorn workers
 - IoTDB clustering
 - Redis clustering
@@ -693,11 +756,13 @@ GET /health
 ### Dashboard Backend (Node.js)
 
 **Horizontal Scaling:**
+
 - Multiple Node instances
 - Shared database
 - WebSocket clustering needed
 
 **Limitations:**
+
 - In-memory storage not shared
 - WebSocket connections per instance
 - No built-in clustering
@@ -737,12 +802,14 @@ GET /health
 ### If Consolidating to Single Backend
 
 **Option 1: Extend Connectivity Layer**
+
 - Add user management to Flask
 - Add WebSocket support
 - Add chart builder
 - Keep MQTT functionality
 
 **Option 2: Extend Dashboard Backend**
+
 - Add MQTT support to Express
 - Add Redis caching
 - Add Prometheus metrics
@@ -760,6 +827,7 @@ The two backends are **complementary, not redundant**:
 - **Dashboard Backend** = User interface (web UI, charts, notifications)
 
 **Best Practice:** Deploy both and route traffic appropriately:
+
 - IoT devices → Connectivity Layer
 - Web users → Dashboard Backend
 - Both share database and IoTDB

@@ -16,19 +16,19 @@ Successfully removed duplicate admin endpoints using TDD methodology. All admin 
 
 ### User Management (6 endpoints removed)
 
-| Old Endpoint | Status | New Endpoint |
-|-------------|--------|--------------|
-| `GET /api/users/` | ❌ Removed | `GET /api/v1/admin/users` |
-| `GET /api/users/:id` | ❌ Removed | `GET /api/v1/admin/users/:id` |
-| `POST /api/users/` | ❌ Removed | `POST /api/v1/admin/users` |
-| `PUT /api/users/:id` | ❌ Removed | `PUT /api/v1/admin/users/:id` |
-| `DELETE /api/users/:id` | ❌ Removed | `DELETE /api/v1/admin/users/:id` |
+| Old Endpoint                 | Status     | New Endpoint                          |
+| ---------------------------- | ---------- | ------------------------------------- |
+| `GET /api/users/`            | ❌ Removed | `GET /api/v1/admin/users`             |
+| `GET /api/users/:id`         | ❌ Removed | `GET /api/v1/admin/users/:id`         |
+| `POST /api/users/`           | ❌ Removed | `POST /api/v1/admin/users`            |
+| `PUT /api/users/:id`         | ❌ Removed | `PUT /api/v1/admin/users/:id`         |
+| `DELETE /api/users/:id`      | ❌ Removed | `DELETE /api/v1/admin/users/:id`      |
 | `GET /api/users/:id/devices` | ❌ Removed | `GET /api/v1/admin/users/:id/devices` |
 
 ### Device Management (1 endpoint removed)
 
-| Old Endpoint | Status | New Endpoint |
-|-------------|--------|--------------|
+| Old Endpoint                     | Status     | New Endpoint                |
+| -------------------------------- | ---------- | --------------------------- |
 | `GET /api/devices/admin/devices` | ❌ Removed | `GET /api/v1/admin/devices` |
 
 ---
@@ -65,15 +65,15 @@ Users can still manage their own devices:
 // Getting all users (old way)
 const response = await fetch('http://localhost:5000/api/users', {
   headers: {
-    'Authorization': `Bearer ${adminToken}`
-  }
+    Authorization: `Bearer ${adminToken}`,
+  },
 });
 
 // Getting all devices as admin (old way)
 const response = await fetch('http://localhost:5000/api/devices/admin/devices', {
   headers: {
-    'Authorization': `Bearer ${adminToken}`
-  }
+    Authorization: `Bearer ${adminToken}`,
+  },
 });
 ```
 
@@ -83,15 +83,15 @@ const response = await fetch('http://localhost:5000/api/devices/admin/devices', 
 // Getting all users (new way)
 const response = await fetch('http://localhost:5000/api/v1/admin/users', {
   headers: {
-    'Authorization': `Bearer ${adminToken}`
-  }
+    Authorization: `Bearer ${adminToken}`,
+  },
 });
 
 // Getting all devices as admin (new way)
 const response = await fetch('http://localhost:5000/api/v1/admin/devices', {
   headers: {
-    'Authorization': `Bearer ${adminToken}`
-  }
+    Authorization: `Bearer ${adminToken}`,
+  },
 });
 ```
 
@@ -104,6 +104,7 @@ const response = await fetch('http://localhost:5000/api/v1/admin/devices', {
 #### apiService.js
 
 **Before:**
+
 ```javascript
 getAllUsers: async () => {
   return apiRequest('/api/users');
@@ -115,6 +116,7 @@ adminGetAllDevices: async () => {
 ```
 
 **After:**
+
 ```javascript
 getAllUsers: async () => {
   return apiRequest('/api/v1/admin/users');
@@ -141,6 +143,7 @@ grep -r '"/api/users"' src/
 ```
 
 **Update pattern:**
+
 - `/api/users` → `/api/v1/admin/users` (for admin operations)
 - `/api/users/profile` → Keep as is (user self-service)
 - `/api/devices/admin/devices` → `/api/v1/admin/devices`
@@ -156,6 +159,7 @@ Created comprehensive test suite: `tests/integration/admin-duplicate-removal.tes
 **Test Results:** ✅ 21/21 passing
 
 **Test Coverage:**
+
 - ✅ Duplicate routes return 404
 - ✅ Admin V1 API fully functional
 - ✅ User self-service routes still work
@@ -212,26 +216,31 @@ npm test
 ## 🎯 Benefits
 
 ### 1. **Cleaner API Structure**
+
 - Single source of truth for admin operations
 - Clear separation of concerns
 - Easier to understand and document
 
 ### 2. **Better Organization**
+
 - Admin routes namespaced under `/api/v1/admin`
 - Versioning support (v1, v2, etc.)
 - No route conflicts or ambiguity
 
 ### 3. **Improved Maintainability**
+
 - Fewer duplicate code paths
 - Centralized admin logic
 - Easier to add new admin features
 
 ### 4. **Enhanced Security**
+
 - Consistent authentication/authorization
 - Middleware applied at router level
 - Clearer admin privilege boundaries
 
 ### 5. **Better DX (Developer Experience)**
+
 - Clear documentation
 - Predictable URL patterns
 - Comprehensive test coverage

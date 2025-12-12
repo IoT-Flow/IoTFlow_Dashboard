@@ -1,12 +1,15 @@
 # IoTFlow Backend API Documentation
 
 ## Overview
+
 The IoTFlow Backend provides a comprehensive REST API for managing IoT devices, users, telemetry data, and dashboard analytics.
 
 **Base URL**: `http://localhost:3001`
 
 ## Authentication
+
 The API uses API key authentication. Include your API key in the request headers:
+
 ```
 x-api-key: YOUR_API_KEY
 ```
@@ -14,32 +17,38 @@ x-api-key: YOUR_API_KEY
 ## API Endpoints
 
 ### Health Check
+
 - **GET /health** - Check API health status
 
 ### Authentication & User Management
 
 #### Register User
+
 - **POST /api/auth/register**
 - **Body**: `{ "username": "string", "email": "string", "password": "string" }`
 - **Response**: User object with API key
 
 #### Login User
+
 - **POST /api/auth/login**
 - **Body**: `{ "email": "string", "password": "string" }`
 - **Response**: User object with JWT token
 
 #### Get User Profile
+
 - **GET /api/auth/profile**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: User profile information
 
 #### Update User Profile
+
 - **PUT /api/auth/profile**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Body**: `{ "username": "string", "email": "string", "password": "string" }`
 - **Response**: Updated user profile
 
 #### Refresh API Key
+
 - **POST /api/auth/refresh-api-key**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: New API key
@@ -47,34 +56,40 @@ x-api-key: YOUR_API_KEY
 ### Device Management
 
 #### Create Device
+
 - **POST /api/devices**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Body**: `{ "name": "string", "description": "string", "device_type": "string", "status": "string", "location": "string" }`
 - **Response**: Created device object
 
 #### Get All Devices
+
 - **GET /api/devices**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Query Parameters**: `page`, `limit`, `status`, `device_type`
 - **Response**: Paginated list of devices
 
 #### Get Device by ID
+
 - **GET /api/devices/:id**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: Device object
 
 #### Update Device
+
 - **PUT /api/devices/:id**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Body**: Device fields to update
 - **Response**: Updated device object
 
 #### Delete Device
+
 - **DELETE /api/devices/:id**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: 204 No Content
 
 #### Update Device Status
+
 - **PATCH /api/devices/:id/status**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Body**: `{ "status": "string" }`
@@ -83,11 +98,13 @@ x-api-key: YOUR_API_KEY
 ### Device Configuration
 
 #### Get Device Configurations
+
 - **GET /api/devices/:id/configurations**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: Array of configuration objects
 
 #### Update Device Configuration
+
 - **PUT /api/devices/:id/configurations**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Body**: `{ "config_key": "string", "config_value": "string", "data_type": "string" }`
@@ -96,24 +113,28 @@ x-api-key: YOUR_API_KEY
 ### Telemetry Data
 
 #### Submit Telemetry Data
+
 - **POST /api/telemetry**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Body**: `{ "device_id": number, "data_type": "string", "value": number, "unit": "string", "metadata": {} }`
 - **Response**: Created telemetry record
 
 #### Get Telemetry Data
+
 - **GET /api/telemetry/device/:device_id**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Query Parameters**: `data_type`, `start_date`, `end_date`, `limit`, `page`
 - **Response**: Paginated telemetry data
 
 #### Get Aggregated Telemetry Data
+
 - **GET /api/telemetry/device/:device_id/aggregated**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Query Parameters**: `data_type`, `start_date`, `end_date`, `aggregation` (hour/day/week/month)
 - **Response**: Aggregated telemetry data
 
 #### Get Latest Telemetry Values
+
 - **GET /api/telemetry/device/:device_id/latest**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: Latest values for each data type
@@ -121,22 +142,26 @@ x-api-key: YOUR_API_KEY
 ### Dashboard & Analytics
 
 #### Get Dashboard Overview
+
 - **GET /api/dashboard/overview**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: Dashboard overview with device stats and recent devices
 
 #### Get Device Activity
+
 - **GET /api/dashboard/activity**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Query Parameters**: `days` (default: 30)
 - **Response**: Device activity over time
 
 #### Get System Alerts
+
 - **GET /api/dashboard/alerts**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: Array of system alerts
 
 #### Get System Health
+
 - **GET /api/dashboard/health**
 - **Headers**: `x-api-key: YOUR_API_KEY`
 - **Response**: System health metrics
@@ -144,6 +169,7 @@ x-api-key: YOUR_API_KEY
 ## Data Models
 
 ### User
+
 ```json
 {
   "id": 1,
@@ -160,6 +186,7 @@ x-api-key: YOUR_API_KEY
 ```
 
 ### Device
+
 ```json
 {
   "id": 1,
@@ -179,6 +206,7 @@ x-api-key: YOUR_API_KEY
 ```
 
 ### Telemetry Data
+
 ```json
 {
   "id": 1,
@@ -192,6 +220,7 @@ x-api-key: YOUR_API_KEY
 ```
 
 ### Device Configuration
+
 ```json
 {
   "id": 1,
@@ -206,6 +235,7 @@ x-api-key: YOUR_API_KEY
 ```
 
 ## Error Responses
+
 All endpoints return appropriate HTTP status codes and error messages:
 
 ```json
@@ -216,6 +246,7 @@ All endpoints return appropriate HTTP status codes and error messages:
 ```
 
 ## Status Codes
+
 - **200**: Success
 - **201**: Created
 - **204**: No Content
@@ -230,6 +261,7 @@ All endpoints return appropriate HTTP status codes and error messages:
 ### Complete User Registration and Device Setup Flow
 
 1. **Register User**
+
 ```bash
 curl -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
@@ -237,6 +269,7 @@ curl -X POST http://localhost:3001/api/auth/register \
 ```
 
 2. **Create Device**
+
 ```bash
 curl -X POST http://localhost:3001/api/devices \
   -H "Content-Type: application/json" \
@@ -245,6 +278,7 @@ curl -X POST http://localhost:3001/api/devices \
 ```
 
 3. **Submit Telemetry Data**
+
 ```bash
 curl -X POST http://localhost:3001/api/telemetry \
   -H "Content-Type: application/json" \
@@ -253,18 +287,22 @@ curl -X POST http://localhost:3001/api/telemetry \
 ```
 
 4. **Get Dashboard Overview**
+
 ```bash
 curl -X GET http://localhost:3001/api/dashboard/overview \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ## Testing
+
 Run the complete test suite:
+
 ```bash
 NODE_ENV=test npm test
 ```
 
 ## Environment Variables
+
 - `NODE_ENV`: Environment (test/development/production)
 - `PORT`: Server port (default: 3000)
 - `JWT_SECRET`: Secret for JWT tokens

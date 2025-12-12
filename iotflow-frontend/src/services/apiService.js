@@ -387,11 +387,13 @@ class ApiService {
 
   async updateProfile(userData) {
     try {
-      const response = await this.api.put('/auth/profile', userData);
+      const response = await this.api.put('/users/profile', userData);
 
       // Update local storage with new user data
-      const updatedUser = response.data;
-      localStorage.setItem('iotflow_user', JSON.stringify(updatedUser));
+      const updatedUser = response.data.user;
+      if (updatedUser) {
+        localStorage.setItem('iotflow_user', JSON.stringify(updatedUser));
+      }
 
       return response.data;
     } catch (error) {
@@ -402,7 +404,7 @@ class ApiService {
 
   async changePassword(currentPassword, newPassword) {
     try {
-      const response = await this.api.put('/auth/change-password', {
+      const response = await this.api.put('/users/password', {
         currentPassword,
         newPassword,
       });

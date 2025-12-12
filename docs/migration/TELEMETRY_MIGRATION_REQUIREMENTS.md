@@ -10,17 +10,20 @@
 ## Executive Summary
 
 Migrate the telemetry data retrieval API from Node.js/Express backend to Flask backend to:
+
 1. **Consolidate IoTDB operations** - Flask backend already has IoTDB infrastructure (`IoTDBService`, `iotdb_config`)
 2. **Improve performance** - Reduce inter-service dependencies and network hops
 3. **Simplify architecture** - Single backend for IoTDB read/write operations
 4. **Enhance maintainability** - All IoTDB logic in one codebase
 
 **Current State:**
+
 - ✅ Flask backend has telemetry **write** operations (POST endpoint)
 - ❌ Node.js backend handles telemetry **read** operations (GET endpoints)
 - ✅ Flask has complete IoTDB client infrastructure
 
 **Target State:**
+
 - ✅ Flask backend handles **both** read and write operations
 - ✅ Node.js frontend calls Flask API directly for telemetry queries
 - ✅ Unified IoTDB access layer
@@ -33,11 +36,11 @@ Migrate the telemetry data retrieval API from Node.js/Express backend to Flask b
 
 **Endpoints to Migrate:**
 
-| Endpoint | Method | Authentication | Purpose | Status |
-|----------|--------|----------------|---------|--------|
-| `/api/telemetry/:device_id` | GET | None (should add) | Get device telemetry | **Migrate** |
-| `/api/telemetry/device/:device_id/aggregated` | GET | None (should add) | Get aggregated data | **Migrate** |
-| `/api/telemetry/health` | GET | None | Health check | **Keep** (both) |
+| Endpoint                                      | Method | Authentication    | Purpose              | Status          |
+| --------------------------------------------- | ------ | ----------------- | -------------------- | --------------- |
+| `/api/telemetry/:device_id`                   | GET    | None (should add) | Get device telemetry | **Migrate**     |
+| `/api/telemetry/device/:device_id/aggregated` | GET    | None (should add) | Get aggregated data  | **Migrate**     |
+| `/api/telemetry/health`                       | GET    | None              | Health check         | **Keep** (both) |
 
 **File:** `IoTFlow_Dashboard/iotflow-backend/src/controllers/telemetryController.js`
 
@@ -47,22 +50,22 @@ Migrate the telemetry data retrieval API from Node.js/Express backend to Flask b
 async getTelemetryData(req, res) {
   const { device_id } = req.params;
   const { data_type, start_date, end_date, limit = 100, page = 1 } = req.query;
-  
+
   // Find device to get user_id
   const device = await Device.findByPk(device_id);
   if (!device) {
     return res.status(404).json({ message: 'Device not found' });
   }
-  
+
   // Build device path
   const devicePath = `root.iotflow.users.user_${device.user_id}.devices.device_${device_id}`;
   const measurements = data_type ? [data_type] : ['*'];
   const startTs = start_date ? new Date(start_date).getTime() : undefined;
   const endTs = end_date ? new Date(end_date).getTime() : undefined;
-  
+
   // Query IoTDB
   const rows = await iotdbClient.queryRecords(devicePath, measurements, startTs, endTs, limit, page);
-  
+
   res.status(200).json({
     telemetry: rows,
     total: rows.length,
@@ -73,6 +76,7 @@ async getTelemetryData(req, res) {
 ```
 
 **Query Parameters:**
+
 - `data_type` (string, optional) - Filter by measurement type (e.g., "temperature", "humidity")
 - `start_date` (ISO string, optional) - Start timestamp for filtering
 - `end_date` (ISO string, optional) - End timestamp for filtering
@@ -80,6 +84,7 @@ async getTelemetryData(req, res) {
 - `page` (integer, default: 1) - Pagination page number
 
 **Response Schema:**
+
 ```json
 {
   "telemetry": [
@@ -101,36 +106,38 @@ async getTelemetryData(req, res) {
 async getAggregatedData(req, res) {
   const { device_id } = req.params;
   const { data_type, aggregation, start_date, end_date } = req.query;
-  
+
   if (!aggregation || !data_type) {
     return res.status(400).json({ message: 'Aggregation type and data_type are required' });
   }
-  
+
   // Find device
   const device = await Device.findByPk(device_id);
   if (!device) {
     return res.status(404).json({ message: 'Device not found' });
   }
-  
+
   // Build path and query
   const devicePath = `root.iotflow.users.user_${device.user_id}.devices.device_${device_id}`;
   const startTs = start_date ? new Date(start_date).getTime() : undefined;
   const endTs = end_date ? new Date(end_date).getTime() : undefined;
-  
+
   // Query aggregated data
   const result = await iotdbClient.aggregate(devicePath, data_type, aggregation, startTs, endTs);
-  
+
   res.status(200).json(result);
 }
 ```
 
 **Query Parameters:**
+
 - `data_type` (string, **required**) - Measurement to aggregate
 - `aggregation` (string, **required**) - Aggregation function: "avg", "sum", "min", "max", "count"
 - `start_date` (ISO string, optional) - Start timestamp
 - `end_date` (ISO string, optional) - End timestamp
 
 **Response Schema:**
+
 ```json
 {
   "aggregation": "avg",
@@ -147,16 +154,17 @@ async getAggregatedData(req, res) {
 **File:** `IoTFlow_Dashboard/iotflow-backend/src/utils/iotdbClient.js`
 
 **Key Methods:**
+
 ```javascript
 class IoTDBClient {
   async queryRecords(devicePath, measurements, startTs, endTs, limit, page) {
     // Executes SQL: SELECT {measurements} FROM {devicePath} WHERE time >= startTs AND time <= endTs LIMIT {limit}
   }
-  
+
   async aggregate(devicePath, dataType, aggregation, startTs, endTs) {
     // Executes SQL: SELECT {aggregation}({dataType}) FROM {devicePath} WHERE time >= startTs AND time <= endTs
   }
-  
+
   async executeSQL(sql) {
     // HTTP POST to http://localhost:18080/rest/v2/query
     // Authorization: Basic {base64(username:password)}
@@ -165,6 +173,7 @@ class IoTDBClient {
 ```
 
 **Connection Details:**
+
 - Host: `localhost` (from env: `IOTDB_HOST`)
 - Port: `18080` (from env: `IOTDB_REST_PORT`)
 - API Path: `/rest/v2/query`
@@ -180,43 +189,47 @@ class IoTDBClient {
 **Already Implemented:**
 
 ✅ **IoTDB Service** (`Connectivity-Layer/src/services/iotdb.py`):
+
 ```python
 class IoTDBService:
     def __init__(self):
         self.session = iotdb_config.session  # Native Python session
         self.database = iotdb_config.database
-    
+
     def write_telemetry_data(device_id, data, device_type, metadata, timestamp, user_id) -> bool
     def get_device_telemetry(device_id, start_time, end_time, limit, user_id) -> List[Dict]
     def is_available() -> bool
 ```
 
 ✅ **IoTDB Config** (`Connectivity-Layer/src/config/iotdb_config.py`):
+
 ```python
 class IoTDBConfig:
     def __init__(self):
         self.host = os.getenv("IOTDB_HOST", "localhost")
         self.port = int(os.getenv("IOTDB_PORT", "6667"))  # Native port, not REST
         self.session = Session(host, port, username, password)
-    
+
     def get_device_path(device_id, user_id) -> str
     def is_connected() -> bool
 ```
 
 ✅ **Telemetry Routes** (`Connectivity-Layer/src/routes/telemetry.py`):
+
 ```python
 telemetry_bp = Blueprint("telemetry", __name__, url_prefix="/api/v1/telemetry")
 
 @telemetry_bp.route("", methods=["POST"])
 def store_telemetry():
     # ✅ Already implemented - stores telemetry data
-    
+
 @telemetry_bp.route("/<int:device_id>", methods=["GET"])
 def get_device_telemetry(device_id):
     # ✅ PARTIALLY IMPLEMENTED - needs enhancement to match Node.js API
 ```
 
 **Current GET Implementation (lines 113-143):**
+
 ```python
 @telemetry_bp.route("/<int:device_id>", methods=["GET"])
 def get_device_telemetry(device_id):
@@ -224,14 +237,14 @@ def get_device_telemetry(device_id):
     device, err, code = get_authenticated_device(device_id)
     if err:
         return err, code
-    
+
     telemetry_data = iotdb_service.get_device_telemetry(
         device_id=str(device_id),
         user_id=str(device.user_id),
         start_time=request.args.get("start_time", "-1h"),  # ⚠️ Different format
         limit=min(int(request.args.get("limit", 1000)), 10000),
     )
-    
+
     return jsonify({
         "device_id": device_id,
         "device_name": device.name,
@@ -244,6 +257,7 @@ def get_device_telemetry(device_id):
 ```
 
 **Gaps to Address:**
+
 1. ❌ No `data_type` filtering (only returns all measurements)
 2. ❌ No pagination support (`page` parameter)
 3. ❌ Time format uses relative strings (`"-1h"`) instead of ISO timestamps
@@ -262,21 +276,22 @@ def get_device_telemetry(device_id):
 **Purpose:** Retrieve telemetry data for a device with filtering and pagination
 
 **Route Definition:**
+
 ```python
 @telemetry_bp.route("/device/<int:device_id>", methods=["GET"])
 def get_device_telemetry_data(device_id):
     """
     Get telemetry data for a device
-    
+
     Query Parameters:
         - data_type (str, optional): Filter by measurement type
         - start_date (ISO string, optional): Start timestamp
-        - end_date (ISO string, optional): End timestamp  
+        - end_date (ISO string, optional): End timestamp
         - limit (int, default: 100): Records per page
         - page (int, default: 1): Page number
-    
+
     Authentication: API key or JWT token
-    
+
     Returns:
         200: Telemetry data with pagination
         404: Device not found
@@ -295,6 +310,7 @@ def get_device_telemetry_data(device_id):
 | `page` | integer | No | 1 | Page number (1-indexed) |
 
 **Request Example:**
+
 ```
 GET /api/v1/telemetry/device/123?data_type=temperature&start_date=2025-01-15T00:00:00Z&end_date=2025-01-16T00:00:00Z&limit=50&page=1
 Headers:
@@ -304,6 +320,7 @@ Headers:
 ```
 
 **Response Schema (Success - 200):**
+
 ```json
 {
   "success": true,
@@ -338,6 +355,7 @@ Headers:
 ```
 
 **Response Schema (Error - 404):**
+
 ```json
 {
   "success": false,
@@ -351,20 +369,21 @@ Headers:
 **Purpose:** Get aggregated telemetry data (avg, sum, min, max, count)
 
 **Route Definition:**
+
 ```python
 @telemetry_bp.route("/device/<int:device_id>/aggregated", methods=["GET"])
 def get_device_aggregated_data(device_id):
     """
     Get aggregated telemetry data for a device
-    
+
     Query Parameters:
         - data_type (str, REQUIRED): Measurement to aggregate
         - aggregation (str, REQUIRED): Function (avg, sum, min, max, count)
         - start_date (ISO string, optional): Start timestamp
         - end_date (ISO string, optional): End timestamp
-    
+
     Authentication: API key or JWT token
-    
+
     Returns:
         200: Aggregated result
         400: Missing required parameters
@@ -383,6 +402,7 @@ def get_device_aggregated_data(device_id):
 | `end_date` | ISO 8601 | No | None | End timestamp |
 
 **Request Example:**
+
 ```
 GET /api/v1/telemetry/device/123/aggregated?data_type=temperature&aggregation=avg&start_date=2025-01-15T00:00:00Z
 Headers:
@@ -390,6 +410,7 @@ Headers:
 ```
 
 **Response Schema (Success - 200):**
+
 ```json
 {
   "success": true,
@@ -408,6 +429,7 @@ Headers:
 ```
 
 **Response Schema (Error - 400):**
+
 ```json
 {
   "success": false,
@@ -419,15 +441,18 @@ Headers:
 ### 3.2 Authentication Requirements
 
 **Current State:**
+
 - ❌ Node.js endpoints have **NO authentication** (security risk)
 - ✅ Flask POST endpoint uses API key authentication
 
 **Target State:**
+
 - ✅ Support **dual authentication**:
   1. **API Key** (`X-API-Key` header) - for device-to-device queries
   2. **JWT Token** (`Authorization: Bearer` header) - for user/admin queries
 
 **Implementation:**
+
 ```python
 from src.middleware.auth import verify_api_key_or_jwt
 
@@ -436,7 +461,7 @@ from src.middleware.auth import verify_api_key_or_jwt
 def get_device_telemetry_data(device_id):
     # Access device from request context (set by middleware)
     authenticated_entity = request.authenticated_entity  # Device or User object
-    
+
     # Authorization: Check if requester has access to device
     if isinstance(authenticated_entity, Device):
         if authenticated_entity.id != device_id:
@@ -448,6 +473,7 @@ def get_device_telemetry_data(device_id):
 ```
 
 **Middleware to Create:**
+
 ```python
 # File: Connectivity-Layer/src/middleware/auth.py
 
@@ -463,7 +489,7 @@ def verify_api_key_or_jwt(f):
                 request.authenticated_entity = device
                 request.auth_type = "api_key"
                 return f(*args, **kwargs)
-        
+
         # Try JWT token
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
@@ -479,15 +505,16 @@ def verify_api_key_or_jwt(f):
                 return jsonify({"error": "Token expired"}), 401
             except jwt.InvalidTokenError:
                 return jsonify({"error": "Invalid token"}), 401
-        
+
         return jsonify({"error": "Authentication required"}), 401
-    
+
     return decorated_function
 ```
 
 ### 3.3 IoTDB Service Enhancements
 
 **Current Method (`get_device_telemetry`):**
+
 ```python
 def get_device_telemetry(device_id, start_time=None, end_time=None, limit=100, user_id=None):
     # Issues:
@@ -498,6 +525,7 @@ def get_device_telemetry(device_id, start_time=None, end_time=None, limit=100, u
 ```
 
 **Enhanced Method (New):**
+
 ```python
 def query_telemetry_data(
     device_id: str,
@@ -510,7 +538,7 @@ def query_telemetry_data(
 ) -> Dict[str, Any]:
     """
     Query telemetry data with filtering and pagination
-    
+
     Args:
         device_id: Device identifier
         user_id: User identifier (for path construction)
@@ -519,7 +547,7 @@ def query_telemetry_data(
         end_date: Optional end timestamp (datetime object)
         limit: Records per page (max 10000)
         page: Page number (1-indexed)
-    
+
     Returns:
         {
             "records": [{"timestamp": ..., "temperature": ...}],
@@ -529,28 +557,28 @@ def query_telemetry_data(
         }
     """
     device_path = iotdb_config.get_device_path(device_id, user_id)
-    
+
     # Build SQL query
     measurements = f"{data_type}" if data_type else "*"
     sql = f"SELECT {measurements} FROM {device_path}"
-    
+
     # Add time filters
     conditions = []
     if start_date:
         conditions.append(f"time >= {int(start_date.timestamp() * 1000)}")
     if end_date:
         conditions.append(f"time <= {int(end_date.timestamp() * 1000)}")
-    
+
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
-    
+
     # Add pagination (offset = (page - 1) * limit)
     offset = (page - 1) * limit
     sql += f" LIMIT {limit} OFFSET {offset}"
-    
+
     # Execute query
     result_set = self.session.execute_query_statement(sql)
-    
+
     # Parse results
     records = []
     while result_set.has_next():
@@ -559,15 +587,15 @@ def query_telemetry_data(
             "timestamp": datetime.fromtimestamp(record.get_timestamp() / 1000).isoformat() + "Z",
             **{field: record.get_field(field) for field in record.get_fields()}
         })
-    
+
     # Get total count (separate query)
     count_sql = f"SELECT COUNT(*) FROM {device_path}"
     if conditions:
         count_sql += " WHERE " + " AND ".join(conditions)
-    
+
     count_result = self.session.execute_query_statement(count_sql)
     total = count_result.next().get_field("count") if count_result.has_next() else 0
-    
+
     return {
         "records": records,
         "total": total,
@@ -577,6 +605,7 @@ def query_telemetry_data(
 ```
 
 **New Method (Aggregation):**
+
 ```python
 def aggregate_telemetry_data(
     device_id: str,
@@ -588,7 +617,7 @@ def aggregate_telemetry_data(
 ) -> Dict[str, Any]:
     """
     Aggregate telemetry data
-    
+
     Args:
         device_id: Device identifier
         user_id: User identifier
@@ -596,7 +625,7 @@ def aggregate_telemetry_data(
         aggregation: Function - "avg", "sum", "min", "max", "count"
         start_date: Optional start timestamp
         end_date: Optional end timestamp
-    
+
     Returns:
         {
             "value": 24.5,
@@ -606,28 +635,28 @@ def aggregate_telemetry_data(
         }
     """
     device_path = iotdb_config.get_device_path(device_id, user_id)
-    
+
     # Validate aggregation function
     valid_aggs = ["avg", "sum", "min", "max", "count"]
     if aggregation.lower() not in valid_aggs:
         raise ValueError(f"Invalid aggregation: {aggregation}")
-    
+
     # Build SQL
     sql = f"SELECT {aggregation.upper()}({data_type}) AS value, COUNT({data_type}) AS count FROM {device_path}"
-    
+
     # Add time filters
     conditions = []
     if start_date:
         conditions.append(f"time >= {int(start_date.timestamp() * 1000)}")
     if end_date:
         conditions.append(f"time <= {int(end_date.timestamp() * 1000)}")
-    
+
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
-    
+
     # Execute
     result_set = self.session.execute_query_statement(sql)
-    
+
     if result_set.has_next():
         record = result_set.next()
         return {
@@ -653,7 +682,7 @@ def aggregate_telemetry_data(
 # Connectivity-Layer/src/models.py
 class Device(db.Model):
     __tablename__ = 'devices'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
@@ -661,7 +690,7 @@ class Device(db.Model):
     api_key = db.Column(db.String(255), unique=True, nullable=False)
     status = db.Column(db.String(20), default='offline')
     last_seen = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    
+
     # Relationship
     user = db.relationship('User', backref='devices')
 ```
@@ -673,9 +702,11 @@ class Device(db.Model):
 ### Phase 1: Enhance IoTDB Service (2-3 hours)
 
 **Files to Modify:**
+
 1. `Connectivity-Layer/src/services/iotdb.py`
 
 **Tasks:**
+
 - [ ] Add `query_telemetry_data()` method with filtering and pagination
 - [ ] Add `aggregate_telemetry_data()` method for aggregations
 - [ ] Update `get_device_telemetry()` to use new method (or deprecate)
@@ -683,6 +714,7 @@ class Device(db.Model):
 - [ ] Write unit tests for new methods
 
 **Test Cases:**
+
 ```python
 # tests/test_iotdb_service.py
 def test_query_telemetry_data_with_filters():
@@ -711,29 +743,32 @@ def test_aggregate_telemetry_data():
 ### Phase 2: Create Authentication Middleware (1-2 hours)
 
 **Files to Create/Modify:**
+
 1. `Connectivity-Layer/src/middleware/auth.py` (create or enhance)
 
 **Tasks:**
+
 - [ ] Implement `verify_api_key_or_jwt()` decorator
 - [ ] Add authorization logic (device/user ownership checks)
 - [ ] Handle token expiration and errors
 - [ ] Write unit tests for authentication
 
 **Test Cases:**
+
 ```python
 # tests/test_auth_middleware.py
 def test_api_key_authentication():
     # Test with valid API key
-    
+
 def test_jwt_authentication():
     # Test with valid JWT token
-    
+
 def test_authorization_device_access():
     # Test device can only access own data
-    
+
 def test_authorization_user_access():
     # Test user can access own devices
-    
+
 def test_admin_access():
     # Test admin can access all devices
 ```
@@ -741,9 +776,11 @@ def test_admin_access():
 ### Phase 3: Implement New Flask Endpoints (3-4 hours)
 
 **Files to Modify:**
+
 1. `Connectivity-Layer/src/routes/telemetry.py`
 
 **Tasks:**
+
 - [ ] Rename existing `get_device_telemetry()` to `get_device_telemetry_legacy()`
 - [ ] Create new `get_device_telemetry_data()` with pagination
 - [ ] Create new `get_device_aggregated_data()`
@@ -752,6 +789,7 @@ def test_admin_access():
 - [ ] Write integration tests
 
 **Test Cases:**
+
 ```python
 # tests/integration/test_telemetry_api.py
 def test_get_telemetry_with_filters():
@@ -761,7 +799,7 @@ def test_get_telemetry_with_filters():
     )
     assert response.status_code == 200
     assert "telemetry" in response.json
-    
+
 def test_get_aggregated_data():
     response = client.get(
         "/api/v1/telemetry/device/123/aggregated?data_type=temperature&aggregation=avg",
@@ -769,7 +807,7 @@ def test_get_aggregated_data():
     )
     assert response.status_code == 200
     assert "aggregation" in response.json
-    
+
 def test_unauthorized_access():
     response = client.get("/api/v1/telemetry/device/123")
     assert response.status_code == 401
@@ -778,9 +816,11 @@ def test_unauthorized_access():
 ### Phase 4: Update Node.js Frontend (1-2 hours)
 
 **Files to Modify:**
+
 1. `IoTFlow_Dashboard/iotflow-frontend/src/services/api.js` (or equivalent)
 
 **Tasks:**
+
 - [ ] Update telemetry API calls to use Flask backend URL
 - [ ] Change base URL from `http://localhost:3001` to `http://localhost:5000` (or unified proxy)
 - [ ] Update request/response handling if structure changed
@@ -788,23 +828,30 @@ def test_unauthorized_access():
 - [ ] Test frontend integration
 
 **Example Changes:**
+
 ```javascript
 // OLD (Node.js)
 const getTelemetryData = async (deviceId, filters) => {
-  const response = await axios.get(`http://localhost:3001/api/telemetry/${deviceId}`, {
-    params: filters
-  });
+  const response = await axios.get(
+    `http://localhost:3001/api/telemetry/${deviceId}`,
+    {
+      params: filters,
+    },
+  );
   return response.data;
 };
 
 // NEW (Flask)
 const getTelemetryData = async (deviceId, filters) => {
-  const response = await axios.get(`http://localhost:5000/api/v1/telemetry/device/${deviceId}`, {
-    params: filters,
-    headers: {
-      'Authorization': `Bearer ${getJWTToken()}`  // Add JWT auth
-    }
-  });
+  const response = await axios.get(
+    `http://localhost:5000/api/v1/telemetry/device/${deviceId}`,
+    {
+      params: filters,
+      headers: {
+        Authorization: `Bearer ${getJWTToken()}`, // Add JWT auth
+      },
+    },
+  );
   return response.data;
 };
 ```
@@ -812,26 +859,39 @@ const getTelemetryData = async (deviceId, filters) => {
 ### Phase 5: Deprecate Node.js Endpoints (30 minutes)
 
 **Files to Modify:**
+
 1. `IoTFlow_Dashboard/iotflow-backend/src/routes/telemetryRoutes.js`
 
 **Tasks:**
+
 - [ ] Add deprecation warnings to Node.js endpoints
 - [ ] Update API documentation
 - [ ] (Optional) Proxy requests to Flask for backward compatibility
 
 **Example:**
+
 ```javascript
 // Deprecation notice
-router.get('/:device_id', (req, res, next) => {
-  console.warn('⚠️ DEPRECATED: Use Flask API at /api/v1/telemetry/device/:id');
-  res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use Flask API.');
-  next();
-}, TelemetryController.getTelemetryData);
+router.get(
+  "/:device_id",
+  (req, res, next) => {
+    console.warn(
+      "⚠️ DEPRECATED: Use Flask API at /api/v1/telemetry/device/:id",
+    );
+    res.set(
+      "X-Deprecation-Warning",
+      "This endpoint is deprecated. Use Flask API.",
+    );
+    next();
+  },
+  TelemetryController.getTelemetryData,
+);
 ```
 
 ### Phase 6: Testing & Documentation (2-3 hours)
 
 **Tasks:**
+
 - [ ] Run full test suite (unit + integration)
 - [ ] Test end-to-end flow (frontend → Flask → IoTDB)
 - [ ] Update API documentation (API_REFERENCE.md)
@@ -846,6 +906,7 @@ router.get('/:device_id', (req, res, next) => {
 ### 5.1 Dependencies
 
 **Flask Backend:**
+
 ```python
 # requirements.txt (already present)
 Flask==2.3.2
@@ -871,24 +932,25 @@ JWT_ALGORITHM=HS256
 
 ### 5.3 API Endpoints Summary
 
-| Endpoint | Method | Backend | Status |
-|----------|--------|---------|--------|
-| `/api/v1/telemetry` | POST | Flask | ✅ Exists |
-| `/api/v1/telemetry/device/:id` | GET | Flask | 🔄 To Implement |
-| `/api/v1/telemetry/device/:id/aggregated` | GET | Flask | 🔄 To Implement |
-| `/api/v1/telemetry/device/:id/latest` | GET | Flask | ✅ Exists |
-| `/api/telemetry/:id` | GET | Node.js | ⚠️ Deprecate |
-| `/api/telemetry/device/:id/aggregated` | GET | Node.js | ⚠️ Deprecate |
+| Endpoint                                  | Method | Backend | Status          |
+| ----------------------------------------- | ------ | ------- | --------------- |
+| `/api/v1/telemetry`                       | POST   | Flask   | ✅ Exists       |
+| `/api/v1/telemetry/device/:id`            | GET    | Flask   | 🔄 To Implement |
+| `/api/v1/telemetry/device/:id/aggregated` | GET    | Flask   | 🔄 To Implement |
+| `/api/v1/telemetry/device/:id/latest`     | GET    | Flask   | ✅ Exists       |
+| `/api/telemetry/:id`                      | GET    | Node.js | ⚠️ Deprecate    |
+| `/api/telemetry/device/:id/aggregated`    | GET    | Node.js | ⚠️ Deprecate    |
 
 ### 5.4 Response Time Targets
 
-| Endpoint | Target | Current (Node.js) |
-|----------|--------|-------------------|
-| GET device telemetry (100 records) | < 200ms | ~150ms |
-| GET aggregated data | < 100ms | ~80ms |
-| POST telemetry | < 50ms | ~40ms |
+| Endpoint                           | Target  | Current (Node.js) |
+| ---------------------------------- | ------- | ----------------- |
+| GET device telemetry (100 records) | < 200ms | ~150ms            |
+| GET aggregated data                | < 100ms | ~80ms             |
+| POST telemetry                     | < 50ms  | ~40ms             |
 
 **Expected Improvement:** 10-20% faster due to:
+
 - No inter-service HTTP calls
 - Native IoTDB session (vs REST API in Node.js)
 - Single Python process
@@ -896,6 +958,7 @@ JWT_ALGORITHM=HS256
 ### 5.5 Error Handling
 
 **Standard Error Response:**
+
 ```json
 {
   "success": false,
@@ -910,6 +973,7 @@ JWT_ALGORITHM=HS256
 ```
 
 **Error Codes:**
+
 - `AUTH_REQUIRED` (401) - No authentication provided
 - `AUTH_INVALID` (401) - Invalid API key or token
 - `FORBIDDEN` (403) - Insufficient permissions
@@ -925,6 +989,7 @@ JWT_ALGORITHM=HS256
 ### 6.1 Unit Tests
 
 **IoTDB Service:**
+
 - [ ] Test `query_telemetry_data()` with all parameter combinations
 - [ ] Test `aggregate_telemetry_data()` with all aggregation functions
 - [ ] Test error handling (device not found, IoTDB down)
@@ -932,6 +997,7 @@ JWT_ALGORITHM=HS256
 - [ ] Test pagination logic
 
 **Authentication Middleware:**
+
 - [ ] Test API key validation
 - [ ] Test JWT token validation
 - [ ] Test token expiration
@@ -941,6 +1007,7 @@ JWT_ALGORITHM=HS256
 ### 6.2 Integration Tests
 
 **API Endpoints:**
+
 - [ ] Test full request/response cycle
 - [ ] Test with real IoTDB instance
 - [ ] Test authentication headers
@@ -951,6 +1018,7 @@ JWT_ALGORITHM=HS256
 ### 6.3 Performance Tests
 
 **Load Testing:**
+
 ```python
 # Using locust (already in project)
 # File: Connectivity-Layer/locust/telemetry_load_test.py
@@ -959,14 +1027,14 @@ from locust import HttpUser, task, between
 
 class TelemetryUser(HttpUser):
     wait_time = between(1, 3)
-    
+
     @task
     def get_telemetry(self):
         self.client.get(
             "/api/v1/telemetry/device/123?limit=100&page=1",
             headers={"X-API-Key": "test_key"}
         )
-    
+
     @task
     def get_aggregated(self):
         self.client.get(
@@ -976,6 +1044,7 @@ class TelemetryUser(HttpUser):
 ```
 
 **Benchmarks:**
+
 - [ ] 100 requests/sec sustained load
 - [ ] < 200ms p95 response time
 - [ ] < 500ms p99 response time
@@ -984,6 +1053,7 @@ class TelemetryUser(HttpUser):
 ### 6.4 Compatibility Tests
 
 **Frontend Integration:**
+
 - [ ] Test React frontend can fetch data
 - [ ] Test data visualization (charts)
 - [ ] Test real-time updates
@@ -994,12 +1064,14 @@ class TelemetryUser(HttpUser):
 ## 7. Migration Checklist
 
 ### Pre-Migration
+
 - [ ] Backup current Node.js telemetry routes
 - [ ] Backup IoTDB database
 - [ ] Document current API usage (log analysis)
 - [ ] Set up monitoring for both backends
 
 ### Development
+
 - [ ] Implement Phase 1: IoTDB service enhancements
 - [ ] Implement Phase 2: Authentication middleware
 - [ ] Implement Phase 3: Flask endpoints
@@ -1007,6 +1079,7 @@ class TelemetryUser(HttpUser):
 - [ ] Code review and approval
 
 ### Testing
+
 - [ ] Run unit tests (100% pass)
 - [ ] Run integration tests (100% pass)
 - [ ] Run performance tests (meet targets)
@@ -1014,6 +1087,7 @@ class TelemetryUser(HttpUser):
 - [ ] Test backward compatibility
 
 ### Deployment
+
 - [ ] Deploy Flask backend with new endpoints
 - [ ] Update frontend to use Flask API
 - [ ] Add deprecation warnings to Node.js endpoints
@@ -1021,6 +1095,7 @@ class TelemetryUser(HttpUser):
 - [ ] Rollback plan ready
 
 ### Post-Migration
+
 - [ ] Monitor production metrics (7 days)
 - [ ] Verify zero errors from Flask endpoints
 - [ ] Remove Node.js endpoints (after 30 days)
@@ -1031,13 +1106,13 @@ class TelemetryUser(HttpUser):
 
 ## 8. Risk Assessment
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| IoTDB data format incompatibility | High | Low | Use same data model, extensive testing |
-| Authentication breaks frontend | High | Medium | Gradual rollout, keep Node.js proxy |
-| Performance degradation | Medium | Low | Load testing before deployment |
-| Data loss during migration | High | Very Low | Read-only migration, no data changes |
-| Frontend breaking changes | High | Medium | API versioning, backward compatibility |
+| Risk                              | Impact | Probability | Mitigation                             |
+| --------------------------------- | ------ | ----------- | -------------------------------------- |
+| IoTDB data format incompatibility | High   | Low         | Use same data model, extensive testing |
+| Authentication breaks frontend    | High   | Medium      | Gradual rollout, keep Node.js proxy    |
+| Performance degradation           | Medium | Low         | Load testing before deployment         |
+| Data loss during migration        | High   | Very Low    | Read-only migration, no data changes   |
+| Frontend breaking changes         | High   | Medium      | API versioning, backward compatibility |
 
 ---
 
@@ -1059,6 +1134,7 @@ class TelemetryUser(HttpUser):
    - Check error rates in monitoring dashboard
 
 **Rollback Criteria:**
+
 - Error rate > 5% for 10 minutes
 - Response time p95 > 500ms for 10 minutes
 - IoTDB connection failures > 10% for 5 minutes
@@ -1068,6 +1144,7 @@ class TelemetryUser(HttpUser):
 ## 10. Success Criteria
 
 **Functional:**
+
 - ✅ All telemetry queries return correct data
 - ✅ Pagination works correctly
 - ✅ Filtering by data_type works
@@ -1076,17 +1153,20 @@ class TelemetryUser(HttpUser):
 - ✅ Frontend displays data correctly
 
 **Performance:**
+
 - ✅ Response time < 200ms (p95)
 - ✅ No increase in error rate
 - ✅ Support 100+ requests/sec
 
 **Quality:**
+
 - ✅ Test coverage > 80%
 - ✅ Zero critical bugs in production (7 days)
 - ✅ API documentation complete
 - ✅ Code review approved
 
 **Operational:**
+
 - ✅ Monitoring dashboards updated
 - ✅ Alerts configured for Flask API
 - ✅ Runbooks updated
@@ -1128,6 +1208,7 @@ A: IoTDB is already in production. Migration only changes which backend queries 
 ## Appendix A: File Locations
 
 **Flask Backend (Connectivity-Layer):**
+
 - Routes: `src/routes/telemetry.py`
 - Service: `src/services/iotdb.py`
 - Config: `src/config/iotdb_config.py`
@@ -1135,12 +1216,14 @@ A: IoTDB is already in production. Migration only changes which backend queries 
 - Tests: `tests/integration/test_telemetry_api.py`
 
 **Node.js Backend (IoTFlow_Dashboard/iotflow-backend):**
+
 - Routes: `src/routes/telemetryRoutes.js`
 - Controller: `src/controllers/telemetryController.js`
 - IoTDB Client: `src/utils/iotdbClient.js`
 - Tests: `tests/integration/telemetry.test.js`
 
 **Frontend (IoTFlow_Dashboard/iotflow-frontend):**
+
 - API Service: `src/services/api.js`
 - Telemetry Components: `src/components/DeviceTelemetry.js`
 - Config: `src/config.js`
@@ -1150,20 +1233,22 @@ A: IoTDB is already in production. Migration only changes which backend queries 
 ## Appendix B: SQL Query Examples
 
 **Node.js (REST API):**
+
 ```sql
 -- Get telemetry data
-SELECT temperature, humidity 
-FROM root.iotflow.users.user_1.devices.device_123 
-WHERE time >= 1705276800000 AND time <= 1705363199999 
+SELECT temperature, humidity
+FROM root.iotflow.users.user_1.devices.device_123
+WHERE time >= 1705276800000 AND time <= 1705363199999
 LIMIT 100 OFFSET 0
 
 -- Get aggregated data
-SELECT AVG(temperature) AS value, COUNT(temperature) AS count 
-FROM root.iotflow.users.user_1.devices.device_123 
+SELECT AVG(temperature) AS value, COUNT(temperature) AS count
+FROM root.iotflow.users.user_1.devices.device_123
 WHERE time >= 1705276800000 AND time <= 1705363199999
 ```
 
 **Flask (Native Session):**
+
 ```python
 # Same SQL, executed via Python session
 sql = "SELECT temperature, humidity FROM root.iotflow.users.user_1.devices.device_123 WHERE time >= 1705276800000 LIMIT 100 OFFSET 0"

@@ -9,9 +9,11 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 ### 1. User Role Mapping (TDD)
 
 **Tests Created:**
+
 - `AuthContext.userRole.test.js` - 3 tests for role mapping logic
 
 **Implementation:**
+
 - Modified `AuthContext.js` to map `is_admin` boolean to `role` string ('admin' or 'user')
 - Applied mapping in `login()`, `register()`, `updateUser()`, and `checkAuthentication()` functions
 - Backward compatibility ensured for existing users
@@ -24,9 +26,11 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 ### 2. Dashboard Routing (TDD)
 
 **Tests Created:**
+
 - `App.dashboardRouting.test.js` - 8 tests for route access control
 
 **Verification:**
+
 - Regular users: Access to Overview, Devices, Telemetry, Profile
 - Regular users: NO access to Admin page (redirects to Overview)
 - Admin users: Access to all pages including Admin page
@@ -40,6 +44,7 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 ### 3. Dashboard Content Differentiation
 
 **User Dashboard (role='user'):**
+
 - Overview: Devices + Telemetry data
 - Devices: Device management
 - ~~Device Control: Send commands~~ ❌ REMOVED (Dec 10, 2025)
@@ -47,6 +52,7 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 - Profile: User settings
 
 **Admin Dashboard (role='admin'):**
+
 - All user features PLUS:
 - Dashboard: Admin dashboard & system overview
 - MQTT: Message broker monitoring
@@ -59,7 +65,7 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 
 1. **`src/contexts/AuthContext.js`**
    - Added role mapping logic in `login()` function
-   - Added role mapping logic in `register()` function  
+   - Added role mapping logic in `register()` function
    - Added role mapping logic in `checkAuthentication()` useEffect
    - Added role mapping logic in `updateUser()` function
    - Ensures backward compatibility for existing users
@@ -83,6 +89,7 @@ Implemented role-based dashboard routing with TDD approach. The system now prope
 ## Test Results
 
 **Total Tests:** 65/65 passing
+
 - AuthContext user role: 3/3 ✅
 - Dashboard routing: 8/8 ✅
 - Existing tests: 54/54 ✅ (no regressions)
@@ -128,6 +135,7 @@ To complete the admin dashboard functionality, you'll need to:
 **Creating an Admin User:**
 
 Backend should allow creating admin users. You can either:
+
 1. Set `is_admin: true` directly in database
 2. Create a seed script to create initial admin user
 3. Add admin registration endpoint (protected)
@@ -136,11 +144,14 @@ Backend should allow creating admin users. You can either:
 
 ```javascript
 // In browser console after login:
-localStorage.setItem('iotflow_user', JSON.stringify({
-  ...JSON.parse(localStorage.getItem('iotflow_user')),
-  is_admin: true,
-  role: 'admin'
-}));
+localStorage.setItem(
+  "iotflow_user",
+  JSON.stringify({
+    ...JSON.parse(localStorage.getItem("iotflow_user")),
+    is_admin: true,
+    role: "admin",
+  }),
+);
 // Then refresh the page
 ```
 

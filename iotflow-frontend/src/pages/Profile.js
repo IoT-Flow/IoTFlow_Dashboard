@@ -25,6 +25,8 @@ import {
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/apiService';
+import { safeFormatDate, safeFormatDateTime } from '../utils/dateFormatter';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -94,19 +96,23 @@ const Profile = () => {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the real API
+      const response = await api.updateProfile({
+        username: profileData.username,
+        email: profileData.email,
+      });
 
-      const updatedUser = {
+      const updatedUser = response.user || {
         ...user,
         ...profileData,
       };
 
       updateUser(updatedUser);
       setIsEditing(false);
-      toast.success('Profile updated successfully');
+      toast.success(response.message || 'Profile updated successfully');
     } catch (error) {
-      toast.error('Failed to update profile');
+      const errorMessage = error.response?.data?.message || 'Failed to update profile';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -118,15 +124,18 @@ const Profile = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+    if (passwordData.newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters long');
       return;
     }
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the real API
+      const response = await api.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
 
       setPasswordData({
         currentPassword: '',
@@ -134,9 +143,10 @@ const Profile = () => {
         confirmPassword: '',
       });
       setChangePasswordOpen(false);
-      toast.success('Password changed successfully');
+      toast.success(response.message || 'Password changed successfully');
     } catch (error) {
-      toast.error('Failed to change password');
+      const errorMessage = error.response?.data?.message || 'Failed to change password';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -191,13 +201,15 @@ const Profile = () => {
                   Account Information
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Member since:</strong> {new Date(user?.createdAt).toLocaleDateString()}
+                  <strong>Member since:</strong>{' '}
+                  {safeFormatDate(user?.createdAt || user?.created_at, 'Not available')}
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Last login:</strong> {new Date(user?.lastLogin).toLocaleString()}
+                  <strong>Last login:</strong>{' '}
+                  {safeFormatDateTime(user?.lastLogin || user?.last_login, 'Never')}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Role:</strong> {user?.role}
+                  <strong>Role:</strong> {user?.role || (user?.is_admin ? 'admin' : 'user')}
                 </Typography>
               </Box>
             </CardContent>

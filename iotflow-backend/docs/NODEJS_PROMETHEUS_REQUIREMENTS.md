@@ -31,6 +31,7 @@ Frontend
 ## 📦 Required Packages
 
 Add to `package.json`:
+
 ```json
 {
   "dependencies": {
@@ -44,11 +45,13 @@ Add to `package.json`:
 ## 🔌 Required API Endpoints
 
 ### 1. System Overview
+
 **GET** `/api/v1/admin/monitoring/system`
 
 **Authentication**: Admin JWT required
 
 **Response**:
+
 ```json
 {
   "timestamp": "2025-12-10T10:00:00Z",
@@ -70,6 +73,7 @@ Add to `package.json`:
 ```
 
 **Prometheus Queries**:
+
 - `system_cpu_usage_percent`
 - `system_memory_usage_percent`
 - `system_disk_usage_percent{path="/"}`
@@ -77,11 +81,13 @@ Add to `package.json`:
 ---
 
 ### 2. Application Statistics
+
 **GET** `/api/v1/admin/monitoring/application`
 
 **Authentication**: Admin JWT required
 
 **Response**:
+
 ```json
 {
   "timestamp": "2025-12-10T10:00:00Z",
@@ -102,6 +108,7 @@ Add to `package.json`:
 ```
 
 **Prometheus Queries**:
+
 - `iotflow_devices_total`
 - `iotflow_devices_active`
 - `increase(flask_http_requests_total[1d])`
@@ -111,11 +118,13 @@ Add to `package.json`:
 ---
 
 ### 3. Database Metrics
+
 **GET** `/api/v1/admin/monitoring/database`
 
 **Authentication**: Admin JWT required
 
 **Response**:
+
 ```json
 {
   "timestamp": "2025-12-10T10:00:00Z",
@@ -142,6 +151,7 @@ Add to `package.json`:
 ```
 
 **Prometheus Queries**:
+
 - `database_connections_active`
 - `database_connections_idle`
 - `database_table_rows`
@@ -150,11 +160,13 @@ Add to `package.json`:
 ---
 
 ### 4. MQTT Metrics
+
 **GET** `/api/v1/admin/monitoring/mqtt`
 
 **Authentication**: Admin JWT required
 
 **Response**:
+
 ```json
 {
   "timestamp": "2025-12-10T10:00:00Z",
@@ -173,6 +185,7 @@ Add to `package.json`:
 ```
 
 **Prometheus Queries**:
+
 - `mqtt_connections_total`
 - `mqtt_connections_active`
 - `mqtt_messages_received_total`
@@ -181,11 +194,13 @@ Add to `package.json`:
 ---
 
 ### 5. Redis Metrics
+
 **GET** `/api/v1/admin/monitoring/redis`
 
 **Authentication**: Admin JWT required
 
 **Response**:
+
 ```json
 {
   "timestamp": "2025-12-10T10:00:00Z",
@@ -206,6 +221,7 @@ Add to `package.json`:
 ```
 
 **Prometheus Queries**:
+
 - `redis_status`
 - `redis_memory_used_bytes`
 - `redis_keys_total`
@@ -214,16 +230,19 @@ Add to `package.json`:
 ---
 
 ### 6. Time-Series Data (Historical)
+
 **GET** `/api/v1/admin/monitoring/timeseries`
 
 **Authentication**: Admin JWT required
 
 **Query Parameters**:
+
 - `metric` (required): Metric name (cpu, memory, requests, etc.)
 - `range` (optional): Time range (1h, 6h, 24h, 7d, 30d) - default: 24h
 - `step` (optional): Data point interval (1m, 5m, 1h) - default: auto
 
 **Response**:
+
 ```json
 {
   "metric": "cpu",
@@ -249,16 +268,19 @@ Add to `package.json`:
 ```
 
 **Prometheus Query**:
+
 - `system_cpu_usage_percent[24h:5m]` (range query)
 
 ---
 
 ### 7. Health Check
+
 **GET** `/api/v1/admin/monitoring/health`
 
 **Authentication**: Admin JWT required
 
 **Response**:
+
 ```json
 {
   "status": "healthy",
@@ -274,6 +296,7 @@ Add to `package.json`:
 ```
 
 **Prometheus Queries**:
+
 - Check if metrics are recent (< 1 minute old)
 - `up{job="flask_iotflow_connectivity"}`
 
@@ -282,6 +305,7 @@ Add to `package.json`:
 ## 🏗️ Implementation Structure
 
 ### File Structure
+
 ```
 iotflow-backend/
 ├── src/
@@ -296,6 +320,7 @@ iotflow-backend/
 ```
 
 ### Controller Responsibilities
+
 - Validate admin authentication
 - Parse query parameters
 - Call PrometheusService
@@ -304,6 +329,7 @@ iotflow-backend/
 - Cache responses (optional, 30-60 seconds)
 
 ### Service Responsibilities
+
 - Connect to Prometheus HTTP API
 - Execute PromQL queries
 - Parse Prometheus response format
@@ -316,6 +342,7 @@ iotflow-backend/
 ## 🔧 Configuration Requirements
 
 ### Environment Variables
+
 ```env
 PROMETHEUS_URL=http://prometheus:9090
 PROMETHEUS_TIMEOUT=10000
@@ -323,6 +350,7 @@ PROMETHEUS_CACHE_TTL=30
 ```
 
 ### Prometheus Connection
+
 - **Base URL**: `http://prometheus:9090`
 - **Query Endpoint**: `/api/v1/query`
 - **Range Query Endpoint**: `/api/v1/query_range`
@@ -345,29 +373,34 @@ PROMETHEUS_CACHE_TTL=30
 ## 📊 PromQL Query Examples
 
 ### Instant Queries (Current Value)
+
 ```
 system_cpu_usage_percent
 ```
 
 ### Rate Calculations (Per Second)
+
 ```
 rate(flask_http_requests_total[5m])
 ```
 
 ### Aggregations
+
 ```
 sum(database_table_rows)
 avg_over_time(system_cpu_usage_percent[1h])
 ```
 
 ### Range Queries (Time Series)
+
 ```
 system_cpu_usage_percent[24h:5m]
 ```
 
 ### Complex Calculations
+
 ```
-rate(redis_cache_hits_total[5m]) / 
+rate(redis_cache_hits_total[5m]) /
 (rate(redis_cache_hits_total[5m]) + rate(redis_cache_misses_total[5m])) * 100
 ```
 
@@ -376,18 +409,21 @@ rate(redis_cache_hits_total[5m]) /
 ## 🧪 Testing Requirements
 
 ### Unit Tests
+
 1. PrometheusService query execution
 2. Data transformation logic
 3. Error handling
 4. Cache functionality
 
 ### Integration Tests
+
 1. Prometheus API connectivity
 2. Query execution and response parsing
 3. Authentication middleware
 4. Rate limiting
 
 ### E2E Tests
+
 1. Frontend can fetch metrics
 2. Real-time data updates
 3. Historical data retrieval
@@ -409,6 +445,7 @@ rate(redis_cache_hits_total[5m]) /
 ## 🎯 Error Handling
 
 ### Error Scenarios
+
 1. Prometheus server unreachable
 2. Invalid PromQL query
 3. No data available for time range
@@ -416,6 +453,7 @@ rate(redis_cache_hits_total[5m]) /
 5. Invalid authentication
 
 ### Error Response Format
+
 ```json
 {
   "error": "Failed to fetch metrics",
@@ -445,6 +483,7 @@ rate(redis_cache_hits_total[5m]) /
 ## 📝 API Documentation Format
 
 Use OpenAPI/Swagger for API documentation:
+
 - Request/response schemas
 - Authentication requirements
 - Query parameters

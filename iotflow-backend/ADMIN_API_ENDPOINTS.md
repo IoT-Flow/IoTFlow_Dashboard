@@ -8,6 +8,7 @@
 ## 🔐 Authentication
 
 All admin endpoints require:
+
 - **JWT Token** in `Authorization` header: `Bearer <token>`
 - **Admin Role** (`is_admin: true` or `role: 'admin'`)
 
@@ -35,11 +36,13 @@ All routes under this path automatically require admin authentication via middle
 ### 👥 User Management
 
 #### 1. Get All Users
+
 ```http
 GET /api/v1/admin/users
 ```
 
 **Response (without pagination params):** `200 OK`
+
 ```json
 [
   {
@@ -68,6 +71,7 @@ GET /api/v1/admin/users
 ```
 
 **Response (with pagination params):** `200 OK`
+
 ```json
 {
   "users": [
@@ -88,6 +92,7 @@ GET /api/v1/admin/users
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Page number for pagination
 - `limit` (optional): Items per page (default: 50)
 - `is_active` (optional): Filter by active status (true/false)
@@ -95,15 +100,18 @@ GET /api/v1/admin/users
 - `search` (optional): Search in username or email
 
 **Important:** The response format changes based on whether pagination parameters are provided:
+
 - **Without `page` or `limit`**: Returns array directly `[user1, user2, ...]`
 - **With `page` or `limit`**: Returns object `{ users: [...], total, page, limit, totalPages }`
 
 #### 2. Get Single User
+
 ```http
 GET /api/v1/admin/users/:id
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "id": 1,
@@ -118,6 +126,7 @@ GET /api/v1/admin/users/:id
 ```
 
 #### 3. Create User
+
 ```http
 POST /api/v1/admin/users
 Content-Type: application/json
@@ -132,6 +141,7 @@ Content-Type: application/json
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "message": "User created successfully",
@@ -140,6 +150,7 @@ Content-Type: application/json
 ```
 
 #### 4. Update User
+
 ```http
 PUT /api/v1/admin/users/:id
 Content-Type: application/json
@@ -153,6 +164,7 @@ Content-Type: application/json
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "message": "User updated successfully"
@@ -160,11 +172,13 @@ Content-Type: application/json
 ```
 
 #### 5. Delete User
+
 ```http
 DELETE /api/v1/admin/users/:id
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "message": "User deleted successfully"
@@ -172,11 +186,13 @@ DELETE /api/v1/admin/users/:id
 ```
 
 #### 6. Get User's Devices
+
 ```http
 GET /api/v1/admin/users/:id/devices
 ```
 
 **Response:** `200 OK`
+
 ```json
 [
   {
@@ -205,11 +221,13 @@ GET /api/v1/admin/users/:id/devices
 ### 📱 Device Management
 
 #### 7. Get All Devices (Admin View)
+
 ```http
 GET /api/v1/admin/devices
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "devices": [
@@ -242,6 +260,7 @@ GET /api/v1/admin/devices
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Page number for pagination (default: 1)
 - `limit` (optional): Items per page (default: 50)
 - `status` (optional): Filter by status (online/offline/active)
@@ -249,11 +268,13 @@ GET /api/v1/admin/devices
 - `user_id` (optional): Filter by user
 
 #### 8. Get Single Device (Admin View)
+
 ```http
 GET /api/v1/admin/devices/:id
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "id": 1,
@@ -275,11 +296,13 @@ GET /api/v1/admin/devices/:id
 ```
 
 #### 9. Delete Device (Admin)
+
 ```http
 DELETE /api/v1/admin/devices/:id
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "message": "Device deleted successfully",
@@ -288,6 +311,7 @@ DELETE /api/v1/admin/devices/:id
 ```
 
 **Note:** This will also delete:
+
 - Associated device configurations
 - Chart-device relationships
 
@@ -296,11 +320,13 @@ DELETE /api/v1/admin/devices/:id
 ### 📊 Statistics
 
 #### 10. Get System Statistics
+
 ```http
 GET /api/v1/admin/stats
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "totalUsers": 50,
@@ -324,12 +350,14 @@ These endpoints exist outside the Admin V1 namespace but provide admin functiona
 **Base Path:** `/api/devices`
 
 #### Get All Devices (Admin View)
+
 ```http
 GET /api/devices/admin/devices
 Authorization: Bearer <admin_token>
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "devices": [
@@ -352,6 +380,7 @@ Authorization: Bearer <admin_token>
 ```
 
 **Query Parameters:**
+
 - `status` (optional): Filter by status (online/offline/active)
 - `device_type` (optional): Filter by device type
 - `user_id` (optional): Filter by specific user
@@ -362,24 +391,26 @@ Authorization: Bearer <admin_token>
 
 ## 🆚 Comparison: Admin V1 vs Legacy
 
-| Feature | Admin V1 API | Legacy API |
-|---------|-------------|------------|
-| **Base Path** | `/api/v1/admin/*` | Mixed paths |
-| **Authentication** | Automatic via middleware | Per-route middleware |
-| **Consistency** | ✅ Consistent structure | ⚠️ Mixed patterns |
-| **Versioning** | ✅ Versioned (v1) | ❌ No versioning |
-| **Recommended** | ✅ **Yes** | ⚠️ Use only if needed |
+| Feature            | Admin V1 API             | Legacy API            |
+| ------------------ | ------------------------ | --------------------- |
+| **Base Path**      | `/api/v1/admin/*`        | Mixed paths           |
+| **Authentication** | Automatic via middleware | Per-route middleware  |
+| **Consistency**    | ✅ Consistent structure  | ⚠️ Mixed patterns     |
+| **Versioning**     | ✅ Versioned (v1)        | ❌ No versioning      |
+| **Recommended**    | ✅ **Yes**               | ⚠️ Use only if needed |
 
 ---
 
 ## 🔒 Security Notes
 
 ### Authentication Requirements
+
 1. **JWT Token**: Must be valid and not expired
 2. **Admin Role**: User must have `is_admin: true` OR `role: 'admin'`
 3. **Token Validation**: Tokens are validated on every request
 
 ### Built-in Security Features
+
 The Admin V1 API includes these security safeguards:
 
 1. **Self-Protection**: Admins cannot:
@@ -397,6 +428,7 @@ The Admin V1 API includes these security safeguards:
    - Password updates are optional in PUT requests
 
 ### Best Practices
+
 - Always use HTTPS in production
 - Rotate admin passwords regularly
 - Use strong password policies (enforced at application level)
@@ -410,6 +442,7 @@ The Admin V1 API includes these security safeguards:
 ## 🚨 Error Responses
 
 ### 401 Unauthorized
+
 ```json
 {
   "message": "Access denied. No token provided."
@@ -417,6 +450,7 @@ The Admin V1 API includes these security safeguards:
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "message": "Access denied. Admin privileges required."
@@ -424,6 +458,7 @@ The Admin V1 API includes these security safeguards:
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "message": "User not found"
@@ -431,17 +466,16 @@ The Admin V1 API includes these security safeguards:
 ```
 
 ### 400 Bad Request
+
 ```json
 {
   "message": "Validation error",
-  "errors": [
-    "Username is required",
-    "Email must be valid"
-  ]
+  "errors": ["Username is required", "Email must be valid"]
 }
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "message": "Internal server error"
@@ -460,9 +494,9 @@ const getAllUsers = async () => {
   const token = localStorage.getItem('token');
   const response = await fetch('http://localhost:5000/api/v1/admin/users', {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
   return await response.json(); // Returns array directly
 };
@@ -474,9 +508,9 @@ const getAllUsersPaginated = async (page = 1, limit = 50) => {
     `http://localhost:5000/api/v1/admin/users?page=${page}&limit=${limit}`,
     {
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     }
   );
   const data = await response.json();
@@ -489,10 +523,10 @@ const updateUser = async (userId, updates) => {
   const response = await fetch(`http://localhost:5000/api/v1/admin/users/${userId}`, {
     method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(updates) // e.g., { is_admin: true, is_active: true }
+    body: JSON.stringify(updates), // e.g., { is_admin: true, is_active: true }
   });
   return await response.json();
 };
@@ -502,9 +536,9 @@ const getAllDevices = async () => {
   const token = localStorage.getItem('token');
   const response = await fetch('http://localhost:5000/api/v1/admin/devices', {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
   return await response.json(); // Returns { devices, total, page, limit, totalPages }
 };
@@ -514,24 +548,24 @@ const getSystemStats = async () => {
   const token = localStorage.getItem('token');
   const response = await fetch('http://localhost:5000/api/v1/admin/stats', {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
   return await response.json();
-  // Returns { totalUsers, activeUsers, inactiveUsers, adminUsers, 
+  // Returns { totalUsers, activeUsers, inactiveUsers, adminUsers,
   //           totalDevices, activeDevices, offlineDevices }
 };
 
 // Delete device
-const deleteDevice = async (deviceId) => {
+const deleteDevice = async deviceId => {
   const token = localStorage.getItem('token');
   const response = await fetch(`http://localhost:5000/api/v1/admin/devices/${deviceId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
   return await response.json(); // Returns { message, success: true }
 };
@@ -575,18 +609,18 @@ curl -X GET http://localhost:5000/api/v1/admin/stats \
 
 ### Admin V1 API Endpoints (10 total)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/admin/users` | Get all users |
-| GET | `/api/v1/admin/users/:id` | Get single user |
-| POST | `/api/v1/admin/users` | Create user |
-| PUT | `/api/v1/admin/users/:id` | Update user |
-| DELETE | `/api/v1/admin/users/:id` | Delete user |
-| GET | `/api/v1/admin/users/:id/devices` | Get user's devices |
-| GET | `/api/v1/admin/devices` | Get all devices |
-| GET | `/api/v1/admin/devices/:id` | Get single device |
-| DELETE | `/api/v1/admin/devices/:id` | Delete device |
-| GET | `/api/v1/admin/stats` | Get system statistics |
+| Method | Endpoint                          | Description           |
+| ------ | --------------------------------- | --------------------- |
+| GET    | `/api/v1/admin/users`             | Get all users         |
+| GET    | `/api/v1/admin/users/:id`         | Get single user       |
+| POST   | `/api/v1/admin/users`             | Create user           |
+| PUT    | `/api/v1/admin/users/:id`         | Update user           |
+| DELETE | `/api/v1/admin/users/:id`         | Delete user           |
+| GET    | `/api/v1/admin/users/:id/devices` | Get user's devices    |
+| GET    | `/api/v1/admin/devices`           | Get all devices       |
+| GET    | `/api/v1/admin/devices/:id`       | Get single device     |
+| DELETE | `/api/v1/admin/devices/:id`       | Delete device         |
+| GET    | `/api/v1/admin/stats`             | Get system statistics |
 
 ---
 
@@ -595,20 +629,23 @@ curl -X GET http://localhost:5000/api/v1/admin/stats \
 If you're using legacy admin endpoints, migrate to Admin V1 API:
 
 ### Before (Legacy)
+
 ```javascript
 fetch('http://localhost:5000/api/users', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  headers: { Authorization: `Bearer ${token}` },
 });
 ```
 
 ### After (Admin V1)
+
 ```javascript
 fetch('http://localhost:5000/api/v1/admin/users', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  headers: { Authorization: `Bearer ${token}` },
 });
 ```
 
 **Benefits:**
+
 - ✅ Cleaner URL structure
 - ✅ Better organization
 - ✅ Version control

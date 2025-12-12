@@ -9,6 +9,7 @@ This document outlines the Test-Driven Development approach for the IoTFlow Dash
 ## TDD Philosophy
 
 **Test-Driven Development Cycle:**
+
 ```
 1. 🔴 RED   → Write a failing test
 2. 🟢 GREEN → Write minimal code to pass
@@ -17,6 +18,7 @@ This document outlines the Test-Driven Development approach for the IoTFlow Dash
 ```
 
 **Benefits:**
+
 - Ensures code correctness before implementation
 - Provides living documentation
 - Facilitates refactoring with confidence
@@ -30,13 +32,13 @@ This document outlines the Test-Driven Development approach for the IoTFlow Dash
 
 ### Core Testing Tools
 
-| Tool | Purpose | Version |
-|------|---------|---------|
-| **Jest** | Test framework | 30.0.4+ |
-| **Supertest** | HTTP testing | 7.1.3+ |
-| **@testing-library** | Component testing | Latest |
-| **ws** | WebSocket testing | 8.14.2+ |
-| **sequelize-test-helpers** | Database testing | Latest |
+| Tool                       | Purpose           | Version |
+| -------------------------- | ----------------- | ------- |
+| **Jest**                   | Test framework    | 30.0.4+ |
+| **Supertest**              | HTTP testing      | 7.1.3+  |
+| **@testing-library**       | Component testing | Latest  |
+| **ws**                     | WebSocket testing | 8.14.2+ |
+| **sequelize-test-helpers** | Database testing  | Latest  |
 
 ### Additional Tools
 
@@ -111,6 +113,7 @@ iotflow-backend/
 **Purpose:** Test individual functions and methods in isolation
 
 **Characteristics:**
+
 - Fast execution (< 10ms per test)
 - No external dependencies
 - Use mocks for dependencies
@@ -120,66 +123,66 @@ iotflow-backend/
 
 ```javascript
 // tests/unit/models/user.test.js
-const { User } = require('../../../src/models');
-const bcrypt = require('bcrypt');
+const { User } = require("../../../src/models");
+const bcrypt = require("bcrypt");
 
-describe('User Model', () => {
-  describe('User Creation', () => {
-    it('should create a user with hashed password', async () => {
+describe("User Model", () => {
+  describe("User Creation", () => {
+    it("should create a user with hashed password", async () => {
       const userData = {
-        username: 'testuser',
-        email: 'test@example.com',
-        password_hash: await bcrypt.hash('password123', 10)
+        username: "testuser",
+        email: "test@example.com",
+        password_hash: await bcrypt.hash("password123", 10),
       };
-      
+
       const user = await User.create(userData);
-      
-      expect(user.username).toBe('testuser');
-      expect(user.email).toBe('test@example.com');
+
+      expect(user.username).toBe("testuser");
+      expect(user.email).toBe("test@example.com");
       expect(user.user_id).toBeDefined();
       expect(user.user_id).toHaveLength(32);
     });
-    
-    it('should generate unique user_id', async () => {
+
+    it("should generate unique user_id", async () => {
       const user1 = await User.create({
-        username: 'user1',
-        email: 'user1@example.com',
-        password_hash: 'hash1'
+        username: "user1",
+        email: "user1@example.com",
+        password_hash: "hash1",
       });
-      
+
       const user2 = await User.create({
-        username: 'user2',
-        email: 'user2@example.com',
-        password_hash: 'hash2'
+        username: "user2",
+        email: "user2@example.com",
+        password_hash: "hash2",
       });
-      
+
       expect(user1.user_id).not.toBe(user2.user_id);
     });
   });
-  
-  describe('User Validation', () => {
-    it('should require username', async () => {
+
+  describe("User Validation", () => {
+    it("should require username", async () => {
       await expect(
         User.create({
-          email: 'test@example.com',
-          password_hash: 'hash'
-        })
+          email: "test@example.com",
+          password_hash: "hash",
+        }),
       ).rejects.toThrow();
     });
-    
-    it('should require unique email', async () => {
+
+    it("should require unique email", async () => {
       await User.create({
-        username: 'user1',
-        email: 'duplicate@example.com',
-        password_hash: 'hash'
+        username: "user1",
+        email: "duplicate@example.com",
+        password_hash: "hash",
       });
-      
+
       await expect(
         User.create({
-          username: 'user2',
-          email: 'duplicate@example.com',
-          password_hash: 'hash'
-        })
+          username: "user2",
+          email: "duplicate@example.com",
+          password_hash: "hash",
+        }),
       ).rejects.toThrow();
     });
   });
@@ -191,103 +194,93 @@ describe('User Model', () => {
 **Purpose:** Test interactions between components
 
 **Characteristics:**
+
 - Test API endpoints
 - Use test database
 - Test service integrations
 - Verify data flow
 
 **Example Structure:**
+
 ```javascript
 // tests/integration/api/auth.test.js
-const request = require('supertest');
-const app = require('../../../src/app');
-const { User } = require('../../../src/models');
-const { sequelize } = require('../../../src/utils/db');
+const request = require("supertest");
+const app = require("../../../src/app");
+const { User } = require("../../../src/models");
+const { sequelize } = require("../../../src/utils/db");
 
-describe('Authentication API', () => {
+describe("Authentication API", () => {
   beforeAll(async () => {
     await sequelize.sync({ force: true });
   });
-  
+
   afterAll(async () => {
     await sequelize.close();
   });
-  
-  describe('POST /api/auth/register', () => {
-    it('should register a new user successfully', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'newuser',
-          email: 'newuser@example.com',
-          password: 'password123'
-        });
-      
+
+  describe("POST /api/auth/register", () => {
+    it("should register a new user successfully", async () => {
+      const response = await request(app).post("/api/auth/register").send({
+        username: "newuser",
+        email: "newuser@example.com",
+        password: "password123",
+      });
+
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('user');
-      expect(response.body).toHaveProperty('token');
-      expect(response.body.user.username).toBe('newuser');
-      expect(response.body.user.email).toBe('newuser@example.com');
+      expect(response.body).toHaveProperty("user");
+      expect(response.body).toHaveProperty("token");
+      expect(response.body.user.username).toBe("newuser");
+      expect(response.body.user.email).toBe("newuser@example.com");
     });
-    
-    it('should return 409 for duplicate email', async () => {
+
+    it("should return 409 for duplicate email", async () => {
       // Create first user
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'user1',
-          email: 'duplicate@example.com',
-          password: 'password123'
-        });
-      
+      await request(app).post("/api/auth/register").send({
+        username: "user1",
+        email: "duplicate@example.com",
+        password: "password123",
+      });
+
       // Try to create second user with same email
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'user2',
-          email: 'duplicate@example.com',
-          password: 'password123'
-        });
-      
+      const response = await request(app).post("/api/auth/register").send({
+        username: "user2",
+        email: "duplicate@example.com",
+        password: "password123",
+      });
+
       expect(response.status).toBe(409);
-      expect(response.body.message).toContain('already exists');
+      expect(response.body.message).toContain("already exists");
     });
   });
-  
-  describe('POST /api/auth/login', () => {
+
+  describe("POST /api/auth/login", () => {
     beforeEach(async () => {
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'loginuser',
-          email: 'login@example.com',
-          password: 'password123'
-        });
+      await request(app).post("/api/auth/register").send({
+        username: "loginuser",
+        email: "login@example.com",
+        password: "password123",
+      });
     });
-    
-    it('should login with valid credentials', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'login@example.com',
-          password: 'password123'
-        });
-      
+
+    it("should login with valid credentials", async () => {
+      const response = await request(app).post("/api/auth/login").send({
+        email: "login@example.com",
+        password: "password123",
+      });
+
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('token');
-      expect(response.body.user.email).toBe('login@example.com');
+      expect(response.body).toHaveProperty("token");
+      expect(response.body.user.email).toBe("login@example.com");
     });
-    
-    it('should return 401 for invalid password', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'login@example.com',
-          password: 'wrongpassword'
-        });
-      
+
+    it("should return 401 for invalid password", async () => {
+      const response = await request(app).post("/api/auth/login").send({
+        email: "login@example.com",
+        password: "wrongpassword",
+      });
+
       expect(response.status).toBe(401);
-      expect(response.body.message).toContain('Invalid credentials');
+      expect(response.body.message).toContain("Invalid credentials");
     });
   });
 });
@@ -298,113 +291,116 @@ describe('Authentication API', () => {
 **Purpose:** Test complete user workflows
 
 **Example Structure:**
+
 ```javascript
 // tests/e2e/deviceLifecycle.test.js
-const request = require('supertest');
-const app = require('../../src/app');
-const WebSocket = require('ws');
+const request = require("supertest");
+const app = require("../../src/app");
+const WebSocket = require("ws");
 
-describe('Device Lifecycle E2E', () => {
+describe("Device Lifecycle E2E", () => {
   let authToken;
   let userId;
   let deviceId;
   let wsClient;
-  
+
   beforeAll(async () => {
     // Register and login user
     const registerResponse = await request(app)
-      .post('/api/auth/register')
+      .post("/api/auth/register")
       .send({
-        username: 'e2euser',
-        email: 'e2e@example.com',
-        password: 'password123'
+        username: "e2euser",
+        email: "e2e@example.com",
+        password: "password123",
       });
-    
+
     authToken = registerResponse.body.token;
     userId = registerResponse.body.user.id;
-    
+
     // Connect WebSocket
-    wsClient = new WebSocket('ws://localhost:3001/ws');
-    await new Promise(resolve => wsClient.on('open', resolve));
-    
+    wsClient = new WebSocket("ws://localhost:3001/ws");
+    await new Promise((resolve) => wsClient.on("open", resolve));
+
     // Authenticate WebSocket
-    wsClient.send(JSON.stringify({
-      type: 'auth',
-      token: authToken
-    }));
+    wsClient.send(
+      JSON.stringify({
+        type: "auth",
+        token: authToken,
+      }),
+    );
   });
-  
+
   afterAll(async () => {
     wsClient.close();
   });
-  
-  it('should complete full device lifecycle', async () => {
+
+  it("should complete full device lifecycle", async () => {
     // 1. Create device
     const createResponse = await request(app)
-      .post('/api/devices')
-      .set('x-api-key', authToken)
+      .post("/api/devices")
+      .set("x-api-key", authToken)
       .send({
-        name: 'E2E Test Device',
-        device_type: 'sensor',
-        location: 'Test Lab'
+        name: "E2E Test Device",
+        device_type: "sensor",
+        location: "Test Lab",
       });
-    
+
     expect(createResponse.status).toBe(201);
     deviceId = createResponse.body.id;
-    
+
     // 2. Get device details
     const getResponse = await request(app)
       .get(`/api/devices/${deviceId}`)
-      .set('x-api-key', authToken);
-    
+      .set("x-api-key", authToken);
+
     expect(getResponse.status).toBe(200);
-    expect(getResponse.body.name).toBe('E2E Test Device');
-    
+    expect(getResponse.body.name).toBe("E2E Test Device");
+
     // 3. Submit telemetry
     const telemetryResponse = await request(app)
-      .post('/api/telemetry')
-      .set('x-api-key', authToken)
+      .post("/api/telemetry")
+      .set("x-api-key", authToken)
       .send({
         device_id: deviceId,
-        data_type: 'temperature',
+        data_type: "temperature",
         value: 25.5,
-        unit: '°C'
+        unit: "°C",
       });
-    
+
     expect(telemetryResponse.status).toBe(201);
-    
+
     // 4. Query telemetry
     const queryResponse = await request(app)
       .get(`/api/telemetry/device/${deviceId}`)
-      .set('x-api-key', authToken);
-    
+      .set("x-api-key", authToken);
+
     expect(queryResponse.status).toBe(200);
     expect(queryResponse.body.telemetry.length).toBeGreaterThan(0);
-    
+
     // 5. Update device
     const updateResponse = await request(app)
       .put(`/api/devices/${deviceId}`)
-      .set('x-api-key', authToken)
+      .set("x-api-key", authToken)
       .send({
-        status: 'active',
-        location: 'Updated Lab'
+        status: "active",
+        location: "Updated Lab",
       });
-    
+
     expect(updateResponse.status).toBe(200);
-    expect(updateResponse.body.location).toBe('Updated Lab');
-    
+    expect(updateResponse.body.location).toBe("Updated Lab");
+
     // 6. Delete device
     const deleteResponse = await request(app)
       .delete(`/api/devices/${deviceId}`)
-      .set('x-api-key', authToken);
-    
+      .set("x-api-key", authToken);
+
     expect(deleteResponse.status).toBe(200);
-    
+
     // 7. Verify deletion
     const verifyResponse = await request(app)
       .get(`/api/devices/${deviceId}`)
-      .set('x-api-key', authToken);
-    
+      .set("x-api-key", authToken);
+
     expect(verifyResponse.status).toBe(404);
   });
 });
@@ -418,54 +414,54 @@ describe('Device Lifecycle E2E', () => {
 
 ```javascript
 // tests/helpers/factories.js
-const { User, Device, Notification } = require('../../src/models');
-const bcrypt = require('bcrypt');
-const { v4: uuidv4 } = require('uuid');
+const { User, Device, Notification } = require("../../src/models");
+const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 
 class TestFactory {
   static async createUser(overrides = {}) {
     const defaults = {
       username: `user_${Date.now()}`,
       email: `user_${Date.now()}@example.com`,
-      password_hash: await bcrypt.hash('password123', 10),
+      password_hash: await bcrypt.hash("password123", 10),
       is_active: true,
-      is_admin: false
+      is_admin: false,
     };
-    
+
     return await User.create({ ...defaults, ...overrides });
   }
-  
+
   static async createDevice(userId, overrides = {}) {
     const defaults = {
       name: `Device_${Date.now()}`,
-      device_type: 'sensor',
-      status: 'offline',
-      user_id: userId
+      device_type: "sensor",
+      status: "offline",
+      user_id: userId,
     };
-    
+
     return await Device.create({ ...defaults, ...overrides });
   }
-  
+
   static async createNotification(userId, deviceId = null, overrides = {}) {
     const defaults = {
       user_id: userId,
       device_id: deviceId,
-      type: 'info',
-      title: 'Test Notification',
-      message: 'This is a test notification',
-      source: 'test',
-      is_read: false
+      type: "info",
+      title: "Test Notification",
+      message: "This is a test notification",
+      source: "test",
+      is_read: false,
     };
-    
+
     return await Notification.create({ ...defaults, ...overrides });
   }
-  
+
   static generateJWT(userId, email) {
-    const jwt = require('jsonwebtoken');
+    const jwt = require("jsonwebtoken");
     return jwt.sign(
       { id: userId, email },
-      process.env.JWT_SECRET || 'test-secret',
-      { expiresIn: '24h' }
+      process.env.JWT_SECRET || "test-secret",
+      { expiresIn: "24h" },
     );
   }
 }
@@ -477,26 +473,26 @@ module.exports = TestFactory;
 
 ```javascript
 // tests/integration/api/devices.test.js
-const TestFactory = require('../../helpers/factories');
+const TestFactory = require("../../helpers/factories");
 
-describe('Device API', () => {
+describe("Device API", () => {
   let user;
   let authToken;
-  
+
   beforeEach(async () => {
     user = await TestFactory.createUser();
     authToken = TestFactory.generateJWT(user.id, user.email);
   });
-  
-  it('should create device for authenticated user', async () => {
+
+  it("should create device for authenticated user", async () => {
     const response = await request(app)
-      .post('/api/devices')
-      .set('x-api-key', authToken)
+      .post("/api/devices")
+      .set("x-api-key", authToken)
       .send({
-        name: 'Test Device',
-        device_type: 'sensor'
+        name: "Test Device",
+        device_type: "sensor",
       });
-    
+
     expect(response.status).toBe(201);
     expect(response.body.user_id).toBe(user.id);
   });
@@ -513,35 +509,35 @@ describe('Device API', () => {
 
 ```javascript
 // tests/unit/controllers/chartController.test.js
-const chartController = require('../../../src/controllers/chartController');
+const chartController = require("../../../src/controllers/chartController");
 
-describe('Chart Controller', () => {
-  describe('createChart', () => {
-    it('should create a new chart', async () => {
+describe("Chart Controller", () => {
+  describe("createChart", () => {
+    it("should create a new chart", async () => {
       const req = {
         user: { id: 1 },
         body: {
-          name: 'Temperature Chart',
-          chart_type: 'line',
+          name: "Temperature Chart",
+          chart_type: "line",
           configuration: {
             devices: [1, 2],
-            data_type: 'temperature'
-          }
-        }
+            data_type: "temperature",
+          },
+        },
       };
       const res = {
         status: jest.fn().mockReturnThis(),
-        json: jest.fn()
+        json: jest.fn(),
       };
-      
+
       await chartController.createChart(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'Temperature Chart',
-          chart_type: 'line'
-        })
+          name: "Temperature Chart",
+          chart_type: "line",
+        }),
       );
     });
   });
@@ -555,23 +551,23 @@ describe('Chart Controller', () => {
 
 ```javascript
 // src/controllers/chartController.js
-const { Chart } = require('../models');
+const { Chart } = require("../models");
 
 class ChartController {
   async createChart(req, res) {
     try {
       const { name, chart_type, configuration } = req.body;
-      
+
       const chart = await Chart.create({
         user_id: req.user.id,
         name,
         chart_type,
-        configuration: JSON.stringify(configuration)
+        configuration: JSON.stringify(configuration),
       });
-      
+
       res.status(201).json(chart);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to create chart' });
+      res.status(500).json({ message: "Failed to create chart" });
     }
   }
 }
@@ -586,8 +582,8 @@ module.exports = new ChartController();
 
 ```javascript
 // src/controllers/chartController.js
-const { Chart } = require('../models');
-const { validateChartConfig } = require('../utils/validators');
+const { Chart } = require("../models");
+const { validateChartConfig } = require("../utils/validators");
 
 class ChartController {
   /**
@@ -598,16 +594,16 @@ class ChartController {
   async createChart(req, res) {
     try {
       const { name, chart_type, configuration, description } = req.body;
-      
+
       // Validate configuration
       const validation = validateChartConfig(configuration);
       if (!validation.isValid) {
         return res.status(400).json({
-          message: 'Invalid chart configuration',
-          errors: validation.errors
+          message: "Invalid chart configuration",
+          errors: validation.errors,
         });
       }
-      
+
       // Create chart
       const chart = await Chart.create({
         user_id: req.user.id,
@@ -616,24 +612,24 @@ class ChartController {
         description: description?.trim(),
         configuration: JSON.stringify(configuration),
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       });
-      
+
       // Send notification
       await notificationService.notifyChartCreated(req.user.id, chart);
-      
+
       res.status(201).json({
         id: chart.id,
         name: chart.name,
         chart_type: chart.chart_type,
         configuration: JSON.parse(chart.configuration),
-        created_at: chart.created_at
+        created_at: chart.created_at,
       });
     } catch (error) {
-      console.error('Chart creation error:', error);
+      console.error("Chart creation error:", error);
       res.status(500).json({
-        message: 'Failed to create chart',
-        error: error.message
+        message: "Failed to create chart",
+        error: error.message,
       });
     }
   }
@@ -643,32 +639,33 @@ module.exports = new ChartController();
 ```
 
 **Add more tests:**
+
 ```javascript
-describe('Chart Controller', () => {
-  describe('createChart', () => {
-    it('should validate chart configuration', async () => {
+describe("Chart Controller", () => {
+  describe("createChart", () => {
+    it("should validate chart configuration", async () => {
       const req = {
         user: { id: 1 },
         body: {
-          name: 'Invalid Chart',
-          chart_type: 'line',
+          name: "Invalid Chart",
+          chart_type: "line",
           configuration: {
-            devices: []  // Empty devices array
-          }
-        }
+            devices: [], // Empty devices array
+          },
+        },
       };
       const res = {
         status: jest.fn().mockReturnThis(),
-        json: jest.fn()
+        json: jest.fn(),
       };
-      
+
       await chartController.createChart(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Invalid chart configuration'
-        })
+          message: "Invalid chart configuration",
+        }),
       );
     });
   });
@@ -683,103 +680,107 @@ describe('Chart Controller', () => {
 
 ```javascript
 // tests/integration/websocket/notifications.test.js
-const WebSocket = require('ws');
-const http = require('http');
-const app = require('../../../src/app');
-const TestFactory = require('../../helpers/factories');
+const WebSocket = require("ws");
+const http = require("http");
+const app = require("../../../src/app");
+const TestFactory = require("../../helpers/factories");
 
-describe('WebSocket Notifications', () => {
+describe("WebSocket Notifications", () => {
   let server;
   let wss;
   let client;
   let user;
   let authToken;
-  
+
   beforeAll(async () => {
     // Create HTTP server
     server = http.createServer(app);
-    
+
     // Create WebSocket server
-    wss = new WebSocket.Server({ server, path: '/ws' });
-    
+    wss = new WebSocket.Server({ server, path: "/ws" });
+
     // Start server
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       server.listen(0, resolve);
     });
-    
+
     // Create test user
     user = await TestFactory.createUser();
     authToken = TestFactory.generateJWT(user.id, user.email);
   });
-  
+
   afterAll(async () => {
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       server.close(resolve);
     });
   });
-  
+
   beforeEach(async () => {
     const port = server.address().port;
     client = new WebSocket(`ws://localhost:${port}/ws`);
-    
-    await new Promise(resolve => {
-      client.on('open', resolve);
+
+    await new Promise((resolve) => {
+      client.on("open", resolve);
     });
   });
-  
+
   afterEach(() => {
     if (client.readyState === WebSocket.OPEN) {
       client.close();
     }
   });
-  
-  it('should authenticate WebSocket connection', async () => {
-    const authPromise = new Promise(resolve => {
-      client.on('message', (data) => {
+
+  it("should authenticate WebSocket connection", async () => {
+    const authPromise = new Promise((resolve) => {
+      client.on("message", (data) => {
         const message = JSON.parse(data);
-        if (message.type === 'auth_success') {
+        if (message.type === "auth_success") {
           resolve(message);
         }
       });
     });
-    
+
     // Send auth message
-    client.send(JSON.stringify({
-      type: 'auth',
-      token: authToken
-    }));
-    
+    client.send(
+      JSON.stringify({
+        type: "auth",
+        token: authToken,
+      }),
+    );
+
     const response = await authPromise;
-    expect(response.type).toBe('auth_success');
+    expect(response.type).toBe("auth_success");
   });
-  
-  it('should receive notification via WebSocket', async () => {
+
+  it("should receive notification via WebSocket", async () => {
     // Authenticate first
-    client.send(JSON.stringify({
-      type: 'auth',
-      token: authToken
-    }));
-    
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    client.send(
+      JSON.stringify({
+        type: "auth",
+        token: authToken,
+      }),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // Listen for notification
-    const notificationPromise = new Promise(resolve => {
-      client.on('message', (data) => {
+    const notificationPromise = new Promise((resolve) => {
+      client.on("message", (data) => {
         const message = JSON.parse(data);
-        if (message.type === 'notification') {
+        if (message.type === "notification") {
           resolve(message);
         }
       });
     });
-    
+
     // Trigger notification
     await TestFactory.createNotification(user.id, null, {
-      title: 'Test Notification',
-      message: 'WebSocket test message'
+      title: "Test Notification",
+      message: "WebSocket test message",
     });
-    
+
     const notification = await notificationPromise;
-    expect(notification.data.title).toBe('Test Notification');
+    expect(notification.data.title).toBe("Test Notification");
   });
 });
 ```
@@ -792,49 +793,49 @@ describe('WebSocket Notifications', () => {
 
 ```javascript
 // tests/unit/utils/iotdbClient.test.js
-jest.mock('iotdb-client-nodejs');
+jest.mock("iotdb-client-nodejs");
 
-const iotdbClient = require('../../../src/utils/iotdbClient');
-const { Session } = require('iotdb-client-nodejs');
+const iotdbClient = require("../../../src/utils/iotdbClient");
+const { Session } = require("iotdb-client-nodejs");
 
-describe('IoTDB Client', () => {
+describe("IoTDB Client", () => {
   let mockSession;
-  
+
   beforeEach(() => {
     mockSession = {
       open: jest.fn().mockResolvedValue(true),
       close: jest.fn().mockResolvedValue(true),
       insertRecord: jest.fn().mockResolvedValue(true),
       executeQueryStatement: jest.fn().mockResolvedValue({
-        hasNext: jest.fn().mockReturnValue(false)
-      })
+        hasNext: jest.fn().mockReturnValue(false),
+      }),
     };
-    
+
     Session.mockImplementation(() => mockSession);
   });
-  
-  it('should insert telemetry record', async () => {
-    const devicePath = 'root.iotflow.users.user_1.devices.device_1';
+
+  it("should insert telemetry record", async () => {
+    const devicePath = "root.iotflow.users.user_1.devices.device_1";
     const data = { temperature: 25.5 };
     const timestamp = Date.now();
-    
+
     await iotdbClient.insertRecord(devicePath, data, timestamp);
-    
+
     expect(mockSession.insertRecord).toHaveBeenCalledWith(
       devicePath,
       timestamp,
-      ['temperature'],
+      ["temperature"],
       [25.5],
-      expect.any(Array)
+      expect.any(Array),
     );
   });
-  
-  it('should handle connection errors', async () => {
-    mockSession.open.mockRejectedValue(new Error('Connection failed'));
-    
-    await expect(
-      iotdbClient.testConnection()
-    ).rejects.toThrow('Connection failed');
+
+  it("should handle connection errors", async () => {
+    mockSession.open.mockRejectedValue(new Error("Connection failed"));
+
+    await expect(iotdbClient.testConnection()).rejects.toThrow(
+      "Connection failed",
+    );
   });
 });
 ```
@@ -848,32 +849,26 @@ describe('IoTDB Client', () => {
 ```javascript
 // jest.config.js
 module.exports = {
-  testEnvironment: 'node',
-  coverageDirectory: 'coverage',
-  collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/server.js',
-    '!src/**/*.test.js'
-  ],
+  testEnvironment: "node",
+  coverageDirectory: "coverage",
+  collectCoverageFrom: ["src/**/*.js", "!src/server.js", "!src/**/*.test.js"],
   coverageThreshold: {
     global: {
       branches: 80,
       functions: 80,
       lines: 85,
-      statements: 85
-    }
+      statements: 85,
+    },
   },
-  testMatch: [
-    '**/tests/**/*.test.js'
-  ],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-  globalTeardown: '<rootDir>/tests/teardown.js',
+  testMatch: ["**/tests/**/*.test.js"],
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
+  globalTeardown: "<rootDir>/tests/teardown.js",
   testTimeout: 10000,
   verbose: true,
   forceExit: true,
   clearMocks: true,
   resetMocks: true,
-  restoreMocks: true
+  restoreMocks: true,
 };
 ```
 
@@ -881,13 +876,13 @@ module.exports = {
 
 ```javascript
 // tests/setup.js
-const { sequelize } = require('../src/utils/db');
+const { sequelize } = require("../src/utils/db");
 
 beforeAll(async () => {
   // Set test environment
-  process.env.NODE_ENV = 'test';
-  process.env.JWT_SECRET = 'test-secret-key';
-  
+  process.env.NODE_ENV = "test";
+  process.env.JWT_SECRET = "test-secret-key";
+
   // Sync database
   await sequelize.sync({ force: true });
 });
@@ -898,7 +893,7 @@ afterAll(async () => {
 });
 
 // Global test utilities
-global.sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+global.sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 ```
 
 ---
@@ -964,7 +959,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -978,28 +973,28 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: "18"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run linter
         run: npm run lint
-      
+
       - name: Run tests
         run: npm run test:ci
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/iotflow_test
           JWT_SECRET: test-secret-key
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -1014,37 +1009,37 @@ jobs:
 
 ```javascript
 // ✅ GOOD: Descriptive test names
-describe('User Authentication', () => {
-  it('should return 201 when registering with valid data', () => {});
-  it('should return 409 when email already exists', () => {});
-  it('should hash password before storing', () => {});
+describe("User Authentication", () => {
+  it("should return 201 when registering with valid data", () => {});
+  it("should return 409 when email already exists", () => {});
+  it("should hash password before storing", () => {});
 });
 
 // ❌ BAD: Vague test names
-describe('User', () => {
-  it('works', () => {});
-  it('test registration', () => {});
+describe("User", () => {
+  it("works", () => {});
+  it("test registration", () => {});
 });
 ```
 
 ### 2. Arrange-Act-Assert Pattern
 
 ```javascript
-it('should update device status', async () => {
+it("should update device status", async () => {
   // Arrange
   const user = await TestFactory.createUser();
   const device = await TestFactory.createDevice(user.id);
   const authToken = TestFactory.generateJWT(user.id, user.email);
-  
+
   // Act
   const response = await request(app)
     .put(`/api/devices/${device.id}`)
-    .set('x-api-key', authToken)
-    .send({ status: 'active' });
-  
+    .set("x-api-key", authToken)
+    .send({ status: "active" });
+
   // Assert
   expect(response.status).toBe(200);
-  expect(response.body.status).toBe('active');
+  expect(response.body.status).toBe("active");
 });
 ```
 
@@ -1052,31 +1047,31 @@ it('should update device status', async () => {
 
 ```javascript
 // ✅ GOOD: Each test is independent
-describe('Device API', () => {
+describe("Device API", () => {
   let user;
   let authToken;
-  
+
   beforeEach(async () => {
     user = await TestFactory.createUser();
     authToken = TestFactory.generateJWT(user.id, user.email);
   });
-  
-  it('should create device', async () => {
+
+  it("should create device", async () => {
     const response = await request(app)
-      .post('/api/devices')
-      .set('x-api-key', authToken)
-      .send({ name: 'Device 1', device_type: 'sensor' });
-    
+      .post("/api/devices")
+      .set("x-api-key", authToken)
+      .send({ name: "Device 1", device_type: "sensor" });
+
     expect(response.status).toBe(201);
   });
-  
-  it('should list devices', async () => {
+
+  it("should list devices", async () => {
     await TestFactory.createDevice(user.id);
-    
+
     const response = await request(app)
-      .get('/api/devices')
-      .set('x-api-key', authToken);
-    
+      .get("/api/devices")
+      .set("x-api-key", authToken);
+
     expect(response.status).toBe(200);
   });
 });
@@ -1088,15 +1083,15 @@ describe('Device API', () => {
 
 ### Coverage Targets
 
-| Component | Target Coverage | Priority |
-|-----------|----------------|----------|
-| **Models** | 95%+ | Critical |
-| **Controllers** | 90%+ | Critical |
-| **Services** | 90%+ | High |
-| **Routes** | 85%+ | High |
-| **Middlewares** | 90%+ | High |
-| **Utils** | 80%+ | Medium |
-| **Overall** | 85%+ | - |
+| Component       | Target Coverage | Priority |
+| --------------- | --------------- | -------- |
+| **Models**      | 95%+            | Critical |
+| **Controllers** | 90%+            | Critical |
+| **Services**    | 90%+            | High     |
+| **Routes**      | 85%+            | High     |
+| **Middlewares** | 90%+            | High     |
+| **Utils**       | 80%+            | Medium   |
+| **Overall**     | 85%+            | -        |
 
 ### Viewing Coverage
 

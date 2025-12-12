@@ -1,9 +1,11 @@
 # Device Group Assignment - Checkbox State Persistence (TDD Implementation)
 
 ## Overview
+
 Implemented checkbox state persistence for device-to-group assignments, allowing users to see which groups a device is currently assigned to and toggle assignments by clicking checkboxes.
 
 ## Implementation Date
+
 December 11, 2025
 
 ## Requirements Met ✅
@@ -57,10 +59,12 @@ December 11, 2025
 **File:** `src/pages/Devices.hybrid.js` (Lines 748-764)
 
 **Issue Identified:**
+
 - Component was passing `device.groups` (array of group objects) instead of group IDs
 - DeviceGroupAssignment expects array of group IDs (numbers)
 
 **Fix Applied:**
+
 ```javascript
 // BEFORE:
 deviceGroups={selectedDeviceForGroups?.groups || []}
@@ -74,6 +78,7 @@ deviceGroups={
 ```
 
 **Additional Enhancement:**
+
 - Added `loadGroups()` call to `onSave` callback to refresh group device counts
 
 ### Phase 3: Integration Test
@@ -81,6 +86,7 @@ deviceGroups={
 **File:** `src/__tests__/pages/DeviceGroupAssignment.test.js`
 
 **TEST 11:** `should correctly pass device group IDs to assignment dialog (integration)`
+
 - **Purpose:** Verify Devices page correctly extracts group IDs
 - **Scenario:** Device with groups as objects (API format)
 - **Assertion:** Groups are properly passed to assignment dialog
@@ -89,6 +95,7 @@ deviceGroups={
 ## Test Results Summary
 
 ### Component Tests: 23/23 ✅
+
 - Single Device Assignment: 6 tests
 - Bulk Device Assignment: 3 tests
 - Group Display: 2 tests
@@ -98,6 +105,7 @@ deviceGroups={
 - **Checkbox State Persistence: 5 tests** ✨ NEW
 
 ### Page Integration Tests: 11/11 ✅
+
 - Basic functionality: 10 tests
 - **Integration test: 1 test** ✨ NEW
 
@@ -110,23 +118,28 @@ deviceGroups={
 **Key Features:**
 
 1. **State Management (Lines 54-58)**
+
    ```javascript
    const [selectedGroups, setSelectedGroups] = useState(new Set());
    const [initialGroups, setInitialGroups] = useState(new Set());
    ```
+
    - Uses Set for efficient group ID storage
    - Tracks initial state to detect changes
 
 2. **Group Loading (Lines 62-81)**
+
    ```javascript
    const initial = new Set(deviceGroups);
    setSelectedGroups(initial);
    setInitialGroups(initial);
    ```
+
    - Initializes checkboxes based on device's current groups
    - Preserves initial state for change detection
 
 3. **Toggle Handler (Lines 97-106)**
+
    ```javascript
    const handleToggleGroup = (groupId) => {
      setSelectedGroups((prev) => {
@@ -140,6 +153,7 @@ deviceGroups={
      });
    };
    ```
+
    - Adds/removes group ID from selection
    - Maintains checkbox state
 
@@ -159,6 +173,7 @@ deviceGroups={
      disableRipple
    />
    ```
+
    - Checkbox checked state based on Set membership
    - Click handler on ListItem for better UX
 
@@ -248,12 +263,14 @@ Device Now Shows Updated Groups
 ## Code Quality
 
 ### Metrics
+
 - **Test Coverage:** 51 tests covering all functionality
 - **Code Quality:** No ESLint errors
 - **Build Status:** ✅ Production build succeeds
 - **Performance:** Efficient Set operations for O(1) lookups
 
 ### Best Practices
+
 - ✅ Test-Driven Development (TDD)
 - ✅ Immutable state updates
 - ✅ Error handling with user feedback
@@ -270,10 +287,10 @@ Device Now Shows Updated Groups
    - Fixed: Extract group IDs from group objects
    - Added: `loadGroups()` on save to refresh counts
 
-3. **src/__tests__/components/DeviceGroupAssignment.test.js**
+3. **src/**tests**/components/DeviceGroupAssignment.test.js**
    - Added: 5 new checkbox persistence tests
 
-4. **src/__tests__/pages/DeviceGroupAssignment.test.js**
+4. **src/**tests**/pages/DeviceGroupAssignment.test.js**
    - Added: 1 integration test
 
 ## Deployment Ready ✅
@@ -290,7 +307,7 @@ Device Now Shows Updated Groups
 ```jsx
 <DeviceGroupAssignment
   open={true}
-  device={{ id: 10, name: 'Temperature Sensor' }}
+  device={{ id: 10, name: "Temperature Sensor" }}
   deviceGroups={[1, 3]} // Device is in groups 1 and 3
   onClose={() => setDialogOpen(false)}
   onSave={() => {
@@ -301,6 +318,7 @@ Device Now Shows Updated Groups
 ```
 
 **Result:**
+
 - Checkboxes for groups 1 and 3 are pre-checked
 - User can click any checkbox to add/remove device
 - Changes are saved via API

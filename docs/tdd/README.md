@@ -3,6 +3,7 @@
 ## 📚 Documentation Location
 
 TDD documentation has been moved to:
+
 - **Backend TDD docs:** `iotflow-backend/docs/tdd/`
 
 ## 📄 Files in This Folder
@@ -12,6 +13,7 @@ TDD documentation has been moved to:
 ## 🔗 Related Documentation
 
 For complete TDD documentation, see:
+
 - Backend tests: `iotflow-backend/docs/tdd/`
 - Frontend tests: `iotflow-frontend/docs/` (when implemented)
 

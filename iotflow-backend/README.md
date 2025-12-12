@@ -74,13 +74,16 @@ iotflow-backend/
 ├── package.json            # Dependencies and scripts
 └── README.md              # This documentation
 ```
+
 1. **Clone the repository**
+
    ```
    git clone <repository-url>
    cd iotflow-backend
    ```
 
 2. **Install dependencies**
+
    ```
    npm install
    ```
@@ -96,9 +99,11 @@ iotflow-backend/
 ## API Endpoints
 
 ### Health Check
+
 - **GET /health**: Check API health status
 
 ### Authentication & User Management
+
 - **POST /api/auth/register**: Register a new user
 - **POST /api/auth/login**: Login and receive JWT token
 - **GET /api/auth/profile**: Get user profile (requires API key)
@@ -106,12 +111,14 @@ iotflow-backend/
 - **POST /api/auth/refresh-api-key**: Refresh API key (requires API key)
 
 #### Admin User Management
+
 - **POST /api/users**: Create user (admin only)
 - **GET /api/users/:id**: Get user by ID (admin only)
 - **PUT /api/users/:id**: Update user by ID (admin only)
 - **DELETE /api/users/:id**: Delete user by ID (admin only)
 
 ### Device Management
+
 - **POST /api/devices**: Create device
 - **GET /api/devices**: Get all devices
 - **GET /api/devices/:id**: Get device by ID
@@ -121,18 +128,22 @@ iotflow-backend/
 - **PUT /api/devices/:id/configuration**: Update device configuration
 
 ### Telemetry Data
+
 - **POST /api/telemetry**: Submit telemetry data
 - **GET /api/telemetry/device/:device_id**: Get telemetry data for device
 - **GET /api/telemetry/device/:device_id/aggregated**: Get aggregated telemetry data for device
 
 ### Dashboard & Analytics
+
 - **GET /api/dashboard/overview**: Get dashboard overview
 - **GET /api/dashboard/activity**: Get device activity
 - **GET /api/dashboard/alerts**: Get system alerts
 - **GET /api/dashboard/health**: Get system health metrics
 
 ---
+
 For detailed request/response formats, authentication, and examples, see `API_DOCUMENTATION.md`.
 
 ## License
+
 This project is licensed under the MIT License.

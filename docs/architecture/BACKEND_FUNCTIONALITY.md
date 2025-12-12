@@ -5,6 +5,7 @@
 The IoTFlow Dashboard Backend is a **Node.js/Express.js** RESTful API that provides a comprehensive web-based management interface for IoT devices. It serves as the presentation and user interaction layer on top of the IoT infrastructure.
 
 **Technology Stack:**
+
 - **Runtime:** Node.js 18+
 - **Framework:** Express.js
 - **Database:** SQLite (development) / PostgreSQL (production) via Sequelize ORM
@@ -50,6 +51,7 @@ The IoTFlow Dashboard Backend is a **Node.js/Express.js** RESTful API that provi
 **Purpose:** Multi-tenant user system with secure authentication
 
 **Features:**
+
 - User registration and login with JWT tokens
 - Password hashing with bcrypt (10 rounds)
 - User profile management
@@ -59,6 +61,7 @@ The IoTFlow Dashboard Backend is a **Node.js/Express.js** RESTful API that provi
 - User-based device isolation
 
 **Key Endpoints:**
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login and get JWT token
 - `GET /api/auth/profile` - Get user profile
@@ -66,6 +69,7 @@ The IoTFlow Dashboard Backend is a **Node.js/Express.js** RESTful API that provi
 - `POST /api/auth/refresh-api-key` - Refresh API key
 
 **Data Model:**
+
 ```javascript
 User {
   id: INTEGER (PK, auto-increment)
@@ -88,6 +92,7 @@ User {
 **Purpose:** CRUD operations for IoT devices with user ownership
 
 **Features:**
+
 - Create, read, update, delete devices
 - Device status tracking (online/offline/critical)
 - Device type categorization
@@ -98,6 +103,7 @@ User {
 - Cascade deletion of related records
 
 **Key Endpoints:**
+
 - `POST /api/devices` - Create device
 - `GET /api/devices` - Get all user's devices
 - `GET /api/devices/:id` - Get specific device
@@ -107,6 +113,7 @@ User {
 - `PUT /api/devices/:id/configurations` - Update device config
 
 **Data Model:**
+
 ```javascript
 Device {
   id: INTEGER (PK, auto-increment)
@@ -132,6 +139,7 @@ Device {
 **Purpose:** Store and retrieve time-series sensor data via IoTDB
 
 **Features:**
+
 - Submit telemetry data to IoTDB
 - Query telemetry by device, date range, data type
 - Aggregated data queries (hourly/daily/weekly/monthly)
@@ -141,6 +149,7 @@ Device {
 - Data anomaly detection and notifications
 
 **Key Endpoints:**
+
 - `POST /api/telemetry` - Submit telemetry data
 - `GET /api/telemetry/device/:device_id` - Get telemetry data
 - `GET /api/telemetry/device/:device_id/aggregated` - Get aggregated data
@@ -149,11 +158,13 @@ Device {
 - `GET /api/telemetry/today-count` - Get today's message count
 
 **IoTDB Path Structure:**
+
 ```
 root.iotflow.users.user_{user_id}.devices.device_{device_id}.{measurement}
 ```
 
 **Data Storage:**
+
 - Telemetry stored in IoTDB (not SQLite/PostgreSQL)
 - Supports multiple data types per device
 - Includes unit and metadata fields
@@ -166,6 +177,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}.{measurement}
 **Purpose:** Provide overview statistics and insights
 
 **Features:**
+
 - Device count by status
 - Device count by type
 - Recent devices (last 7 days)
@@ -175,12 +187,14 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}.{measurement}
 - User-specific analytics
 
 **Key Endpoints:**
+
 - `GET /api/dashboard/overview` - Dashboard overview
 - `GET /api/dashboard/activity` - Device activity (configurable days)
 - `GET /api/dashboard/alerts` - System alerts
 - `GET /api/dashboard/health` - System health metrics
 
 **Analytics Provided:**
+
 - Total devices count
 - Devices by status (online/offline/critical)
 - Devices by type distribution
@@ -196,6 +210,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}.{measurement}
 **Purpose:** Custom visualization creation and management
 
 **Features:**
+
 - Create custom charts with multiple data sources
 - Support for 15+ chart types
 - Multi-device data aggregation
@@ -204,6 +219,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}.{measurement}
 - User-specific chart management
 
 **Key Endpoints:**
+
 - `POST /api/charts` - Create chart
 - `GET /api/charts` - Get all user's charts
 - `GET /api/charts/:id` - Get specific chart
@@ -211,6 +227,7 @@ root.iotflow.users.user_{user_id}.devices.device_{device_id}.{measurement}
 - `DELETE /api/charts/:id` - Delete chart
 
 **Data Model:**
+
 ```javascript
 Chart {
   id: INTEGER (PK)
@@ -232,6 +249,7 @@ Chart {
 **Purpose:** Real-time alerts and notifications via WebSocket
 
 **Features:**
+
 - Real-time WebSocket notifications
 - Multiple notification types (success/info/warning/error)
 - Device-related notifications
@@ -241,6 +259,7 @@ Chart {
 - Notification history
 
 **Key Endpoints:**
+
 - `GET /api/notifications` - Get user notifications
 - `GET /api/notifications/unread` - Get unread count
 - `PUT /api/notifications/:id/read` - Mark as read
@@ -248,6 +267,7 @@ Chart {
 - `DELETE /api/notifications` - Clear all notifications
 
 **Notification Types:**
+
 - Device created/updated/deleted
 - Device connected/disconnected
 - Data anomalies
@@ -257,6 +277,7 @@ Chart {
 - Control command status
 
 **Data Model:**
+
 ```javascript
 Notification {
   id: INTEGER (PK)
@@ -279,6 +300,7 @@ Notification {
 **Purpose:** Send commands to devices and track execution
 
 **Features:**
+
 - Send control commands to devices
 - Command status tracking (pending/acknowledged/completed/failed)
 - Command history
@@ -287,11 +309,13 @@ Notification {
 - Simulated async command processing
 
 **Key Endpoints:**
+
 - `POST /api/devices/:id/control` - Send control command
 - `GET /api/devices/:id/control/:controlId/status` - Get command status
 - `GET /api/devices/:id/control/pending` - Get pending commands
 
 **Command Flow:**
+
 1. Command submitted → status: `pending`
 2. Device acknowledges → status: `acknowledged` (0.5-2s)
 3. Command executes → status: `completed` or `failed` (2-5s)
@@ -305,6 +329,7 @@ Notification {
 **Purpose:** Real-time bidirectional communication
 
 **Features:**
+
 - JWT-based WebSocket authentication
 - User-specific connection management
 - Real-time notification delivery
@@ -314,6 +339,7 @@ Notification {
 **WebSocket Path:** `ws://localhost:3001/ws`
 
 **Authentication Flow:**
+
 ```javascript
 // Client sends auth message
 {
@@ -329,6 +355,7 @@ Notification {
 ```
 
 **Notification Format:**
+
 ```javascript
 {
   type: 'notification',
@@ -377,14 +404,16 @@ Device (1) ──< (N) Notification
 **Purpose:** Verify JWT tokens and authenticate requests
 
 **Functions:**
+
 - `verifyApiKey(req, res, next)` - Verify JWT token from headers
 - Extracts user from token
 - Attaches `req.user` to request object
 - Returns 401 for invalid/missing tokens
 
 **Usage:**
+
 ```javascript
-router.get('/devices', verifyApiKey, deviceController.getAllDevices);
+router.get("/devices", verifyApiKey, deviceController.getAllDevices);
 ```
 
 ---
@@ -396,6 +425,7 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 **Purpose:** Centralized notification management
 
 **Features:**
+
 - Create notifications
 - Send real-time WebSocket notifications
 - Manage WebSocket connections
@@ -417,6 +447,7 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 **Purpose:** Sequelize configuration and connection
 
 **Features:**
+
 - SQLite for development
 - PostgreSQL for production
 - Connection pooling
@@ -427,6 +458,7 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 **Purpose:** IoTDB integration wrapper
 
 **Features:**
+
 - Insert telemetry records
 - Query telemetry data
 - Aggregate data
@@ -435,12 +467,13 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 - Error handling
 
 **Key Methods:**
+
 ```javascript
-- insertRecord(devicePath, data, timestamp)
-- queryRecords(devicePath, measurements, startTs, endTs, limit, page)
-- aggregate(devicePath, dataType, aggregation, startTs, endTs)
-- executeSQL(sql)
-- testConnection()
+-insertRecord(devicePath, data, timestamp) -
+  queryRecords(devicePath, measurements, startTs, endTs, limit, page) -
+  aggregate(devicePath, dataType, aggregation, startTs, endTs) -
+  executeSQL(sql) -
+  testConnection();
 ```
 
 ---
@@ -448,6 +481,7 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 ## API Response Formats
 
 ### Success Response
+
 ```json
 {
   "success": true,
@@ -457,6 +491,7 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 ```
 
 ### Error Response
+
 ```json
 {
   "success": false,
@@ -466,6 +501,7 @@ router.get('/devices', verifyApiKey, deviceController.getAllDevices);
 ```
 
 ### Paginated Response
+
 ```json
 {
   "data": [...],
@@ -520,12 +556,14 @@ IOTDB_PASSWORD=root
 ## Deployment
 
 ### Development
+
 ```bash
 npm install
 npm run dev  # Uses nodemon for auto-reload
 ```
 
 ### Production
+
 ```bash
 npm install
 npm run init-db  # Initialize database
@@ -533,6 +571,7 @@ npm start  # Production server
 ```
 
 ### Docker
+
 ```bash
 docker build -t iotflow-backend .
 docker run -p 3001:3001 iotflow-backend

@@ -142,13 +142,46 @@ class UserController {
   async updateProfile(req, res) {
     try {
       const { id } = req.user;
-      const { username, email, password } = req.body;
+      const { username, email } = req.body;
+
+      // Password changes not allowed through this endpoint
+      if (req.body.password) {
+        return res.status(400).json({
+          message: 'Password changes must be done through the /api/users/password endpoint',
+        });
+      }
 
       const updates = {};
-      if (username) updates.username = username;
-      if (email) updates.email = email;
-      if (password) {
-        updates.password_hash = await bcrypt.hash(password, 10);
+
+      // Validate and update username
+      if (username !== undefined) {
+        if (username === '') {
+          return res.status(400).json({ message: 'Username cannot be empty' });
+        }
+        // Check for duplicate username
+        const existingUser = await User.findOne({ where: { username } });
+        if (existingUser && existingUser.id !== id) {
+          return res.status(400).json({ message: 'Username already exists' });
+        }
+        updates.username = username;
+      }
+
+      // Validate and update email
+      if (email !== undefined) {
+        if (email === '') {
+          return res.status(400).json({ message: 'Email cannot be empty' });
+        }
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return res.status(400).json({ message: 'Invalid email format' });
+        }
+        // Check for duplicate email
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser && existingUser.id !== id) {
+          return res.status(400).json({ message: 'Email already exists' });
+        }
+        updates.email = email;
       }
 
       if (Object.keys(updates).length === 0) {
@@ -179,6 +212,83 @@ class UserController {
       res.status(200).json(userResponse);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update profile', error: error.message });
+    }
+  }
+
+  async changePassword(req, res) {
+    try {
+      const { id } = req.user;
+      const { currentPassword, newPassword } = req.body;
+
+      // Validate inputs
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required' });
+      }
+
+      if (!newPassword) {
+        return res.status(400).json({ message: 'New password is required' });
+      }
+
+      // Validate password strength
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+      }
+
+      // Check for weak passwords
+      const weakPasswords = ['password', '12345678', '123456', 'qwerty', 'abc123', 'password123'];
+      if (weakPasswords.includes(newPassword.toLowerCase())) {
+        return res
+          .status(400)
+          .json({ message: 'Password is too weak. Please use a stronger password.' });
+      }
+
+      // Get current user
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Verify current password
+      const { verifyPassword } = require('../utils/password');
+      const isValid = await verifyPassword(currentPassword, user.password_hash);
+      if (!isValid) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
+
+      // Check if new password is same as current
+      const isSame = await verifyPassword(newPassword, user.password_hash);
+      if (isSame) {
+        return res
+          .status(400)
+          .json({ message: 'New password must be different from current password' });
+      }
+
+      // Hash new password
+      const { hashPassword } = require('../utils/password');
+      const newPasswordHash = await hashPassword(newPassword);
+
+      // Update password
+      await User.update(
+        {
+          password_hash: newPasswordHash,
+          updated_at: new Date(),
+        },
+        { where: { id } }
+      );
+
+      // Send notification
+      await notificationService.createNotification(req.user.id, {
+        type: 'warning',
+        title: 'Password Changed',
+        message: 'Your password has been changed successfully',
+        device_id: null,
+        source: 'profile_management',
+        metadata: { action: 'password_change' },
+      });
+
+      res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to change password', error: error.message });
     }
   }
 

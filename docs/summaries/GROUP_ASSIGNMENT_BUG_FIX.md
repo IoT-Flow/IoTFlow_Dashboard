@@ -5,6 +5,7 @@
 **Issue:** "Could not assign group to device"
 
 **Root Cause:** The frontend and backend were using different naming conventions for the request body parameters:
+
 - **Frontend** (`apiService.js`): Sending `deviceId` (camelCase)
 - **Backend** (`deviceGroupController.js`): Expecting `device_id` (snake_case)
 
@@ -17,12 +18,14 @@ This caused the backend to receive `undefined` when trying to extract the device
 Modified `src/controllers/deviceGroupController.js` to accept both naming conventions:
 
 **Before:**
+
 ```javascript
 const { device_id, device_ids } = req.body;
 const deviceIdsToAdd = device_ids || [device_id];
 ```
 
 **After:**
+
 ```javascript
 // Support both snake_case (device_id, device_ids) and camelCase (deviceId, deviceIds)
 const { device_id, device_ids, deviceId, deviceIds } = req.body;
@@ -34,8 +37,9 @@ const deviceIdsToAdd = device_ids || deviceIds || [device_id || deviceId];
 ### Testing
 
 Created comprehensive backend tests in `tests/deviceGroupController.test.js` to verify:
+
 1. ✅ `device_id` (snake_case) format works
-2. ✅ `deviceId` (camelCase) format works  
+2. ✅ `deviceId` (camelCase) format works
 3. ✅ `device_ids` (snake_case) array format works
 4. ✅ `deviceIds` (camelCase) array format works
 5. ✅ Proper error handling for missing groups
@@ -44,11 +48,13 @@ Created comprehensive backend tests in `tests/deviceGroupController.test.js` to 
 ## Test Results
 
 ### Backend Tests
+
 - **6/6 tests passing** for the `addDeviceToGroup` controller method
 - Tests cover both naming conventions (snake_case and camelCase)
 - Tests verify error handling for edge cases
 
-### Frontend Tests  
+### Frontend Tests
+
 - **19/19 tests passing** for group assignment functionality
 - DeviceGroupAssignment component tests: 18 passed
 - Devices page group assignment integration test: 1 passed
@@ -58,7 +64,6 @@ Created comprehensive backend tests in `tests/deviceGroupController.test.js` to 
 
 1. **Backend Controller:**
    - `/IoTFlow_Dashboard/iotflow-backend/src/controllers/deviceGroupController.js` (lines 136-152)
-   
 2. **Backend Tests:**
    - `/IoTFlow_Dashboard/iotflow-backend/tests/deviceGroupController.test.js` (new file, 134 lines)
 

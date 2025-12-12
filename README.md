@@ -25,30 +25,35 @@
 ## ✨ Features
 
 ### 📊 **Real-time Dashboard**
+
 - **Live Telemetry Monitoring** - Real-time data visualization with WebSocket connectivity
 - **Interactive Charts** - 15+ chart types including gauges, heatmaps, and specialized IoT widgets
 - **Multi-tenant Support** - User-based device and data isolation
 - **Responsive Design** - Mobile-first, enterprise-grade Material-UI interface
 
 ### 🎛️ **Device Management**
+
 - **Device Registration & Control** - Add, configure, and manage IoT devices
 - **Status Monitoring** - Real-time device health and connectivity status
 - **Command Execution** - Send commands and receive responses from devices
 - **Device Grouping** - Organize devices by type, location, or custom criteria
 
 ### 📈 **Analytics & Visualization**
+
 - **Custom Chart Builder** - Drag-and-drop chart creation with multiple data sources
 - **Historical Data Analysis** - Time-series data with flexible time ranges
 - **Export Capabilities** - Export data and visualizations in multiple formats
 - **Alerting System** - Real-time notifications and threshold-based alerts
 
 ### 🔒 **Security & Authentication**
+
 - **JWT-based Authentication** - Secure token-based user authentication
 - **Role-based Access Control** - Admin and user roles with granular permissions
 - **API Rate Limiting** - Protection against abuse and DoS attacks
 - **Data Encryption** - Secure data transmission and storage
 
 ### 🚀 **Performance & Scalability**
+
 - **WebSocket Integration** - Real-time bidirectional communication
 - **Optimized Data Handling** - Efficient data processing and caching
 - **Production-Ready** - Clean code, error handling, and monitoring
@@ -77,6 +82,7 @@
 ### **Technology Stack**
 
 **Frontend:**
+
 - React 18.2+ with hooks and functional components
 - Material-UI 5.11+ for consistent design system
 - ECharts & Recharts for data visualization
@@ -84,6 +90,7 @@
 - React Router for single-page application routing
 
 **Backend:**
+
 - Node.js 18+ with Express.js framework
 - SQLite for development, IoTDB for production
 - WebSocket server for real-time communication
@@ -91,6 +98,7 @@
 - bcrypt for secure password hashing
 
 **Infrastructure:**
+
 - Docker & Docker Compose for containerization
 - Nginx for production web server
 - Environment-based configuration management
@@ -99,6 +107,7 @@
 ## 🚀 Quick Start
 
 ### **Prerequisites**
+
 - Node.js 18+ and npm
 - Git
 - Docker (optional, but recommended for production)
@@ -151,11 +160,13 @@ npm run dev
 ```
 
 **Access the application:**
+
 - 🌐 **Dashboard**: http://localhost:3000
 - 🔧 **API**: http://localhost:3001/api
 - 📡 **WebSocket**: ws://localhost:3001/ws
 
 ### **Default Credentials**
+
 - **Username:** `admin`
 - **Password:** `admin123`
 
@@ -194,43 +205,48 @@ REACT_APP_WS_URL=wss://your-api-domain.com/ws
 # Application
 REACT_APP_ENVIRONMENT=production
 ```
+
 cd iotflow-backend
-npm run dev          # Start with nodemon
-npm test            # Run tests
-npm run lint        # Check code quality
+npm run dev # Start with nodemon
+npm test # Run tests
+npm run lint # Check code quality
 
 # Frontend development
+
 cd iotflow-frontend
-npm start           # Start development server
-npm test            # Run tests
-npm run build       # Create production build
+npm start # Start development server
+npm test # Run tests
+npm run build # Create production build
+
 ```
 
 ### **Code Structure**
 
 ```
+
 Dashboard_IoTFlow/
-├── iotflow-backend/          # Node.js backend
-│   ├── src/
-│   │   ├── controllers/      # API controllers
-│   │   ├── models/          # Database models
-│   │   ├── routes/          # Express routes
-│   │   ├── middlewares/     # Custom middleware
-│   │   └── services/        # Business logic
-│   ├── tests/               # Backend tests
-│   └── package.json
-├── iotflow-frontend/         # React frontend
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── contexts/        # React contexts
-│   │   ├── pages/          # Page components
-│   │   └── services/       # API services
-│   ├── public/             # Static assets
-│   └── package.json
-├── docker-compose.yml       # Container orchestration
-├── deploy.sh               # Production deployment
-└── dev-setup.sh           # Development setup
-```
+├── iotflow-backend/ # Node.js backend
+│ ├── src/
+│ │ ├── controllers/ # API controllers
+│ │ ├── models/ # Database models
+│ │ ├── routes/ # Express routes
+│ │ ├── middlewares/ # Custom middleware
+│ │ └── services/ # Business logic
+│ ├── tests/ # Backend tests
+│ └── package.json
+├── iotflow-frontend/ # React frontend
+│ ├── src/
+│ │ ├── components/ # React components
+│ │ ├── contexts/ # React contexts
+│ │ ├── pages/ # Page components
+│ │ └── services/ # API services
+│ ├── public/ # Static assets
+│ └── package.json
+├── docker-compose.yml # Container orchestration
+├── deploy.sh # Production deployment
+└── dev-setup.sh # Development setup
+
+````
 
 ## 🐳 Deployment
 
@@ -244,7 +260,7 @@ npm run deploy
 npm run install:all
 npm run build:all
 npm run start:prod
-```
+````
 
 ### **Docker Deployment**
 
@@ -295,13 +311,14 @@ npm run start:prod
 ## 📚 Documentation
 
 - **[Deployment Guide](DEPLOYMENT.md)** - Comprehensive deployment checklist
-- **[Backend API](iotflow-backend/README.md)** - Backend API documentation  
+- **[Backend API](iotflow-backend/README.md)** - Backend API documentation
 - **[Frontend](iotflow-frontend/README.md)** - Frontend component documentation
 - **[Device Features](DEVICE_CONTROL_FEATURES.md)** - Device control capabilities
 
 ## 🔧 Configuration
 
 ### **Feature Flags**
+
 Configure features via environment variables:
 
 ```bash
@@ -318,6 +335,7 @@ REACT_APP_CHART_ANIMATION_DURATION=750
 ```
 
 ### **Database Configuration**
+
 ```bash
 # SQLite (Development)
 DATABASE_URL=sqlite:./src/database.sqlite
@@ -345,6 +363,7 @@ npm run test:e2e           # End-to-end tests
 ```
 
 ### **Test Coverage**
+
 - Unit tests for all API endpoints
 - Component testing for React components
 - Integration tests for WebSocket functionality
@@ -366,6 +385,7 @@ npm run test:e2e           # End-to-end tests
 5. **Open** a Pull Request
 
 ### **Development Guidelines**
+
 - Follow ESLint configuration
 - Write tests for new features
 - Update documentation as needed
@@ -382,6 +402,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ### **Common Issues**
 
 **Port Already in Use:**
+
 ```bash
 # Find and kill processes using ports 3000/3001
 lsof -ti:3000 | xargs kill -9
@@ -389,11 +410,13 @@ lsof -ti:3001 | xargs kill -9
 ```
 
 **WebSocket Connection Issues:**
+
 - Check firewall settings
 - Verify CORS configuration
 - Ensure backend is running before frontend
 
 **Database Issues:**
+
 ```bash
 # Reset database
 cd iotflow-backend
@@ -402,6 +425,7 @@ npm run init-db
 ```
 
 ### **Getting Help**
+
 - 📧 **Email**: support@iotflow.com
 - 💬 **Discord**: [IoTFlow Community](https://discord.gg/iotflow)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/your-repo/issues)

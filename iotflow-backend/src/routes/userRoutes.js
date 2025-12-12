@@ -11,6 +11,7 @@ router.post('/login', UserController.login);
 // User management routes (require authentication)
 router.get('/profile', verifyToken, UserController.getProfile);
 router.put('/profile', verifyToken, UserController.updateProfile);
+router.put('/password', verifyToken, UserController.changePassword);
 router.post('/refresh-api-key', verifyToken, UserController.refreshApiKey);
 
 // ============================================================================

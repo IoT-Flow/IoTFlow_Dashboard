@@ -9,6 +9,7 @@ The frontend has **non-critical ESLint warnings** that don't prevent the app fro
 ### 1. Unused Variables (`no-unused-vars`)
 
 **Files affected:**
+
 - `src/components/ChartCustomizationDialog.js` - `options` variable
 - `src/components/CustomChart.js` - `apiService`, `yIndex` variables
 - `src/components/Dashboard.js` - `telemetryData`, `recentUpdatesCount` variables
@@ -24,6 +25,7 @@ The frontend has **non-critical ESLint warnings** that don't prevent the app fro
 ### 2. React Hook Dependencies (`react-hooks/exhaustive-deps`)
 
 **Files affected:**
+
 - `src/components/ChartCustomizationDialog.js` - Missing `chartTypes` dependency
 - `src/components/CustomChart.js` - Missing `fetchChartData`, `loadChartData` dependencies
 - `src/components/Dashboard.js` - Missing `loadDashboardData` dependency
@@ -46,6 +48,7 @@ The frontend has **non-critical ESLint warnings** that don't prevent the app fro
 ## Configuration
 
 ### `.eslintrc.json`
+
 ```json
 {
   "extends": ["react-app", "react-app/jest"],
@@ -57,12 +60,14 @@ The frontend has **non-critical ESLint warnings** that don't prevent the app fro
 ```
 
 ### CI Configuration
+
 - Backend: `--max-warnings 0 || true` (allows warnings)
 - Frontend: `--max-warnings 10 || true` (allows up to 10 warnings)
 
 ## How to Fix
 
 ### Quick Fix All Unused Variables
+
 ```bash
 cd IoTFlow_Dashboard/iotflow-frontend
 
@@ -76,6 +81,7 @@ npm run lint:fix
 ### Fix React Hook Dependencies
 
 **Option 1: Add missing dependencies**
+
 ```javascript
 // Before
 useEffect(() => {
@@ -89,10 +95,16 @@ useEffect(() => {
 ```
 
 **Option 2: Wrap function in useCallback**
+
 ```javascript
-const loadData = useCallback(() => {
-  // ... fetch data
-}, [/* dependencies */]);
+const loadData = useCallback(
+  () => {
+    // ... fetch data
+  },
+  [
+    /* dependencies */
+  ]
+);
 
 useEffect(() => {
   loadData();
@@ -100,6 +112,7 @@ useEffect(() => {
 ```
 
 **Option 3: Disable warning for specific line (if intentional)**
+
 ```javascript
 useEffect(() => {
   loadData();

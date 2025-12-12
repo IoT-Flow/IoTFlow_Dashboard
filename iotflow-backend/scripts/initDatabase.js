@@ -132,7 +132,7 @@ async function createDefaultUser() {
       is_active: true,
       is_admin: true,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     });
     console.log('✅ Default admin user created (username: admin, password: admin123)');
   } else {
@@ -155,14 +155,18 @@ async function createIndexes() {
           CREATE INDEX IF NOT EXISTS idx_username 
           ON users (username)
         `);
-      } catch (e) { /* Column may not exist */ }
+      } catch (e) {
+        /* Column may not exist */
+      }
 
       try {
         await sequelize.query(`
           CREATE INDEX IF NOT EXISTS idx_email 
           ON users (email)
         `);
-      } catch (e) { /* Column may not exist */ }
+      } catch (e) {
+        /* Column may not exist */
+      }
 
       // Device indexes
       try {
@@ -170,7 +174,9 @@ async function createIndexes() {
           CREATE INDEX IF NOT EXISTS idx_devices_user_id 
           ON devices (user_id)
         `);
-      } catch (e) { /* Table may not exist yet */ }
+      } catch (e) {
+        /* Table may not exist yet */
+      }
 
       // Notification indexes
       try {
@@ -198,8 +204,9 @@ async function createIndexes() {
           CREATE INDEX IF NOT EXISTS notifications_source 
           ON notifications (source)
         `);
-      } catch (e) { /* Table may not exist yet */ }
-
+      } catch (e) {
+        /* Table may not exist yet */
+      }
     } else {
       // SQLite indexes
       console.log('Creating SQLite indexes...');
@@ -231,7 +238,9 @@ async function createIndexes() {
 
     console.log('✅ Database indexes created/verified');
   } catch (error) {
-    console.warn('⚠️ Some indexes may have failed to create (this is normal if they already exist or tables don\'t exist yet)');
+    console.warn(
+      "⚠️ Some indexes may have failed to create (this is normal if they already exist or tables don't exist yet)"
+    );
     console.warn('Index creation error:', error.message);
   }
 }

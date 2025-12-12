@@ -17,6 +17,7 @@ The group filter is located in the Devices page filter toolbar:
 ## 🎨 Component Appearance
 
 ### Default State (All Groups Selected)
+
 ```
 ┌────────────────────────┐
 │ Group            ▼     │
@@ -25,6 +26,7 @@ The group filter is located in the Devices page filter toolbar:
 ```
 
 ### Dropdown Open
+
 ```
 ┌────────────────────────┐
 │ Group            ▲     │
@@ -39,6 +41,7 @@ The group filter is located in the Devices page filter toolbar:
 ```
 
 ### Loading State
+
 ```
 ┌────────────────────────┐
 │ Group            ▼     │
@@ -47,6 +50,7 @@ The group filter is located in the Devices page filter toolbar:
 ```
 
 ### Disabled State
+
 ```
 ┌────────────────────────┐
 │ Group            ▼     │  (grayed out)
@@ -63,11 +67,13 @@ The group filter is located in the Devices page filter toolbar:
    - Filter shows "All Groups"
 
 2. **User Opens Filter**
+
    ```
    User clicks: [Group ▼]
    ```
 
 3. **Dropdown Shows Options**
+
    ```
    - All Groups
    - Living Room (5 devices)
@@ -76,6 +82,7 @@ The group filter is located in the Devices page filter toolbar:
    ```
 
 4. **User Selects Group**
+
    ```
    User clicks: Living Room (5)
    ```
@@ -94,6 +101,7 @@ The group filter is located in the Devices page filter toolbar:
 ## 📊 Device Table Integration
 
 ### Before Filtering
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ Device Name    │ Type        │ Location      │ Status    │
@@ -108,6 +116,7 @@ Total: 5 devices
 ```
 
 ### After Filtering (Living Room selected)
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ Device Name    │ Type        │ Location      │ Status    │
@@ -133,6 +142,7 @@ Each group has a color indicator:
 ## 📱 Responsive Design
 
 ### Desktop View (md and up)
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ [Search........]  [Status ▼]  [Type ▼]  [Group ▼]  [Actions]│
@@ -141,6 +151,7 @@ Each group has a color indicator:
 ```
 
 ### Tablet View
+
 ```
 ┌─────────────────────────────────────┐
 │ [Search..............]              │
@@ -150,6 +161,7 @@ Each group has a color indicator:
 ```
 
 ### Mobile View (xs)
+
 ```
 ┌──────────────────────┐
 │ [Search............] │
@@ -164,6 +176,7 @@ Each group has a color indicator:
 Multiple filters work together:
 
 ### Example: Status + Type + Group
+
 ```
 Search: "sensor"
 Status: Active
@@ -176,18 +189,21 @@ Result: Active temperature sensors in Living Room only
 ## 🔔 User Feedback
 
 ### Success Messages
+
 ```
 ✅ Loaded 3 device groups
 ✅ Loaded 15 devices
 ```
 
 ### Error Messages
+
 ```
 ❌ Failed to load device groups
 ❌ No devices found in selected group
 ```
 
 ### Loading States
+
 ```
 ⟳ Loading groups...
 ⟳ Loading devices...
@@ -196,6 +212,7 @@ Result: Active temperature sensors in Living Room only
 ## 🛠️ Developer Notes
 
 ### Component Structure
+
 ```
 DeviceGroupFilter
 ├── FormControl (MUI)
@@ -209,25 +226,27 @@ DeviceGroupFilter
 ```
 
 ### Props Interface
+
 ```typescript
 interface DeviceGroupFilterProps {
-  groups: Group[];           // Array of group objects
-  selectedGroup: string | number;  // "all" or group ID
+  groups: Group[]; // Array of group objects
+  selectedGroup: string | number; // "all" or group ID
   onChange: (value: string | number) => void;
-  loading?: boolean;         // Optional loading state
-  disabled?: boolean;        // Optional disabled state
+  loading?: boolean; // Optional loading state
+  disabled?: boolean; // Optional disabled state
 }
 ```
 
 ### Group Object Structure
+
 ```typescript
 interface Group {
   id: number;
   name: string;
   device_count: number;
-  color: string;           // Hex color code
-  icon?: string;           // Optional icon name
-  description?: string;    // Optional description
+  color: string; // Hex color code
+  icon?: string; // Optional icon name
+  description?: string; // Optional description
 }
 ```
 
@@ -241,12 +260,14 @@ interface Group {
 ## 🎨 Styling Details
 
 ### MUI Theme Integration
+
 - Uses Material-UI's default theme
 - Consistent sizing (small variant)
 - Matches existing filter components
 - Responsive min-width (200px)
 
 ### Color Indicators
+
 - 16px diameter circles
 - Positioned to the left of group names
 - Uses group's custom color
