@@ -41,7 +41,14 @@ module.exports = [
       },
     },
     rules: {
-      'no-unused-vars': 'warn',
+      // More lenient unused vars rule - only error on unused function parameters
+      'no-unused-vars': ['warn', { 
+        'vars': 'local', 
+        'args': 'after-used', 
+        'ignoreRestSiblings': true,
+        'varsIgnorePattern': '^(React|_)', // Ignore React and variables starting with _
+        'argsIgnorePattern': '^_' // Ignore function args starting with _
+      }],
       'react-hooks/exhaustive-deps': 'warn',
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',

@@ -1,5 +1,6 @@
-// Removed unused imports
 import { useEffect, useState } from 'react';
+import { Card, CardContent, Box, Typography, Avatar, Chip, CircularProgress } from '@mui/material';
+import { Thermostat, Speed, SignalWifi4Bar, DeviceHub, TrendingUp } from '@mui/icons-material';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import apiService from '../services/apiService';
 
