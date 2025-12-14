@@ -5,6 +5,8 @@ const dotenv = require('dotenv');
 const app = require('./app');
 const { sequelize } = require('./utils/db');
 const notificationService = require('./services/notificationService');
+const redisService = require('./services/redisService');
+const deviceStatusSyncService = require('./services/deviceStatusSyncService');
 const jwt = require('jsonwebtoken');
 
 // Import models to ensure they are registered
@@ -19,6 +21,21 @@ const startServer = async () => {
   try {
     await sequelize.sync({ force: false });
     console.log('Database synced successfully');
+
+    // Initialize Redis connection for device status tracking
+    try {
+      await redisService.connect();
+      console.log('✅ Redis connected for device status tracking');
+
+      // Start the device status sync service
+      deviceStatusSyncService.start();
+      console.log('✅ Device status sync service started');
+    } catch (redisError) {
+      console.warn(
+        '⚠️ Redis connection failed, device status tracking will be limited:',
+        redisError.message
+      );
+    }
 
     // Create HTTP server
     const server = http.createServer(app);

@@ -2,6 +2,7 @@ const Device = require('../models/device');
 const { Op, Sequelize } = require('sequelize');
 const iotdbClient = require('../utils/iotdbClient.js'); // You need to implement this IoTDB client wrapper
 const notificationService = require('../services/notificationService');
+const redisService = require('../services/redisService');
 
 class TelemetryController {
   async submitTelemetry(req, res) {
@@ -38,6 +39,10 @@ class TelemetryController {
       await iotdbClient.insertRecord(devicePath, telemetryData, timestamp);
 
       console.log(`✅ Telemetry stored successfully in IoTDB for device ${device_id}`);
+
+      // Mark device as online in Redis (refreshes 60s TTL)
+      await redisService.markDeviceOnline(device_id);
+      console.log(`📡 Device ${device_id} marked online in Redis`);
 
       // Send real-time notifications for significant data or anomalies
       await this.checkDataForNotifications(device, data_type, value, telemetryData);

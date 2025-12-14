@@ -24,6 +24,10 @@ router.delete('/:id', verifyToken, DeviceController.deleteDevice);
 router.get('/:id/configuration', verifyToken, DeviceController.getDeviceConfiguration);
 router.put('/:id/configuration', verifyToken, DeviceController.updateDeviceConfiguration);
 
+// Real-time device status (from Redis)
+router.get('/status/summary', verifyToken, DeviceController.getDevicesStatusSummary);
+router.get('/:id/status/realtime', verifyToken, DeviceController.getDeviceRealtimeStatus);
+
 // Device control endpoints removed - were using in-memory storage (not production-ready)
 // These used global.deviceControls which is lost on restart
 // Should be re-implemented with proper database tables and MQTT/WebSocket integration

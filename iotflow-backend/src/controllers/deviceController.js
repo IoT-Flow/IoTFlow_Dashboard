@@ -3,6 +3,7 @@ const DeviceConfiguration = require('../models/deviceConfiguration');
 const User = require('../models/user');
 const { sequelize } = require('../utils/db');
 const notificationService = require('../services/notificationService');
+const redisService = require('../services/redisService');
 
 class DeviceController {
   // Admin: get all devices from all users
@@ -46,7 +47,29 @@ class DeviceController {
           : 'No devices'
       );
 
-      res.status(200).json({ devices, total: devices.length });
+      // Enrich devices with real-time status from Redis
+      const deviceIds = devices.map(d => d.id);
+      const redisStatuses = await redisService.getDeviceStatuses(deviceIds);
+
+      const enrichedDevices = devices.map(device => {
+        const deviceJson = device.toJSON();
+        const redisStatus = redisStatuses.get(device.id);
+
+        if (redisStatus) {
+          deviceJson.is_online = redisStatus.is_online;
+          deviceJson.realtime_status = redisStatus.status;
+          // Override status with real-time status for frontend compatibility
+          deviceJson.status = redisStatus.is_online ? 'online' : 'offline';
+        } else {
+          deviceJson.is_online = false;
+          deviceJson.realtime_status = 'offline';
+          deviceJson.status = 'offline';
+        }
+
+        return deviceJson;
+      });
+
+      res.status(200).json({ devices: enrichedDevices, total: enrichedDevices.length });
     } catch (error) {
       console.error('❌ [ADMIN] Admin get all devices error:', error);
       res.status(500).json({ message: 'Failed to retrieve devices', error: error.message });
@@ -155,7 +178,32 @@ class DeviceController {
         });
       }
 
-      res.status(200).json({ devices });
+      // Enrich devices with real-time status from Redis
+      const deviceIds = devices.map(d => d.id);
+      const redisStatuses = await redisService.getDeviceStatuses(deviceIds);
+
+      const enrichedDevices = devices.map(device => {
+        const deviceJson = device.toJSON();
+        const redisStatus = redisStatuses.get(device.id);
+
+        if (redisStatus) {
+          deviceJson.is_online = redisStatus.is_online;
+          deviceJson.realtime_status = redisStatus.status;
+          // Override status with real-time status for frontend compatibility
+          deviceJson.status = redisStatus.is_online ? 'online' : 'offline';
+          if (redisStatus.last_seen) {
+            deviceJson.last_seen = redisStatus.last_seen;
+          }
+        } else {
+          deviceJson.is_online = false;
+          deviceJson.realtime_status = 'offline';
+          deviceJson.status = 'offline';
+        }
+
+        return deviceJson;
+      });
+
+      res.status(200).json({ devices: enrichedDevices });
     } catch (error) {
       res.status(500).json({ message: 'Failed to retrieve devices', error: error.message });
     }
@@ -524,6 +572,90 @@ class DeviceController {
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to get pending controls', error: error.message });
+    }
+  }
+
+  // ==================== REAL-TIME STATUS METHODS ====================
+
+  /**
+   * Get real-time status for a specific device from Redis
+   */
+  async getDeviceRealtimeStatus(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Verify device belongs to user
+      const device = await Device.findOne({
+        where: { id, user_id: req.user.id },
+      });
+
+      if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+      }
+
+      const isOnline = await redisService.isDeviceOnline(parseInt(id));
+      const lastSeen = await redisService.getDeviceLastSeen(parseInt(id));
+
+      res.status(200).json({
+        device_id: parseInt(id),
+        device_name: device.name,
+        is_online: isOnline,
+        realtime_status: isOnline ? 'online' : 'offline',
+        last_seen: lastSeen || device.last_seen,
+        db_status: device.status,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get device status', error: error.message });
+    }
+  }
+
+  /**
+   * Get real-time status summary for all user's devices
+   */
+  async getDevicesStatusSummary(req, res) {
+    try {
+      const devices = await Device.findAll({
+        where: { user_id: req.user.id },
+        attributes: ['id', 'name', 'device_type', 'status'],
+      });
+
+      const deviceIds = devices.map(d => d.id);
+      const redisStatuses = await redisService.getDeviceStatuses(deviceIds);
+
+      let onlineCount = 0;
+      let offlineCount = 0;
+
+      const deviceStatuses = devices.map(device => {
+        const redisStatus = redisStatuses.get(device.id);
+        const isOnline = redisStatus?.is_online || false;
+
+        if (isOnline) {
+          onlineCount++;
+        } else {
+          offlineCount++;
+        }
+
+        return {
+          id: device.id,
+          name: device.name,
+          device_type: device.device_type,
+          is_online: isOnline,
+          realtime_status: isOnline ? 'online' : 'offline',
+        };
+      });
+
+      res.status(200).json({
+        summary: {
+          total: devices.length,
+          online: onlineCount,
+          offline: offlineCount,
+        },
+        devices: deviceStatuses,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get status summary', error: error.message });
     }
   }
 }
