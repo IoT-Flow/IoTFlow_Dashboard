@@ -1,5 +1,4 @@
-import { DeviceHub, SignalWifi4Bar, Speed, Thermostat, TrendingUp } from '@mui/icons-material';
-import { Avatar, Box, Card, CardContent, Chip, CircularProgress, Typography } from '@mui/material';
+// Removed unused imports
 import { useEffect, useState } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import apiService from '../services/apiService';

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 // Dashboard → Node.js Backend API → SQLite (secure architecture)
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 const WS_BASE_URL = process.env.REACT_APP_WS_URL;
+const FLASK_API_URL = process.env.REACT_APP_FLASK_API_URL || 'http://localhost:5000/api/v1';
 
 // System configuration (for reference only - actual connections go through Flask backend)
 const SYSTEM_CONFIG = {
@@ -30,6 +31,12 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
+      timeout: 15000,
+    });
+
+    // Flask API instance for connectivity layer (MQTT, telemetry, devices)
+    this.flaskApi = axios.create({
+      baseURL: FLASK_API_URL,
       timeout: 15000,
     });
 
@@ -83,6 +90,60 @@ class ApiService {
         // Don't show toast for auth endpoints to handle errors manually
         if (!error.config?.url?.includes('/auth/')) {
           const message = error.response?.data?.message || 'An error occurred';
+          toast.error(message);
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    // Flask API interceptors
+    this.flaskApi.interceptors.request.use(
+      config => {
+        console.log(
+          'Flask API Request:',
+          config.method?.toUpperCase(),
+          config.baseURL + config.url
+        );
+        const user = this.getCurrentUserFromStorage();
+
+        // Add admin token for admin endpoints
+        if (config.url.includes('/mqtt/monitoring/metrics') || config.url.includes('/admin/')) {
+          config.headers['Authorization'] = 'admin test';
+          console.log('Added admin token for:', config.url);
+        }
+
+        // Add JWT token for user endpoints
+        const token = localStorage.getItem('iotflow_token');
+        if (token && !config.headers['Authorization']) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Add user context
+        if (user && user.id) {
+          config.headers['X-User-ID'] = user.id;
+        }
+
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      }
+    );
+
+    this.flaskApi.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response?.status === 401) {
+          this.handleUnauthorized();
+        } else if (error.response?.status === 403) {
+          this.handleForbidden();
+        }
+
+        // Don't show toast for device registration to handle manually
+        if (!error.config?.url?.includes('/devices/register')) {
+          const message =
+            error.response?.data?.message || error.response?.data?.error || 'An error occurred';
           toast.error(message);
         }
 
@@ -299,11 +360,13 @@ class ApiService {
         }
       }
 
-      // If no match found, throw authentication error
-      throw new Error(
-        error.response?.data?.message ||
-          'Invalid credentials. Please check your email/username and password.'
-      );
+      // If no match found, return error response instead of throwing
+      return {
+        success: false,
+        error:
+          error.response?.data?.message ||
+          'Invalid credentials. Please check your email/username and password.',
+      };
     }
   }
 
@@ -794,19 +857,24 @@ class ApiService {
     return response.data;
   }
 
-  // MQTT Management
+  // MQTT Management (Flask backend)
   async getMqttStatus() {
-    const response = await this.api.get('/mqtt/status');
+    const response = await this.flaskApi.get('/mqtt/status');
+    return response.data;
+  }
+
+  async getMqttMetrics() {
+    const response = await this.flaskApi.get('/mqtt/monitoring/metrics');
     return response.data;
   }
 
   async getMqttTopics() {
-    const response = await this.api.get('/mqtt/topics');
+    const response = await this.flaskApi.get('/mqtt/topics');
     return response.data;
   }
 
   async getMqttMessages(topic, params = {}) {
-    const response = await this.api.get(`/mqtt/messages/${topic}`, { params });
+    const response = await this.flaskApi.get(`/mqtt/messages/${topic}`, { params });
     return response.data;
   }
 
@@ -828,6 +896,20 @@ class ApiService {
 
   async clearCache() {
     const response = await this.api.post('/admin/cache/clear');
+    return response.data;
+  }
+
+  async getPrometheusMetrics() {
+    // /metrics endpoint is at root level, not under /api/v1
+    const flaskBaseUrl = process.env.REACT_APP_FLASK_API_URL || 'http://localhost:5000/api/v1';
+    const metricsUrl = flaskBaseUrl.replace('/api/v1', '/metrics');
+
+    const response = await axios.get(metricsUrl, {
+      headers: {
+        Authorization: `admin ${process.env.REACT_APP_ADMIN_TOKEN || 'test'}`,
+      },
+      timeout: 15000,
+    });
     return response.data;
   }
 

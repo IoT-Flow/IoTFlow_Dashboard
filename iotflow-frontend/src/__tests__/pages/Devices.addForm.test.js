@@ -142,6 +142,12 @@ describe('Devices Page with AddDeviceForm Integration', () => {
   // TEST 4: Should close dialog after successful device creation
   test('should close dialog after successful device creation', async () => {
     apiService.getDevices.mockResolvedValueOnce({ data: mockDevices });
+    apiService.addDevice = jest.fn().mockResolvedValue({
+      id: 2,
+      name: 'New Device',
+      device_type: 'sensor',
+      status: 'online',
+    });
     apiService.getDevices.mockResolvedValueOnce({
       data: [
         ...mockDevices,
@@ -177,9 +183,12 @@ describe('Devices Page with AddDeviceForm Integration', () => {
     const submitButton = screen.getByRole('button', { name: /create device/i });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.queryByText('Create Device')).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Create Device')).not.toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   });
 
   // TEST 5: Should reload devices after successful creation

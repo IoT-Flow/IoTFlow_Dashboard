@@ -1,13 +1,11 @@
-import { Box, Container } from '@mui/material';
-import DeviceControlDashboard from '../components/DeviceControlDashboard';
+// import { Box, Container } from '@mui/material';
+// import DeviceControlDashboard from '../components/DeviceControlDashboard';
 
 const DeviceControl = () => {
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-        <DeviceControlDashboard />
-      </Box>
-    </Container>
+    <div>
+      <div>Device Control Page</div>
+    </div>
   );
 };
 

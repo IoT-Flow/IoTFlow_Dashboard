@@ -1,19 +1,19 @@
-import { Email, Person, Security, Visibility, VisibilityOff } from '@mui/icons-material';
 import {
-  Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Container,
+  TextField,
+  Button,
+  Typography,
+  Tabs,
+  Tab,
+  Alert,
   IconButton,
   InputAdornment,
   Link,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
 } from '@mui/material';
+import { Visibility, VisibilityOff, Email, Person, Lock, Security } from '@mui/icons-material';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,32 +35,62 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
 
-  const handleLoginSubmit = async e => {
-    e.preventDefault();
+  const handleLoginSubmit = async (e = null) => {
+    // Completely prevent any event propagation
+    if (e) {
+      try {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') {
+          e.stopImmediatePropagation();
+        }
+      } catch (err) {
+        // Ignore any event handling errors
+      }
+    }
+
+    console.log('🔍 Login process started - no page reload');
+
     setLoading(true);
     setError('');
 
     if (!loginData.emailOrUsername.trim() || !loginData.password.trim()) {
+      console.log('❌ Validation failed - empty fields');
       setError('Please enter both email/username and password');
       setLoading(false);
-      return;
+      return false; // Explicitly return false
     }
+
+    console.log('📡 Attempting login with:', {
+      email: loginData.emailOrUsername,
+      passwordLength: loginData.password.length,
+    });
 
     try {
       const result = await login(loginData.emailOrUsername, loginData.password);
+      console.log('📥 Login result:', result);
 
       if (!result.success) {
+        console.log('❌ Login failed:', result.error);
+        // Display the specific error message from the backend
         setError(result.error || 'Invalid credentials');
+      } else {
+        console.log('✅ Login successful');
       }
     } catch (err) {
+      // Handle network errors or unexpected errors
+      console.error('💥 Login error caught:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
+      console.log('🏁 Login process finished, setting loading to false');
       setLoading(false);
     }
+
+    return false; // Explicitly return false to prevent any form submission
   };
 
-  const handleRegisterSubmit = async e => {
-    e.preventDefault();
+  const handleRegisterSubmit = async () => {
+    console.log('🔍 Registration process started - no page reload');
     setLoading(true);
     setError('');
 
@@ -181,7 +211,7 @@ const Login = () => {
 
             {/* Login Form */}
             {activeTab === 0 && (
-              <Box component="form" onSubmit={handleLoginSubmit}>
+              <Box component="form" onSubmit={handleLoginSubmit} noValidate>
                 <Typography
                   variant="h5"
                   component="h2"
@@ -199,6 +229,16 @@ const Login = () => {
                   placeholder="Enter your email address or username"
                   variant="outlined"
                   sx={{ mb: 2 }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔘 Enter key pressed on email field - isolated handler');
+                      setTimeout(() => {
+                        handleLoginSubmit();
+                      }, 0);
+                    }
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -217,6 +257,16 @@ const Login = () => {
                   placeholder="Enter your password"
                   variant="outlined"
                   sx={{ mb: 3 }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔘 Enter key pressed on password field - isolated handler');
+                      setTimeout(() => {
+                        handleLoginSubmit();
+                      }, 0);
+                    }
+                  }}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -233,12 +283,18 @@ const Login = () => {
                 />
 
                 <Button
-                  type="submit"
+                  type="button"
                   fullWidth
                   variant="contained"
                   size="large"
-                  loading={loading}
                   disabled={loading}
+                  onClick={() => {
+                    console.log('🔘 Login button clicked - isolated handler');
+                    // Use setTimeout to completely isolate the login process
+                    setTimeout(() => {
+                      handleLoginSubmit();
+                    }, 0);
+                  }}
                   sx={{
                     py: 1.5,
                     borderRadius: '8px',
@@ -265,7 +321,7 @@ const Login = () => {
 
             {/* Registration Form */}
             {activeTab === 1 && (
-              <Box component="form" onSubmit={handleRegisterSubmit}>
+              <Box component="div">
                 <Typography
                   variant="h5"
                   component="h2"
@@ -363,12 +419,16 @@ const Login = () => {
                 />
 
                 <Button
-                  type="submit"
+                  type="button"
                   fullWidth
                   variant="contained"
                   size="large"
-                  loading={loading}
                   disabled={loading}
+                  onClick={() => {
+                    setTimeout(() => {
+                      handleRegisterSubmit();
+                    }, 0);
+                  }}
                   sx={{
                     py: 1.5,
                     borderRadius: '8px',

@@ -165,6 +165,7 @@ deviceGroups={
    - Updates UI after successful operations
 
 5. **Checkbox Rendering (Lines 260-278)**
+
    ```javascript
    <Checkbox
      edge="start"

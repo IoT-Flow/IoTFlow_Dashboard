@@ -58,10 +58,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (emailOrUsername, password) => {
+    console.log('🔐 AuthContext: Login attempt started');
     try {
+      console.log('📡 AuthContext: Calling apiService.login');
       const response = await apiService.login(emailOrUsername, password);
+      console.log('📥 AuthContext: API response received:', response);
 
       if (response.success) {
+        console.log('✅ AuthContext: Login successful');
         const { token, user } = response.data;
 
         // Map is_admin to role for easier access
@@ -80,12 +84,28 @@ export const AuthProvider = ({ children }) => {
         toast.success(`Welcome back, ${user.username}!`);
         return { success: true };
       } else {
-        return { success: false, error: response.message || 'Login failed' };
+        console.log('❌ AuthContext: Login failed with response:', response);
+        // Pass through the specific error message from the API
+        return { success: false, error: response.error || response.message || 'Login failed' };
       }
     } catch (error) {
+      console.error('💥 AuthContext: Login error caught:', error);
+      // Handle different types of errors with specific messages
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+
+      if (error.response?.data?.message) {
+        // Backend returned a specific error message
+        errorMessage = error.response.data.message;
+        console.log('🔍 AuthContext: Using backend error message:', errorMessage);
+      } else if (error.message) {
+        // Network or other error
+        errorMessage = error.message;
+        console.log('🔍 AuthContext: Using error message:', errorMessage);
+      }
+
       return {
         success: false,
-        error: error.message || 'Login failed. Please check your credentials.',
+        error: errorMessage,
       };
     }
   };

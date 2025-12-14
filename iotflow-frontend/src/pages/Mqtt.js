@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -13,6 +13,8 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -20,82 +22,111 @@ import {
   Error as ErrorIcon,
   Router as RouterIcon,
 } from '@mui/icons-material';
+import apiService from '../services/apiService';
 
 export default function Mqtt() {
-  const [brokerStatus] = useState({
-    status: 'running',
-    uptime: '2d 15h 32m',
-    version: 'Mosquitto 2.0.15',
-    port: 1883,
-    connections: 24,
-    messagesReceived: 15847,
-    messagesSent: 15923,
-    bytesReceived: '2.4 MB',
-    bytesSent: '2.5 MB',
-  });
+  const [brokerStatus, setBrokerStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [topicStats] = useState([
-    {
-      topic: 'devices/+/telemetry',
-      subscribers: 3,
-      publishers: 12,
-      messages: 8234,
-      lastActivity: '2 seconds ago',
-    },
-    {
-      topic: 'devices/+/status',
-      subscribers: 5,
-      publishers: 24,
-      messages: 1247,
-      lastActivity: '5 seconds ago',
-    },
-    {
-      topic: 'devices/+/control',
-      subscribers: 12,
-      publishers: 2,
-      messages: 156,
-      lastActivity: '1 minute ago',
-    },
-    {
-      topic: 'system/alerts',
-      subscribers: 8,
-      publishers: 1,
-      messages: 23,
-      lastActivity: '5 minutes ago',
-    },
-  ]);
+  // Helper function to format bytes to human-readable format
+  const formatBytes = bytes => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  };
 
-  const [connectedClients] = useState([
-    {
-      clientId: 'dashboard_client_1',
-      address: '192.168.1.100',
-      connected: '2h 15m ago',
-      keepalive: 60,
-    },
-    {
-      clientId: 'device_TEMP_001',
-      address: '192.168.1.50',
-      connected: '1d 3h ago',
-      keepalive: 120,
-    },
-    {
-      clientId: 'device_HUM_002',
-      address: '192.168.1.51',
-      connected: '1d 3h ago',
-      keepalive: 120,
-    },
-    {
-      clientId: 'backend_service',
-      address: '127.0.0.1',
-      connected: '2d 15h ago',
-      keepalive: 30,
-    },
-  ]);
+  // Fetch MQTT metrics from backend
+  const fetchMetrics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching MQTT metrics...');
+      const data = await apiService.getMqttMetrics();
+      console.log('MQTT metrics received:', data);
+
+      if (data && data.metrics) {
+        const { metrics } = data;
+
+        // Extract data from the actual API structure
+        const brokerConnection = metrics.connection_metrics?.broker_connection || {};
+        const overview = metrics.overview || {};
+        const handlerStats = metrics.handler_metrics?.handler_statistics || {};
+        const topicManagement = metrics.topic_metrics?.topic_management || {};
+        const subscriptionMetrics = metrics.subscription_metrics || {};
+        const messageMetrics = metrics.message_metrics?.data_transfer || {};
+        const prometheusMetrics = metrics.prometheus_metrics || {};
+
+        setBrokerStatus({
+          status: brokerConnection.connected ? 'running' : 'stopped',
+          uptime: overview.uptime_seconds ? formatUptime(overview.uptime_seconds) : 'N/A',
+          version: 'Mosquitto 2.0.15', // Not provided by API
+          host: brokerConnection.host || 'localhost',
+          port: brokerConnection.port || 1883,
+          useTls: brokerConnection.use_tls || false,
+          connections: brokerConnection.active_connections || 0,
+          messagesReceived: prometheusMetrics.mqtt_messages_received_total || 0,
+          messagesSent: prometheusMetrics.mqtt_messages_sent_total || 0,
+          bytesReceived: formatBytes(prometheusMetrics.mqtt_bytes_received_total || 0),
+          bytesSent: formatBytes(prometheusMetrics.mqtt_bytes_sent_total || 0),
+          messageHandlers: handlerStats.total_handlers || 0,
+          subscriptionCallbacks: subscriptionMetrics.active_subscriptions || 0,
+          totalTopics: topicManagement.total_topic_structures || 0,
+        });
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching MQTT metrics:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setError(err.message || 'Failed to fetch MQTT metrics');
+      setLoading(false);
+    }
+  };
+
+  // Format uptime from seconds to readable format
+  const formatUptime = seconds => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+  };
+
+  // Fetch metrics on mount and set up auto-refresh
+  useEffect(() => {
+    fetchMetrics();
+
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(() => {
+      fetchMetrics();
+    }, 5000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRefresh = () => {
-    // Simulate refresh
-    console.log('Refreshing MQTT stats...');
+    fetchMetrics();
   };
+
+  // Show loading state
+  if (loading && !brokerStatus) {
+    return (
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading MQTT metrics...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -103,10 +134,17 @@ export default function Mqtt() {
         <Typography variant="h4" component="h1">
           MQTT Broker Monitoring
         </Typography>
-        <IconButton onClick={handleRefresh}>
+        <IconButton onClick={handleRefresh} disabled={loading}>
           <RefreshIcon />
         </IconButton>
       </Box>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* Broker Status Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -118,16 +156,16 @@ export default function Mqtt() {
                 <Typography variant="h6">Broker Status</Typography>
               </Box>
               <Chip
-                icon={brokerStatus.status === 'running' ? <CheckCircleIcon /> : <ErrorIcon />}
-                label={brokerStatus.status === 'running' ? 'Running' : 'Stopped'}
-                color={brokerStatus.status === 'running' ? 'success' : 'error'}
+                icon={brokerStatus?.status === 'running' ? <CheckCircleIcon /> : <ErrorIcon />}
+                label={brokerStatus?.status === 'running' ? 'Running' : 'Stopped'}
+                color={brokerStatus?.status === 'running' ? 'success' : 'error'}
                 sx={{ mt: 1 }}
               />
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Uptime: {brokerStatus.uptime}
+                Uptime: {brokerStatus?.uptime || 'N/A'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {brokerStatus.version} • Port {brokerStatus.port}
+                {brokerStatus?.version || 'N/A'} • Port {brokerStatus?.port || 'N/A'}
               </Typography>
             </CardContent>
           </Card>
@@ -140,7 +178,7 @@ export default function Mqtt() {
                 Active Connections
               </Typography>
               <Typography variant="h3" color="primary">
-                {brokerStatus.connections}
+                {brokerStatus?.connections || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Connected clients
@@ -156,10 +194,10 @@ export default function Mqtt() {
                 Messages
               </Typography>
               <Typography variant="h4" color="success.main">
-                ↓ {brokerStatus.messagesReceived.toLocaleString()}
+                ↓ {(brokerStatus?.messagesReceived || 0).toLocaleString()}
               </Typography>
               <Typography variant="h4" color="info.main">
-                ↑ {brokerStatus.messagesSent.toLocaleString()}
+                ↑ {(brokerStatus?.messagesSent || 0).toLocaleString()}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Received / Sent
@@ -174,8 +212,8 @@ export default function Mqtt() {
               <Typography variant="h6" gutterBottom>
                 Data Transfer
               </Typography>
-              <Typography variant="body1">↓ {brokerStatus.bytesReceived}</Typography>
-              <Typography variant="body1">↑ {brokerStatus.bytesSent}</Typography>
+              <Typography variant="body1">↓ {brokerStatus?.bytesReceived || '0 B'}</Typography>
+              <Typography variant="body1">↑ {brokerStatus?.bytesSent || '0 B'}</Typography>
               <Typography variant="caption" color="text.secondary">
                 Received / Sent
               </Typography>
@@ -184,87 +222,97 @@ export default function Mqtt() {
         </Grid>
       </Grid>
 
-      {/* Topic Statistics */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Topic Statistics
-          </Typography>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Topic</TableCell>
-                  <TableCell align="center">Subscribers</TableCell>
-                  <TableCell align="center">Publishers</TableCell>
-                  <TableCell align="right">Messages</TableCell>
-                  <TableCell>Last Activity</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {topicStats.map((topic, index) => (
-                  <TableRow key={index} hover>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {topic.topic}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip label={topic.subscribers} size="small" color="primary" />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip label={topic.publishers} size="small" color="secondary" />
-                    </TableCell>
-                    <TableCell align="right">{topic.messages.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {topic.lastActivity}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+      {/* MQTT Metrics */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Topic Structures
+              </Typography>
+              <Typography variant="h3" color="primary">
+                {brokerStatus?.totalTopics || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total topic definitions
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* Connected Clients */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Message Handlers
+              </Typography>
+              <Typography variant="h3" color="success.main">
+                {brokerStatus?.messageHandlers || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Active message handlers
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Subscriptions
+              </Typography>
+              <Typography variant="h3" color="info.main">
+                {brokerStatus?.subscriptionCallbacks || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Active subscription callbacks
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Connection Info */}
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Connected Clients
+            Connection Information
           </Typography>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Client ID</TableCell>
-                  <TableCell>IP Address</TableCell>
-                  <TableCell>Connected Since</TableCell>
-                  <TableCell align="right">Keep Alive (s)</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {connectedClients.map((client, index) => (
-                  <TableRow key={index} hover>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {client.clientId}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{client.address}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {client.connected}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">{client.keepalive}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" color="text.secondary">
+                Host
+              </Typography>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                {brokerStatus?.host || 'localhost'}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" color="text.secondary">
+                Port
+              </Typography>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                {brokerStatus?.port || 1883}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" color="text.secondary">
+                Status
+              </Typography>
+              <Chip
+                label={brokerStatus?.status === 'running' ? 'Connected' : 'Disconnected'}
+                color={brokerStatus?.status === 'running' ? 'success' : 'error'}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" color="text.secondary">
+                TLS Enabled
+              </Typography>
+              <Typography variant="body1">{brokerStatus?.useTls ? 'Yes' : 'No'}</Typography>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
     </Box>

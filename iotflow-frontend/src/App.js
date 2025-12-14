@@ -10,6 +10,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 import Admin from './pages/Admin';
 import Devices from './pages/Devices.hybrid';
 import Login from './pages/Login';
+import LoginDebug from './pages/LoginDebug';
 import Mqtt from './pages/Mqtt';
 import Overview from './pages/Overview';
 import Profile from './pages/Profile';
@@ -56,7 +57,12 @@ const AppContent = () => {
   }
 
   if (!isAuthenticated) {
-    return <Login />;
+    return (
+      <Routes>
+        <Route path="/debug" element={<LoginDebug />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    );
   }
 
   return (

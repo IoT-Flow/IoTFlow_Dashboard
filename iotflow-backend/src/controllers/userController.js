@@ -69,7 +69,20 @@ class UserController {
         },
       });
 
-      if (!user || !(await verifyPassword(password, user.password_hash))) {
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      // Check if user account is active before verifying password
+      if (!user.is_active) {
+        return res.status(403).json({
+          message: 'Your account is inactive. Please contact an administrator.',
+          error_code: 'ACCOUNT_INACTIVE',
+        });
+      }
+
+      // Verify password
+      if (!(await verifyPassword(password, user.password_hash))) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
