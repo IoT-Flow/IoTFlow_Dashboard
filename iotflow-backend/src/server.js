@@ -38,10 +38,10 @@ const initializeDatabase = () => {
     const initScript = path.join(__dirname, '../scripts/initDatabase.js');
     const child = spawn('node', [initScript], {
       stdio: 'inherit',
-      cwd: path.join(__dirname, '..')
+      cwd: path.join(__dirname, '..'),
     });
 
-    child.on('close', (code) => {
+    child.on('close', code => {
       if (code === 0) {
         console.log('✅ Database initialization completed successfully');
         resolve();
@@ -50,7 +50,7 @@ const initializeDatabase = () => {
       }
     });
 
-    child.on('error', (error) => {
+    child.on('error', error => {
       reject(error);
     });
   });
