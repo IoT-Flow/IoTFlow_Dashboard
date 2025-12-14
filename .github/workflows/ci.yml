@@ -2,9 +2,9 @@ name: IoTFlow Dashboard CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main,prod, master, develop]
   pull_request:
-    branches: [main, master, develop]
+    branches: [main,prod, master, develop]
 
 jobs:
   backend-ci:

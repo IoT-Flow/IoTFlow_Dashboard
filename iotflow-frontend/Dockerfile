@@ -1,54 +1,90 @@
-# Use official Node.js LTS image
-FROM node:18-alpine
+# Stage 1: Build React app
+FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependency definitions
+# ==================================
+# Build Arguments (Configuration)
+# React env vars must be set at BUILD time
+# ==================================
+
+# API Configuration
+ARG REACT_APP_API_URL=http://localhost:3001/api
+ARG REACT_APP_WS_URL=ws://localhost:3001/ws
+ARG REACT_APP_FLASK_API_URL=http://localhost:5000/api/v1
+
+# Application
+ARG REACT_APP_NAME=IoTFlow Dashboard
+ARG REACT_APP_VERSION=2.0.0
+ARG REACT_APP_ENVIRONMENT=production
+
+# Feature Flags
+ARG REACT_APP_ENABLE_ANALYTICS=true
+ARG REACT_APP_ENABLE_REAL_TIME=true
+ARG REACT_APP_ENABLE_WEBSOCKETS=true
+ARG REACT_APP_ENABLE_DEVICE_CONTROL=true
+ARG REACT_APP_ENABLE_NOTIFICATIONS=true
+ARG REACT_APP_ENABLE_CHARTS=true
+
+# System Configuration
+ARG REACT_APP_IOTDB_HOST=localhost
+ARG REACT_APP_IOTDB_PORT=6667
+ARG REACT_APP_IOTDB_USER=root
+ARG REACT_APP_IOTDB_PASSWORD=root
+
+# Performance
+ARG REACT_APP_POLLING_INTERVAL=30000
+ARG REACT_APP_MAX_TELEMETRY_POINTS=1000
+
+# Build Configuration
+ARG GENERATE_SOURCEMAP=false
+
+# Set environment variables for build
+ENV REACT_APP_API_URL=${REACT_APP_API_URL} \
+    REACT_APP_WS_URL=${REACT_APP_WS_URL} \
+    REACT_APP_FLASK_API_URL=${REACT_APP_FLASK_API_URL} \
+    REACT_APP_NAME=${REACT_APP_NAME} \
+    REACT_APP_VERSION=${REACT_APP_VERSION} \
+    REACT_APP_ENVIRONMENT=${REACT_APP_ENVIRONMENT} \
+    REACT_APP_ENABLE_ANALYTICS=${REACT_APP_ENABLE_ANALYTICS} \
+    REACT_APP_ENABLE_REAL_TIME=${REACT_APP_ENABLE_REAL_TIME} \
+    REACT_APP_ENABLE_WEBSOCKETS=${REACT_APP_ENABLE_WEBSOCKETS} \
+    REACT_APP_ENABLE_DEVICE_CONTROL=${REACT_APP_ENABLE_DEVICE_CONTROL} \
+    REACT_APP_ENABLE_NOTIFICATIONS=${REACT_APP_ENABLE_NOTIFICATIONS} \
+    REACT_APP_ENABLE_CHARTS=${REACT_APP_ENABLE_CHARTS} \
+    REACT_APP_IOTDB_HOST=${REACT_APP_IOTDB_HOST} \
+    REACT_APP_IOTDB_PORT=${REACT_APP_IOTDB_PORT} \
+    REACT_APP_IOTDB_USER=${REACT_APP_IOTDB_USER} \
+    REACT_APP_IOTDB_PASSWORD=${REACT_APP_IOTDB_PASSWORD} \
+    REACT_APP_POLLING_INTERVAL=${REACT_APP_POLLING_INTERVAL} \
+    REACT_APP_MAX_TELEMETRY_POINTS=${REACT_APP_MAX_TELEMETRY_POINTS} \
+    GENERATE_SOURCEMAP=${GENERATE_SOURCEMAP}
+
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies for production
-RUN npm install
+# Install dependencies
+RUN npm ci --only=production && \
+    npm cache clean --force
 
-# Copy application source
-COPY . .
+# Copy source code
+COPY public/ ./public/
+COPY src/ ./src/
 
-# Expose application port
+# Build the app
+RUN npm run build
+
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
+
+# Copy built app
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copy nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port
 EXPOSE 3000
 
-# Set environment variables
-ENV NODE_ENV=production \
-    HOST=0.0.0.0 \
-    PORT=3000 \
-    REACT_APP_API_URL=http://localhost:3001/api \
-    REACT_APP_WS_URL=ws://localhost:3001/ws \
-    REACT_APP_NAME="IoTFlow Dashboard" \
-    REACT_APP_VERSION=2.0.0 \
-    REACT_APP_TITLE="IoTFlow - Enterprise IoT Management Platform" \
-    REACT_APP_ENVIRONMENT=production \
-    REACT_APP_ADMIN_TOKEN_LENGTH=32 \
-    REACT_APP_SESSION_TIMEOUT=3600000 \
-    REACT_APP_RATE_LIMIT=60 \
-    REACT_APP_ENABLE_ANALYTICS=true \
-    REACT_APP_ENABLE_REAL_TIME=true \
-    REACT_APP_ENABLE_WEBSOCKETS=true \
-    REACT_APP_ENABLE_DEVICE_CONTROL=true \
-    REACT_APP_ENABLE_DEVICE_MANAGEMENT=true \
-    REACT_APP_ENABLE_MQTT_MONITORING=true \
-    REACT_APP_ENABLE_NOTIFICATIONS=true \
-    REACT_APP_ENABLE_CHARTS=true \
-    REACT_APP_ENABLE_EXPORTS=true \
-    REACT_APP_IOTDB_HOST=localhost \
-    REACT_APP_IOTDB_PORT=6667 \
-    REACT_APP_IOTDB_USER=root \
-    REACT_APP_IOTDB_PASSWORD=root \
-    REACT_APP_POLLING_INTERVAL=30000 \
-    REACT_APP_MAX_TELEMETRY_POINTS=1000 \
-    REACT_APP_CHART_ANIMATION_DURATION=750 \
-    REACT_APP_DEBOUNCE_DELAY=300 \
-    GENERATE_SOURCEMAP=false \
-    INLINE_RUNTIME_CHUNK=false \
-    IMAGE_INLINE_SIZE_LIMIT=10000
-
-# Generate .env from .env.example and start the application
-ENTRYPOINT ["/bin/sh", "-c", "for key in $(grep -E '^[A-Za-z_][A-Za-z_0-9_]*=' /app/.env.example | cut -d= -f1); do val=$(printenv $key || echo); printf '%s=%s\\n' \"$key\" \"$val\" >> /app/.env; done && exec npm start"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

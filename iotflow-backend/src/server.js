@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const dotenv = require('dotenv');
+const { spawn } = require('child_process');
+const path = require('path');
 const app = require('./app');
 const { sequelize } = require('./utils/db');
 const notificationService = require('./services/notificationService');
@@ -16,11 +18,59 @@ dotenv.config();
 
 const PORT = 3001;
 
+// Function to check if database is initialized
+const isDatabaseInitialized = async () => {
+  try {
+    // Check if users table exists and has at least one user
+    const User = require('./models/user');
+    const userCount = await User.count();
+    return userCount > 0;
+  } catch (error) {
+    console.log('Database not initialized yet:', error.message);
+    return false;
+  }
+};
+
+// Function to run database initialization script
+const initializeDatabase = () => {
+  return new Promise((resolve, reject) => {
+    console.log('🔄 Running database initialization script...');
+    const initScript = path.join(__dirname, '../scripts/initDatabase.js');
+    const child = spawn('node', [initScript], {
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '..')
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Database initialization completed successfully');
+        resolve();
+      } else {
+        reject(new Error(`Database initialization failed with code ${code}`));
+      }
+    });
+
+    child.on('error', (error) => {
+      reject(error);
+    });
+  });
+};
+
 // Initialize database and WebSocket server
 const startServer = async () => {
   try {
+    // First, sync the database structure
     await sequelize.sync({ force: false });
     console.log('Database synced successfully');
+
+    // Check if database needs initialization
+    const isInitialized = await isDatabaseInitialized();
+    if (!isInitialized) {
+      console.log('🔄 Database not initialized, running initialization...');
+      await initializeDatabase();
+    } else {
+      console.log('✅ Database already initialized');
+    }
 
     // Initialize Redis connection for device status tracking
     try {

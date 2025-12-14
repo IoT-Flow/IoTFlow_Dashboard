@@ -76,6 +76,48 @@ async function createAdditionalTables() {
         FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE SET NULL ON UPDATE CASCADE
       )
     `);
+
+    // Create device_auth table (for Flask connectivity layer)
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS device_auth (
+        id SERIAL PRIMARY KEY,
+        device_id INTEGER NOT NULL,
+        api_key_hash VARCHAR(128) NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        expires_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        last_used TIMESTAMP WITH TIME ZONE,
+        usage_count INTEGER DEFAULT 0,
+        FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create chart_devices table (for chart-device associations)
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS chart_devices (
+        id SERIAL PRIMARY KEY,
+        chart_id VARCHAR(255) NOT NULL,
+        device_id INTEGER NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT unique_chart_device UNIQUE (chart_id, device_id),
+        FOREIGN KEY (chart_id) REFERENCES charts (id) ON DELETE CASCADE,
+        FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create chart_measurements table (for chart measurement configurations)
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS chart_measurements (
+        id SERIAL PRIMARY KEY,
+        chart_id VARCHAR(255) NOT NULL,
+        measurement_name VARCHAR(255) NOT NULL,
+        display_name VARCHAR(255),
+        color VARCHAR(7),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT unique_chart_measurement UNIQUE (chart_id, measurement_name),
+        FOREIGN KEY (chart_id) REFERENCES charts (id) ON DELETE CASCADE
+      )
+    `);
   } else {
     console.log('Using SQLite syntax for table creation...');
 
@@ -110,6 +152,48 @@ async function createAdditionalTables() {
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE SET NULL ON UPDATE CASCADE
+      )
+    `);
+
+    // Create device_auth table (for Flask connectivity layer)
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS device_auth (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        device_id INTEGER NOT NULL,
+        api_key_hash VARCHAR(128) NOT NULL,
+        is_active BOOLEAN DEFAULT 1,
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_used DATETIME,
+        usage_count INTEGER DEFAULT 0,
+        FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create chart_devices table (for chart-device associations)
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS chart_devices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chart_id VARCHAR(255) NOT NULL,
+        device_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT unique_chart_device UNIQUE (chart_id, device_id),
+        FOREIGN KEY (chart_id) REFERENCES charts (id) ON DELETE CASCADE,
+        FOREIGN KEY (device_id) REFERENCES devices (id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create chart_measurements table (for chart measurement configurations)
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS chart_measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chart_id VARCHAR(255) NOT NULL,
+        measurement_name VARCHAR(255) NOT NULL,
+        display_name VARCHAR(255),
+        color VARCHAR(7),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT unique_chart_measurement UNIQUE (chart_id, measurement_name),
+        FOREIGN KEY (chart_id) REFERENCES charts (id) ON DELETE CASCADE
       )
     `);
   }
@@ -203,6 +287,51 @@ async function createIndexes() {
         await sequelize.query(`
           CREATE INDEX IF NOT EXISTS notifications_source 
           ON notifications (source)
+        `);
+      } catch (e) {
+        /* Table may not exist yet */
+      }
+
+      // Device auth indexes
+      try {
+        await sequelize.query(`
+          CREATE INDEX IF NOT EXISTS idx_api_key_hash 
+          ON device_auth (api_key_hash)
+        `);
+
+        await sequelize.query(`
+          CREATE INDEX IF NOT EXISTS idx_device_auth 
+          ON device_auth (device_id, is_active)
+        `);
+      } catch (e) {
+        /* Table may not exist yet */
+      }
+
+      // Chart devices indexes
+      try {
+        await sequelize.query(`
+          CREATE INDEX IF NOT EXISTS idx_device_charts 
+          ON chart_devices (device_id)
+        `);
+
+        await sequelize.query(`
+          CREATE INDEX IF NOT EXISTS idx_chart_devices 
+          ON chart_devices (chart_id)
+        `);
+      } catch (e) {
+        /* Table may not exist yet */
+      }
+
+      // Chart measurements indexes
+      try {
+        await sequelize.query(`
+          CREATE INDEX IF NOT EXISTS idx_measurement_name 
+          ON chart_measurements (measurement_name)
+        `);
+
+        await sequelize.query(`
+          CREATE INDEX IF NOT EXISTS idx_chart_measurements 
+          ON chart_measurements (chart_id)
         `);
       } catch (e) {
         /* Table may not exist yet */
