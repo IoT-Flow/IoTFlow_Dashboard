@@ -102,7 +102,7 @@ class Chart extends Model {
           id, name, title, description, type, user_id,
           time_range, refresh_interval, aggregation, group_by,
           appearance_config, created_at, updated_at, is_active
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), true)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, true)
       `,
         {
           replacements: [
@@ -125,7 +125,7 @@ class Chart extends Model {
       // Insert device associations
       if (chartData.devices && chartData.devices.length > 0) {
         const deviceInserts = chartData.devices
-          .map(deviceId => `('${chartId}', '${deviceId}', datetime('now'))`)
+          .map(deviceId => `('${chartId}', '${deviceId}', CURRENT_TIMESTAMP)`)
           .join(', ');
 
         await sequelize.query(
@@ -139,7 +139,7 @@ class Chart extends Model {
       // Insert measurement associations
       if (chartData.measurements && chartData.measurements.length > 0) {
         const measurementInserts = chartData.measurements
-          .map(measurement => `('${chartId}', '${measurement}', '${measurement}', datetime('now'))`)
+          .map(measurement => `('${chartId}', '${measurement}', '${measurement}', CURRENT_TIMESTAMP)`)
           .join(', ');
 
         await sequelize.query(
@@ -184,7 +184,7 @@ class Chart extends Model {
         UPDATE charts SET 
           name = ?, title = ?, description = ?, type = ?,
           time_range = ?, refresh_interval = ?, aggregation = ?, group_by = ?,
-          appearance_config = ?, updated_at = datetime('now')
+          appearance_config = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND user_id = ?
       `,
         {

@@ -7,9 +7,8 @@ const router = express.Router();
 // Health check for IoTDB connectivity (must be before parameterized routes)
 router.get('/health', TelemetryController.healthCheck);
 
-// Today's message count removed - use dashboard/overview for aggregated data instead
-// This was too specific and dashboard provides better aggregation
-// router.get('/today/count', verifyToken, TelemetryController.getTodayMessageCount);
+// Today's message count (used by dashboard)
+router.get('/today/count', verifyToken, TelemetryController.getTodayMessageCount);
 
 // Test notification endpoint removed - was security risk (development only)
 // router.post('/test-notification', verifyToken, isAdmin, TelemetryController.generateTestNotification);

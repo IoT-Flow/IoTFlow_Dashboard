@@ -499,7 +499,7 @@ class ApiService {
           location: device.location,
           status: device.status,
           description: device.description,
-          apiKey: device.api_key, // Re-add api_key
+          apiKey: device.api_key || device.apiKey, // normalize api key casing
           lastSeen: device.last_seen || device.lastSeen || device.updated_at,
           createdAt: device.created_at || device.createdAt,
           updatedAt: device.updated_at || device.updatedAt,
@@ -658,7 +658,7 @@ class ApiService {
         location: device.location,
         status: device.status,
         description: device.description,
-        apiKey: device.api_key, // Re-add api_key
+        apiKey: device.api_key || device.apiKey, // normalize api key casing
         lastSeen: device.last_seen || device.lastSeen || device.updated_at,
         createdAt: device.created_at || device.createdAt,
         updatedAt: device.updated_at || device.updatedAt,

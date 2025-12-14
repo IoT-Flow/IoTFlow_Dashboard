@@ -73,26 +73,27 @@ const Dashboard = () => {
 
       // Load user-specific devices
       const devicesResult = await apiService.getDevices();
+      let devicesList = [];
       if (devicesResult.success) {
         // Handle both array and object responses
         const devicesData = devicesResult.data;
         if (Array.isArray(devicesData)) {
-          setDevices(devicesData);
+          devicesList = devicesData;
         } else if (devicesData && Array.isArray(devicesData.devices)) {
-          setDevices(devicesData.devices);
-        } else {
-          setDevices([]);
+          devicesList = devicesData.devices;
         }
-      } else {
-        setDevices([]);
       }
 
-      // Load telemetry overview
-      const overviewResult = await apiService.getUserTelemetryOverview('24h');
-      console.log(overviewResult);
-      if (overviewResult.success) {
-        setTelemetryOverview(overviewResult.data.overview);
-      }
+      setDevices(devicesList);
+
+      // Derive telemetry overview locally instead of calling missing backend endpoint
+      const activeCount = devicesList.filter(d => d.status === 'active').length;
+      const inactiveCount = Math.max(devicesList.length - activeCount, 0);
+      setTelemetryOverview({
+        active_devices: activeCount,
+        inactive_devices: inactiveCount,
+        time_range: '24h',
+      });
 
       // Load today's message count from IoTDB
       let todayMessages = 0;
@@ -109,8 +110,8 @@ const Dashboard = () => {
 
       // Set dashboard data with real message count
       setDashboardData({
-        total_devices: devices.length,
-        active_devices: devices.filter(d => d.status === 'active').length,
+        total_devices: devicesList.length,
+        active_devices: activeCount,
         total_messages: todayMessages,
         last_updated: new Date().toISOString(),
       });
