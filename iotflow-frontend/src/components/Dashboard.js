@@ -87,31 +87,13 @@ const Dashboard = () => {
         setDevices([]);
       }
 
-      // Load telemetry overview
-      const overviewResult = await apiService.getUserTelemetryOverview('24h');
-      console.log(overviewResult);
-      if (overviewResult.success) {
-        setTelemetryOverview(overviewResult.data.overview);
-      }
 
-      // Load today's message count from IoTDB
-      let todayMessages = 0;
-      try {
-        const todayResult = await apiService.getTodayMessageCount();
-        if (todayResult.success) {
-          todayMessages = todayResult.data.message_count || 0;
-          console.log('Today message count from IoTDB:', todayMessages);
-        }
-      } catch (msgError) {
-        console.warn('Failed to load today message count:', msgError);
-        todayMessages = 0; // Default fallback
-      }
 
-      // Set dashboard data with real message count
+      // Set dashboard data with device counts
       setDashboardData({
         total_devices: devices.length,
         active_devices: devices.filter(d => d.status === 'active').length,
-        total_messages: todayMessages,
+        total_messages: 0, // Placeholder - can be implemented later if needed
         last_updated: new Date().toISOString(),
       });
     } catch (err) {
