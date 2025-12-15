@@ -16,10 +16,25 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',')
-      : ['http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Cache-Control',
+      'X-File-Name',
+      'X-User-ID',
+      'x-user-id',
+      'DNT',
+      'User-Agent',
+      'If-Modified-Since',
+      'Range',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-Request-ID'],
   })
 );
 app.use(bodyParser.json());

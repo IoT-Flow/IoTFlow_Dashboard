@@ -90,13 +90,6 @@ const Dashboard = () => {
         setDevices([]);
       }
 
-      // Load telemetry overview
-      const overviewResult = await apiService.getUserTelemetryOverview('24h');
-      // console.log(overviewResult);
-      if (overviewResult.success) {
-        setTelemetryOverview(overviewResult.data.overview);
-      }
-
       // Set some demo dashboard data for now
       setDashboardData({
         total_devices: devices.length,

@@ -824,11 +824,6 @@ class ApiService {
     return response.data;
   }
 
-  async getTodayMessageCount() {
-    const response = await this.api.get('/telemetry/today/count');
-    return response.data;
-  }
-
   async generateTestNotification(
     type = 'info',
     message = 'Test notification',
@@ -1296,22 +1291,6 @@ class ApiService {
       return response;
     } catch (error) {
       return this.generateDemoHistoricalTelemetry(deviceId, params);
-    }
-  }
-
-  /**
-   * Get telemetry overview for all user's devices
-   * Endpoint: GET /api/v1/telemetry/user/overview
-   */
-  async getUserTelemetryOverview(timeRange = '24h') {
-    try {
-      const response = await this.makeAuthenticatedRequest('/telemetry/user/overview', {
-        method: 'GET',
-        params: { time_range: timeRange },
-      });
-      return response;
-    } catch (error) {
-      return await this.generateDemoUserOverview(timeRange);
     }
   }
 

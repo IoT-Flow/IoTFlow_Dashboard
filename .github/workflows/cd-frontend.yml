@@ -1,0 +1,172 @@
+name: CD - Dashboard Frontend
+
+on:
+  # Trigger after CI completes successfully
+  workflow_run:
+    workflows: ["IoTFlow Dashboard CI"]
+    types: [completed]
+    branches: [master, develop, main]
+  # Manual trigger still available
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: ['staging', 'production']
+      force_deploy:
+        description: 'Force deployment even if no changes'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  ACR_REGISTRY: iotflow.azurecr.io
+  IMAGE_NAME: dashboard-frontend
+  AKS_CLUSTER: iotflow-aks
+  AKS_RESOURCE_GROUP: service-web
+  NAMESPACE: iotflow
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    # Only run if CI succeeded or manual trigger
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      ref: ${{ steps.env.outputs.ref }}
+      sha: ${{ steps.env.outputs.sha }}
+    steps:
+      - name: Determine Environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            # workflow_run event
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+              echo "environment=production" >> $GITHUB_OUTPUT
+            else
+              echo "environment=staging" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Check deployment
+        id: check
+        run: |
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "✅ CI passed - ready to deploy"
+
+  build:
+    needs: setup
+    if: needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Log in to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push
+        run: |
+          REF="${{ needs.setup.outputs.ref }}"
+          SHA="${{ needs.setup.outputs.sha }}"
+          IMAGE="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}"
+          
+          # Build with environment-specific args if needed
+          docker build \
+            --build-arg REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL || 'http://localhost:3001/api' }} \
+            --build-arg REACT_APP_WS_URL=${{ secrets.REACT_APP_WS_URL || 'ws://localhost:3001/ws' }} \
+            --build-arg REACT_APP_FLASK_API_URL=${{ secrets.REACT_APP_FLASK_API_URL || 'http://localhost:5000/api/v1' }} \
+            -t $IMAGE:${REF}-${SHA} \
+            -t $IMAGE:${REF} \
+            -t $IMAGE:latest \
+            ./iotflow-frontend
+          
+          docker push $IMAGE:${REF}-${SHA}
+          docker push $IMAGE:${REF}
+          docker push $IMAGE:latest
+          
+          echo "✅ Image built: $IMAGE:${REF}-${SHA}"
+
+  deploy:
+    needs: [setup, build]
+    if: needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AKS_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER }}
+
+      - name: Deploy to AKS
+        run: |
+          echo "🚀 Deploying dashboard-frontend to ${{ needs.setup.outputs.environment }}"
+          
+          REF="${{ needs.setup.outputs.ref }}"
+          SHA="${{ needs.setup.outputs.sha }}"
+          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${REF}-${SHA}"
+          echo "📦 Image: $IMAGE_TAG"
+          
+          kubectl set image deployment/dashboard-frontend \
+            dashboard-frontend=$IMAGE_TAG \
+            -n ${{ env.NAMESPACE }}
+          
+          echo "⏳ Waiting for rollout..."
+          kubectl rollout status deployment/dashboard-frontend -n ${{ env.NAMESPACE }} --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          kubectl get pods -l app=dashboard-frontend -n ${{ env.NAMESPACE }}
+          kubectl wait --for=condition=ready pod -l app=dashboard-frontend -n ${{ env.NAMESPACE }} --timeout=300s
+          echo "✅ Deployment verified"
+
+  notify:
+    needs: [setup, build, deploy]
+    if: always() && needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            STATUS="✅ SUCCESS"
+          else
+            STATUS="❌ FAILED"
+          fi
+          
+          echo "## 🚀 Dashboard Frontend Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ needs.setup.outputs.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ needs.setup.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
