@@ -90,8 +90,6 @@ const Dashboard = () => {
         setDevices([]);
       }
 
-
-
       // Set some demo dashboard data for now
       setDashboardData({
         total_devices: devices.length,

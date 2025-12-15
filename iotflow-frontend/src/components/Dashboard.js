@@ -87,8 +87,6 @@ const Dashboard = () => {
         setDevices([]);
       }
 
-
-
       // Set dashboard data with device counts
       setDashboardData({
         total_devices: devices.length,

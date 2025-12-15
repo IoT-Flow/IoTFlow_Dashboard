@@ -31,10 +31,10 @@ app.use(
       'DNT',
       'User-Agent',
       'If-Modified-Since',
-      'Range'
+      'Range',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-Request-ID']
+    exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-Request-ID'],
   })
 );
 app.use(bodyParser.json());

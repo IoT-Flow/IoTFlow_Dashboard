@@ -824,8 +824,6 @@ class ApiService {
     return response.data;
   }
 
-
-
   async generateTestNotification(
     type = 'info',
     message = 'Test notification',
@@ -1295,8 +1293,6 @@ class ApiService {
       return this.generateDemoHistoricalTelemetry(deviceId, params);
     }
   }
-
-
 
   /**
    * Submit telemetry data for a device (used by devices, not dashboard)

@@ -1,21 +1,22 @@
 name: CD - Dashboard Backend
 
 on:
-  push:
+  # Trigger after CI completes successfully
+  workflow_run:
+    workflows: ["IoTFlow Dashboard CI"]
+    types: [completed]
     branches: [master, develop, main]
-    paths:
-      - 'iotflow-backend/**'
-      - '.github/workflows/cd-backend.yml'
+  # Manual trigger still available
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: "Deployment environment"
         required: true
-        default: 'staging'
+        default: "staging"
         type: choice
-        options: ['staging', 'production']
+        options: ["staging", "production"]
       force_deploy:
-        description: 'Force deployment even if no changes'
+        description: "Force deployment even if no changes"
         required: false
         type: boolean
         default: false
@@ -30,29 +31,38 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
+    # Only run if CI succeeded or manual trigger
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     outputs:
       environment: ${{ steps.env.outputs.environment }}
       should_deploy: ${{ steps.check.outputs.should_deploy }}
+      ref: ${{ steps.env.outputs.ref }}
+      sha: ${{ steps.env.outputs.sha }}
     steps:
       - name: Determine Environment
         id: env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           else
-            echo "environment=staging" >> $GITHUB_OUTPUT
+            # workflow_run event
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+              echo "environment=production" >> $GITHUB_OUTPUT
+            else
+              echo "environment=staging" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Check deployment
         id: check
         run: |
-          if [[ "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-          else
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-          fi
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "✅ CI passed - ready to deploy"
 
   build:
     needs: setup
@@ -60,6 +70,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -74,19 +86,21 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./iotflow-backend
-          push: true
-          tags: |
-            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${{ github.sha }}
-            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
-            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          provenance: false
-
-      - name: Output image tag
         run: |
-          echo "✅ Image built: ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${{ github.sha }}"
+          REF="${{ needs.setup.outputs.ref }}"
+          SHA="${{ needs.setup.outputs.sha }}"
+          IMAGE="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}"
+
+          docker build -t $IMAGE:${REF}-${SHA} \
+                       -t $IMAGE:${REF} \
+                       -t $IMAGE:latest \
+                       ./iotflow-backend
+
+          docker push $IMAGE:${REF}-${SHA}
+          docker push $IMAGE:${REF}
+          docker push $IMAGE:latest
+
+          echo "✅ Image built: $IMAGE:${REF}-${SHA}"
 
   deploy:
     needs: [setup, build]
@@ -113,15 +127,16 @@ jobs:
       - name: Deploy to AKS
         run: |
           echo "🚀 Deploying dashboard-backend to ${{ needs.setup.outputs.environment }}"
-          
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${{ github.sha }}"
+
+          REF="${{ needs.setup.outputs.ref }}"
+          SHA="${{ needs.setup.outputs.sha }}"
+          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${REF}-${SHA}"
           echo "📦 Image: $IMAGE_TAG"
-          
+
           kubectl set image deployment/dashboard-backend \
             dashboard-backend=$IMAGE_TAG \
             -n ${{ env.NAMESPACE }}
-          
+
           echo "⏳ Waiting for rollout..."
           kubectl rollout status deployment/dashboard-backend -n ${{ env.NAMESPACE }} --timeout=300s
 
@@ -144,7 +159,7 @@ jobs:
           else
             STATUS="❌ FAILED"
           fi
-          
+
           echo "## 🚀 Dashboard Backend Deployment" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: $STATUS" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment**: ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
